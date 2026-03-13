@@ -1,0 +1,129 @@
+{
+    "query_info": {
+        "csv_file": "/home/tom/projector_version_check/projectors.csv",
+        "timestamp": "2026-03-13T17:39:17.664251+00:00",
+        "protocol": "PJLink Class 1 v1.00",
+        "spec_document": "5-1_PJLink_eng_20131210.pdf",
+        "total_projectors": 10,
+        "successful": 9,
+        "errors": 1
+    },
+    "projectors": [
+        {
+            "host": "lsc-100-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:16.588593+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ131L",
+            "other_info": "",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-100-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:16.736002+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ131L",
+            "other_info": "",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-105-1-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:16.875391+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "ERROR: Empty response for INF1",
+            "product_name": "ERROR: Empty response for INF2",
+            "other_info": "ERROR: Empty response for INFO",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-105-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:16.957492+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ75",
+            "other_info": "",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-205-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:17.112768+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "ERROR: Empty response for INF1",
+            "product_name": "ERROR: Empty response for INF2",
+            "other_info": "ERROR: Empty response for INFO",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-205-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:17.217595+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "ERROR: Empty response for INF1",
+            "product_name": "ERROR: Empty response for INF2",
+            "other_info": "ERROR: Empty response for INFO",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-200-1-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:17.331766+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "ERROR: Empty response for INF1",
+            "product_name": "ERROR: Empty response for INF2",
+            "other_info": "ERROR: Empty response for INFO",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-200-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:17.414594+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "ERROR: Empty response for INF1",
+            "product_name": "ERROR: Empty response for INF2",
+            "other_info": "ERROR: Empty response for INFO",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-201-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:17.503008+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "ERROR: Empty response for INF1",
+            "product_name": "ERROR: Empty response for INF2",
+            "other_info": "ERROR: Empty response for INFO",
+            "firmware_version": "Not available (INFO field empty or errored)"
+        },
+        {
+            "host": "lsc-202-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-03-13T17:39:17.593841+00:00",
+            "status": "error",
+            "error": "Network error: lsc-202-projector-1.openav.dartmouth.edu:4352: [Errno -2] Name or service not known",
+            "firmware_version": "ERROR"
+        }
+    ]
+}
