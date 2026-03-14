@@ -2,13 +2,15 @@
 """
 MikroTik Router Version Checker
 ================================
-Reads router credentials from a CSV, connects via SSH,
+Reads router credentials from routers.csv, connects via SSH,
 runs /system/package/print, extracts name + version for
-each package, writes results to JSON.
+each package, writes results to results.json, and prints
+a summary table.
 
 Usage:
-    python3 mikrotik_checker.py --csv routers.csv --output results.json
-    python3 mikrotik_checker.py --csv routers.csv --output results.json --verbose
+    python3 mikrotik_checker.py
+    python3 mikrotik_checker.py --verbose
+    python3 mikrotik_checker.py --include-raw
 """
 
 from __future__ import annotations
@@ -22,6 +24,10 @@ import socket
 import sys
 import time
 from pathlib import Path
+
+# ── Default file paths ──
+DEFAULT_CSV    = Path("routers.csv")
+DEFAULT_OUTPUT = Path("results.json")
 
 try:
     import paramiko
@@ -68,13 +74,10 @@ def read_router_csv(csv_path: Path) -> list[dict]:
 #  Strip ANSI escape codes
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def strip_ansi(text: str) -> str:
-    """Remove ALL ANSI / VT100 escape sequences."""
-    # Covers CSI sequences, OSC sequences, and simple escapes
     text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
     text = re.sub(r"\x1b\].*?\x07", "", text)
     text = re.sub(r"\x1b[()][AB012]", "", text)
     text = re.sub(r"\x1b.", "", text)
-    # Remove other control characters except newline/tab
     text = re.sub(r"[\x00-\x08\x0e-\x1f\x7f]", "", text)
     return text
 
@@ -82,17 +85,10 @@ def strip_ansi(text: str) -> str:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  SSH: get command output (tries TWO methods)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def get_command_output(
-    client: paramiko.SSHClient,
-    command: str,
-) -> str:
-    """
-    Try exec_command first (clean output, no ANSI codes).
-    If that returns nothing, fall back to invoke_shell.
-    """
+def get_command_output(client: paramiko.SSHClient, command: str) -> str:
     output = ""
 
-    # ── Method 1: exec_command (preferred) ──
+    # ── Method 1: exec_command (clean output) ──
     try:
         log.debug("  Trying exec_command …")
         stdin, stdout, stderr = client.exec_command(command, timeout=15)
@@ -103,7 +99,7 @@ def get_command_output(
         if output.strip():
             log.debug("  exec_command returned %d bytes", len(output))
             return output
-        log.debug("  exec_command returned empty output, trying invoke_shell …")
+        log.debug("  exec_command empty, trying invoke_shell …")
     except Exception as exc:
         log.debug("  exec_command failed (%s), trying invoke_shell …", exc)
 
@@ -112,7 +108,7 @@ def get_command_output(
         channel = client.invoke_shell(width=200, height=50)
         time.sleep(2)
         if channel.recv_ready():
-            channel.recv(65535)  # discard banner
+            channel.recv(65535)
 
         channel.send(command + "\n")
         time.sleep(3)
@@ -141,26 +137,15 @@ def get_command_output(
 #  Parse the output — extract NAME + VERSION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def parse_packages(raw: str) -> list[dict]:
-    """
-    Parse the raw output of /system/package/print and return
-    a list of dicts, each with "name" and "version" keys.
-
-    Handles all known MikroTik output formats:
-      - Columnar:      0  routeros   7.16.2
-      - Key=value:     name="routeros" version="7.16.2"
-      - With flags:    0 X ipv6      7.16.2
-      - With headers:  #  NAME  VERSION
-    """
     clean = strip_ansi(raw)
     packages: list[dict] = []
-    seen: set[str] = set()  # avoid duplicates
+    seen: set[str] = set()
 
     log.debug("  Cleaned output for parsing:")
     for i, line in enumerate(clean.splitlines()):
         log.debug("    [%d] %r", i, line)
 
     # ── Pattern A: key="value" style ──
-    #    name="routeros" version="7.16.2"
     kv_matches = re.findall(
         r'name\s*=\s*"([^"]+)".*?version\s*=\s*"([^"]+)"',
         clean,
@@ -178,16 +163,10 @@ def parse_packages(raw: str) -> list[dict]:
         log.debug("  Pattern A found %d packages", len(packages))
         return packages
 
-    # ── Pattern B: columnar table ──
-    #    Matches lines like:
-    #      0  routeros       7.16.2
-    #      1  system         7.16.2
-    #      0 X ipv6          7.16.2
-    #      0   routeros-x86  6.49.10
+    # ── Pattern B: columnar table with row number ──
     for line in clean.splitlines():
         stripped = line.strip()
 
-        # Skip blank lines, header lines, command echo, prompt lines
         if not stripped:
             continue
         if stripped.startswith("#") or stripped.startswith("Columns"):
@@ -199,12 +178,11 @@ def parse_packages(raw: str) -> list[dict]:
         if stripped.endswith(">") or stripped.endswith("#"):
             continue
 
-        # Try to match:  NUMBER  [FLAGS]  NAME  VERSION  [anything]
         m = re.match(
-            r"^\s*(\d+)\s+"         # row number
-            r"([X\s]{0,3})\s*"      # optional flags (X = disabled)
-            r"(\S+)\s+"             # package name
-            r"(\d+\.\d+\S*)",       # version
+            r"^\s*(\d+)\s+"
+            r"([X\s]{0,3})\s*"
+            r"(\S+)\s+"
+            r"(\d+\.\d+\S*)",
             stripped,
         )
         if m:
@@ -221,17 +199,15 @@ def parse_packages(raw: str) -> list[dict]:
                 log.debug("  Pattern B matched: name=%s version=%s", name, version)
             continue
 
-        # ── Pattern C: just  NAME  VERSION  (no row number) ──
-        #    Some firmware versions omit the row number
+        # ── Pattern C: NAME  VERSION (no row number) ──
         m = re.match(
-            r"^\s*(\S+)\s+"         # package name
-            r"(\d+\.\d+\S*)\s*$",   # version
+            r"^\s*(\S+)\s+"
+            r"(\d+\.\d+\S*)\s*$",
             stripped,
         )
         if m:
             name    = m.group(1).strip()
             version = m.group(2).strip()
-            # Skip if name looks like a header word
             if name.lower() in ("name", "version", "#", "columns:", "flags:"):
                 continue
             key = f"{name}|{version}"
@@ -249,16 +225,12 @@ def parse_packages(raw: str) -> list[dict]:
 
 
 def get_routeros_version(packages: list[dict]) -> str | None:
-    """Pick the main RouterOS version from the package list."""
-    # Prefer package named "routeros*"
     for pkg in packages:
         if "routeros" in pkg["name"].lower():
             return pkg["version"]
-    # Then "system"
     for pkg in packages:
         if pkg["name"].lower() == "system":
             return pkg["version"]
-    # Otherwise first package
     if packages:
         return packages[0]["version"]
     return None
@@ -301,7 +273,6 @@ def check_router(
             disabled_algorithms={"pubkeys": ["rsa-sha2-256", "rsa-sha2-512"]},
         )
 
-        # Get the output (tries exec_command first, then invoke_shell)
         cmd = "/system/package/print"
         log.info("[%s] Running: %s", host, cmd)
         raw = get_command_output(client, cmd)
@@ -312,11 +283,9 @@ def check_router(
             log.warning("[%s] ✘  Empty output", host)
             return result
 
-        # Parse packages (name + version)
         packages = parse_packages(raw)
         result["packages"] = packages
 
-        # Extract the main RouterOS version
         version = get_routeros_version(packages)
         result["routeros_version"] = version
         result["success"] = len(packages) > 0
@@ -347,7 +316,89 @@ def check_router(
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Check ALL routers → JSON
+#  Print results table to console
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def print_results_table(results: list[dict]) -> None:
+    col_host    = "HOST"
+    col_status  = "STATUS"
+    col_version = "ROUTEROS VERSION"
+    col_pkgs    = "PACKAGES"
+    col_error   = "ERROR"
+
+    rows: list[dict] = []
+    for r in results:
+        status = "OK" if r["success"] else "FAIL"
+        version = r.get("routeros_version") or "-"
+
+        pkg_list = r.get("packages", [])
+        if pkg_list:
+            pkg_strs = []
+            for pkg in pkg_list:
+                disabled = " [X]" if pkg.get("disabled") else ""
+                pkg_strs.append(f"{pkg['name']}({pkg['version']}){disabled}")
+            pkg_text = ", ".join(pkg_strs)
+        else:
+            pkg_text = "-"
+
+        error = r.get("error") or "-"
+
+        rows.append({
+            "host":    r["host"],
+            "status":  status,
+            "version": version,
+            "pkgs":    pkg_text,
+            "error":   error,
+        })
+
+    w_host    = max(len(col_host),    max((len(row["host"])    for row in rows), default=4))
+    w_status  = max(len(col_status),  max((len(row["status"])  for row in rows), default=6))
+    w_version = max(len(col_version), max((len(row["version"]) for row in rows), default=16))
+    w_pkgs    = max(len(col_pkgs),    max((len(row["pkgs"])    for row in rows), default=8))
+    w_error   = max(len(col_error),   max((len(row["error"])   for row in rows), default=5))
+
+    w_pkgs  = min(w_pkgs, 60)
+    w_error = min(w_error, 40)
+
+    fmt = (
+        f"  {{:<{w_host}}}  "
+        f"{{:<{w_status}}}  "
+        f"{{:<{w_version}}}  "
+        f"{{:<{w_pkgs}}}  "
+        f"{{:<{w_error}}}"
+    )
+
+    total_width = w_host + w_status + w_version + w_pkgs + w_error + 10
+    separator = "-" * total_width
+
+    print()
+    print(f"  {'=' * total_width}")
+    print(f"  MIKROTIK VERSION CHECK RESULTS")
+    print(f"  {'=' * total_width}")
+    print()
+    print(fmt.format(col_host, col_status, col_version, col_pkgs, col_error))
+    print(f"  {separator}")
+
+    for row in rows:
+        pkgs_display  = row["pkgs"][:w_pkgs]  if len(row["pkgs"])  > w_pkgs  else row["pkgs"]
+        error_display = row["error"][:w_error] if len(row["error"]) > w_error else row["error"]
+        print(fmt.format(
+            row["host"],
+            row["status"],
+            row["version"],
+            pkgs_display,
+            error_display,
+        ))
+
+    print(f"  {separator}")
+    ok   = sum(1 for r in results if r["success"])
+    fail = len(results) - ok
+    print()
+    print(f"  TOTAL: {len(results)}   OK: {ok}   FAILED: {fail}")
+    print()
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Check ALL routers -> JSON + Table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def check_all_routers(
     routers: list[dict],
@@ -357,7 +408,7 @@ def check_all_routers(
     all_results: list[dict] = []
 
     for idx, router in enumerate(routers, start=1):
-        log.info("── Router %d / %d ──", idx, len(routers))
+        log.info("-- Router %d / %d --", idx, len(routers))
         result = check_router(
             host=router["host"],
             username=router["username"],
@@ -374,9 +425,9 @@ def check_all_routers(
         json.dump(all_results, fh, indent=2, ensure_ascii=False)
 
     log.info("Results written to %s", output_path)
-    ok   = sum(1 for r in all_results if r["success"])
-    fail = len(all_results) - ok
-    log.info("Done – %d succeeded, %d failed, %d total", ok, fail, len(all_results))
+
+    # Print summary table
+    print_results_table(all_results)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -384,29 +435,32 @@ def check_all_routers(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main() -> None:
     p = argparse.ArgumentParser(
-        description="Check MikroTik router versions via SSH"
+        description=(
+            "Check MikroTik router versions via SSH.\n"
+            "Reads from routers.csv, writes to results.json."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--csv",         required=True, type=Path)
-    p.add_argument("--output",      required=True, type=Path)
     p.add_argument("--verbose",     action="store_true",
-                   help="DEBUG logging – shows raw output line by line")
+                   help="DEBUG logging - shows raw output line by line")
     p.add_argument("--include-raw", action="store_true",
-                   help="Include raw SSH output in JSON for debugging")
+                   help="Include raw SSH output in results.json for debugging")
     args = p.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    if not args.csv.is_file():
-        log.error("CSV not found: %s", args.csv)
+    if not DEFAULT_CSV.is_file():
+        log.error("Cannot find %s in the current directory", DEFAULT_CSV)
+        log.error("Make sure routers.csv exists with columns: host,username,password,port")
         sys.exit(1)
 
-    routers = read_router_csv(args.csv)
+    routers = read_router_csv(DEFAULT_CSV)
     if not routers:
-        log.error("No routers in CSV")
+        log.error("No routers found in %s", DEFAULT_CSV)
         sys.exit(1)
 
-    check_all_routers(routers, args.output, include_raw=args.include_raw)
+    check_all_routers(routers, DEFAULT_OUTPUT, include_raw=args.include_raw)
 
 
 if __name__ == "__main__":
