@@ -1,0 +1,64 @@
+{
+  "query_timestamp": "2026-03-15T13:03:10.209691",
+  "csv_source": "cameras.csv",
+  "total_cameras": 4,
+  "timeout_seconds": 5,
+  "results": [
+    {
+      "host": "lsc-100-ceiling-camera-1.openav.dartmouth.edu",
+      "port": 52381,
+      "camera_name": "LSC CAMERA 1",
+      "timestamp": "2026-03-15T13:03:09.391748",
+      "status": "connection_error",
+      "version_info": {},
+      "software_version_info": {},
+      "interface_info": {},
+      "camera_generation": "",
+      "errors": [
+        "Connection failed: [Errno 111] Connection refused"
+      ]
+    },
+    {
+      "host": "lsc-100-ceiling-camera-2.openav.dartmouth.edu",
+      "port": 52381,
+      "camera_name": "LSC CAMERA 2",
+      "timestamp": "2026-03-15T13:03:09.651782",
+      "status": "connection_error",
+      "version_info": {},
+      "software_version_info": {},
+      "interface_info": {},
+      "camera_generation": "",
+      "errors": [
+        "Connection failed: [Errno 111] Connection refused"
+      ]
+    },
+    {
+      "host": "lsc-100-ceiling-camera-3.openav.dartmouth.edu",
+      "port": 52381,
+      "camera_name": "LSC CAMERA 3",
+      "timestamp": "2026-03-15T13:03:09.899573",
+      "status": "connection_error",
+      "version_info": {},
+      "software_version_info": {},
+      "interface_info": {},
+      "camera_generation": "",
+      "errors": [
+        "Connection failed: [Errno 111] Connection refused"
+      ]
+    },
+    {
+      "host": "lsc-100-ceiling-camera-4.openav.dartmouth.edu",
+      "port": 52381,
+      "camera_name": "LSC CAMERA 4",
+      "timestamp": "2026-03-15T13:03:10.156063",
+      "status": "connection_error",
+      "version_info": {},
+      "software_version_info": {},
+      "interface_info": {},
+      "camera_generation": "",
+      "errors": [
+        "Connection failed: [Errno 111] Connection refused"
+      ]
+    }
+  ]
+}

@@ -31,11 +31,11 @@ from typing import Optional
 
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants / Configuration
 # ---------------------------------------------------------------------------
 
 VISCA_DEFAULT_PORT = 52381
-SOCKET_TIMEOUT = 5  # seconds
+DEFAULT_TIMEOUT = 5  # seconds — used as default; can be overridden via CLI
 
 # VISCA over IP payload types
 PAYLOAD_TYPE_VISCA_COMMAND = 0x0100
@@ -48,33 +48,23 @@ PAYLOAD_TYPE_CONTROL_REPLY = 0x0201
 # ---- VISCA Inquiry Commands (System Section) ----
 
 # CAM_VersionInq: 81 09 00 02 FF
-# Response: 90 50 00 vv ww ww xx xx yy yy zz FF
-#   vv     = Vendor ID (0x00 = Sony)
-#   ww ww  = Model Code
-#   xx xx  = ROM Version
-#   yy yy  = Socket Number (max sockets)
-#   zz     = (reserved or additional info)
 VISCA_INQ_CAM_VERSION = bytes([0x81, 0x09, 0x00, 0x02, 0xFF])
 
-# IF_InfInq: 81 09 00 00 FF  (Interface Information Inquiry — not always supported)
+# IF_InfInq: 81 09 00 00 FF
 VISCA_INQ_INTERFACE = bytes([0x81, 0x09, 0x00, 0x00, 0xFF])
 
 # CAM_SoftVersionInq (available on some newer models): 81 09 04 00 FF
-# This isn't in every firmware; we try it and gracefully handle errors.
 VISCA_INQ_SOFT_VERSION = bytes([0x81, 0x09, 0x04, 0x00, 0xFF])
 
-# MultAddrInq (System): 81 09 00 01 FF  — not commonly needed but part of system queries
+# MultAddrInq (System): 81 09 00 01 FF
 VISCA_INQ_MULT_ADDR = bytes([0x81, 0x09, 0x00, 0x01, 0xFF])
 
-# Additional inquiry — CAM_ICRModeInq used sometimes for generation detection
-# Not strictly "system section" but can help identify camera generation
-# 81 09 04 01 FF
+# CAM_ICRModeInq: 81 09 04 01 FF
 VISCA_INQ_MODE_STATUS = bytes([0x81, 0x09, 0x04, 0x01, 0xFF])
 
 
 # ---------------------------------------------------------------------------
-# Known Sony Model Codes (from various Sony VISCA documentation)
-# This mapping can be extended as new models are identified.
+# Known Sony Model Codes
 # ---------------------------------------------------------------------------
 SONY_MODEL_CODES = {
     0x0519: "SRG-X400",
@@ -200,7 +190,7 @@ def send_visca_inquiry(sock: socket.socket, inquiry: bytes,
 
         parsed = parse_visca_ip_response(data)
         if "error" in parsed:
-            print(f"      [ERROR] {parsed['error']}  raw={parsed.get('raw','')}")
+            print(f"      [ERROR] {parsed['error']}  raw={parsed.get('raw', '')}")
             return None
 
         payload = parsed["payload"]
@@ -208,7 +198,6 @@ def send_visca_inquiry(sock: socket.socket, inquiry: bytes,
         if len(payload) < 2:
             continue
 
-        # Check the reply byte (second nibble of first byte is socket#; high nibble is 9 = reply)
         reply_type = payload[1] & 0xF0
 
         # 0x40-0x4F = ACK — keep waiting for completion
@@ -246,26 +235,12 @@ def parse_version_response(payload: bytes) -> dict:
     Parse CAM_VersionInq response payload.
 
     Expected: 90 50 00 vv ww ww xx xx yy yy zz FF
-    Where:
-        90        = Reply from address 1
-        50        = Completion (inquiry result)
-        00        = Socket 0 / padding
-        vv        = Vendor ID
-        ww ww     = Model Code (2 bytes)
-        xx xx     = ROM Revision (2 bytes)
-        yy yy     = Maximum Socket Number (2 bytes) — sometimes just 02
-        zz        = Additional info (not always present)
-        FF        = Terminator
-    
-    Some cameras return slightly different lengths. We'll be flexible.
     """
     result = {}
 
-    # Strip terminator 0xFF if present at end
     if payload and payload[-1] == 0xFF:
         payload = payload[:-1]
 
-    # Minimum expected: 90 50 00 vv ww ww xx xx = 8 bytes (after stripping FF)
     if len(payload) < 8:
         result["parse_error"] = f"Version response too short ({len(payload)} bytes)"
         result["raw_hex"] = payload.hex()
@@ -297,7 +272,6 @@ def parse_version_response(payload: bytes) -> dict:
 def parse_software_version_response(payload: bytes) -> dict:
     """
     Parse CAM_SoftVersionInq response if available.
-    Response format varies by camera model. We'll capture raw data.
     """
     result = {}
 
@@ -309,10 +283,8 @@ def parse_software_version_response(payload: bytes) -> dict:
         result["raw_hex"] = payload.hex() if payload else ""
         return result
 
-    # Try to interpret bytes after the header (90 50 ...) as ASCII or version numbers
-    version_bytes = payload[2:]  # skip 90 50
+    version_bytes = payload[2:]
 
-    # Attempt ASCII interpretation
     try:
         ascii_str = version_bytes.decode('ascii', errors='ignore')
         printable = ''.join(c if c.isprintable() else '.' for c in ascii_str)
@@ -320,7 +292,6 @@ def parse_software_version_response(payload: bytes) -> dict:
     except Exception:
         pass
 
-    # Also store hex
     result["software_version_hex"] = version_bytes.hex()
     result["raw_hex"] = payload.hex()
 
@@ -332,24 +303,21 @@ def parse_interface_response(payload: bytes) -> dict:
     result = {}
     if payload and payload[-1] == 0xFF:
         payload = payload[:-1]
-
     result["raw_hex"] = payload.hex() if payload else ""
     return result
 
 
 def determine_camera_generation(version_info: dict) -> str:
     """
-    Attempt to determine camera generation based on model code and ROM version.
+    Attempt to determine camera generation based on model code.
     """
     model_code_str = version_info.get("model_code", "")
-    model_name = version_info.get("model_name", "")
 
     try:
         model_code = int(model_code_str, 16)
     except (ValueError, TypeError):
         return "Unknown"
 
-    # Rough generation mapping based on model code ranges
     if model_code >= 0x0700:
         return "Gen 4 / AI-based (SRG-A series, FR7, BRC-AM7)"
     elif model_code >= 0x0600:
@@ -370,8 +338,8 @@ def determine_camera_generation(version_info: dict) -> str:
 # Main Camera Query Function
 # ---------------------------------------------------------------------------
 
-def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
-                 camera_name: str = "") -> dict:
+def query_camera(host: str, port: int, camera_name: str,
+                 timeout: int) -> dict:
     """
     Connect to a single camera and perform all system inquiry commands.
     Returns a dict with all gathered information.
@@ -390,20 +358,20 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
     }
 
     display_name = camera_name if camera_name else host
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Querying: {display_name} ({host}:{port})")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # ----- Connect -----
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(SOCKET_TIMEOUT)
+    sock.settimeout(timeout)
 
     try:
         print(f"  Connecting to {host}:{port} ...")
         sock.connect((host, port))
         print(f"  Connected successfully.")
     except socket.timeout:
-        msg = f"Connection timed out ({SOCKET_TIMEOUT}s)"
+        msg = f"Connection timed out ({timeout}s)"
         print(f"  [FAIL] {msg}")
         result["status"] = "connection_timeout"
         result["errors"].append(msg)
@@ -417,7 +385,7 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
         sock.close()
         return result
 
-    seq = 1  # Sequence number for VISCA over IP
+    seq = 1
 
     # ===== 1. CAM_VersionInq =====
     print(f"\n  [1/4] Sending CAM_VersionInq (81 09 00 02 FF) ...")
@@ -441,9 +409,9 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
         print("      No response / error.")
         result["errors"].append("CAM_VersionInq failed")
 
-    time.sleep(0.1)  # Small delay between commands
+    time.sleep(0.1)
 
-    # ===== 2. CAM_SoftVersionInq (not supported on all models) =====
+    # ===== 2. CAM_SoftVersionInq =====
     print(f"\n  [2/4] Sending CAM_SoftVersionInq (81 09 04 00 FF) ...")
     resp = send_visca_inquiry(sock, VISCA_INQ_SOFT_VERSION, seq)
     seq += 1
@@ -457,12 +425,12 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
         if "parse_error" in sw_info:
             print(f"      [WARN] {sw_info['parse_error']}")
     else:
-        print("      Not supported or no response (this is normal for some models).")
+        print("      Not supported or no response (normal for some models).")
         result["software_version_info"] = {"note": "Not supported on this model"}
 
     time.sleep(0.1)
 
-    # ===== 3. IF_InfInq (Interface Information) =====
+    # ===== 3. IF_InfInq =====
     print(f"\n  [3/4] Sending IF_InfInq (81 09 00 00 FF) ...")
     resp = send_visca_inquiry(sock, VISCA_INQ_INTERFACE, seq)
     seq += 1
@@ -477,7 +445,7 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
 
     time.sleep(0.1)
 
-    # ===== 4. Camera Generation Determination =====
+    # ===== 4. Camera Generation =====
     print(f"\n  [4/4] Determining camera generation ...")
     generation = determine_camera_generation(result["version_info"])
     result["camera_generation"] = generation
@@ -489,7 +457,12 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
     except Exception:
         pass
 
-    result["status"] = "success" if result["version_info"] and "parse_error" not in result["version_info"] else "partial"
+    if result["version_info"] and "parse_error" not in result["version_info"]:
+        result["status"] = "success"
+    elif result["version_info"]:
+        result["status"] = "partial"
+    else:
+        result["status"] = "failed"
 
     return result
 
@@ -501,21 +474,11 @@ def query_camera(host: str, port: int = VISCA_DEFAULT_PORT,
 def read_csv(filepath: str) -> list:
     """
     Read camera hosts from CSV file.
-    
+
     Expected CSV columns (header row required):
-        host          - IP address or hostname (REQUIRED)
-        port          - VISCA port (optional, defaults to 52381)
-        name          - Friendly name (optional)
-    
-    Minimal CSV example:
-        host
-        192.168.1.100
-        192.168.1.101
-    
-    Full CSV example:
-        host,port,name
-        192.168.1.100,52381,Camera A - Main Hall
-        192.168.1.101,52381,Camera B - Stage Left
+        host  - IP address or hostname (REQUIRED)
+        port  - VISCA port (optional, defaults to 52381)
+        name  - Friendly name (optional)
     """
     cameras = []
 
@@ -526,31 +489,43 @@ def read_csv(filepath: str) -> list:
     with open(filepath, 'r', newline='', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
 
-        # Verify 'host' column exists
-        if 'host' not in (reader.fieldnames or []):
-            # Try case-insensitive match
-            fieldnames_lower = {fn.lower().strip(): fn for fn in (reader.fieldnames or [])}
-            if 'host' not in fieldnames_lower and 'ip' not in fieldnames_lower and 'address' not in fieldnames_lower:
-                print(f"[ERROR] CSV must contain a 'host' column. Found columns: {reader.fieldnames}")
-                sys.exit(1)
+        if not reader.fieldnames:
+            print(f"[ERROR] CSV file is empty or has no header row.")
+            sys.exit(1)
+
+        # Normalize field names for lookup
+        fieldnames_lower = [fn.lower().strip() for fn in reader.fieldnames]
+
+        has_host = ('host' in fieldnames_lower or
+                    'ip' in fieldnames_lower or
+                    'address' in fieldnames_lower)
+
+        if not has_host:
+            print(f"[ERROR] CSV must have a 'host' column. Found: {reader.fieldnames}")
+            sys.exit(1)
 
         for row_num, row in enumerate(reader, start=2):
-            # Normalize keys to lowercase
-            row_lower = {k.lower().strip(): v.strip() for k, v in row.items() if v}
+            row_lower = {k.lower().strip(): (v.strip() if v else '')
+                         for k, v in row.items()}
 
-            host = row_lower.get('host') or row_lower.get('ip') or row_lower.get('address', '')
+            host = (row_lower.get('host') or
+                    row_lower.get('ip') or
+                    row_lower.get('address', ''))
+
             if not host:
                 print(f"  [WARN] Row {row_num}: Missing host, skipping.")
                 continue
 
-            port_str = row_lower.get('port', str(VISCA_DEFAULT_PORT))
+            port_str = row_lower.get('port', '') or str(VISCA_DEFAULT_PORT)
             try:
                 port = int(port_str)
             except ValueError:
-                print(f"  [WARN] Row {row_num}: Invalid port '{port_str}', using default {VISCA_DEFAULT_PORT}.")
+                print(f"  [WARN] Row {row_num}: Invalid port '{port_str}', "
+                      f"using default {VISCA_DEFAULT_PORT}.")
                 port = VISCA_DEFAULT_PORT
 
-            name = row_lower.get('name', '') or row_lower.get('camera_name', '') or ''
+            name = (row_lower.get('name', '') or
+                    row_lower.get('camera_name', ''))
 
             cameras.append({
                 "host": host,
@@ -568,47 +543,48 @@ def read_csv(filepath: str) -> list:
 def print_summary(results: list):
     """Print a formatted summary table of all results."""
 
-    print(f"\n\n{'#'*70}")
+    print(f"\n\n{'#' * 70}")
     print(f"  SUMMARY OF ALL CAMERAS")
-    print(f"{'#'*70}\n")
+    print(f"{'#' * 70}\n")
 
-    # Table header
-    header = f"{'#':<4} {'Name':<25} {'Host':<18} {'Status':<12} {'Model':<20} {'FW Version':<12} {'Generation'}"
+    header = (f"{'#':<4} {'Name':<25} {'Host':<18} {'Status':<12} "
+              f"{'Model':<20} {'FW Version':<12} {'Generation'}")
     print(header)
     print("-" * len(header))
 
     for i, r in enumerate(results, 1):
-        name = r.get("camera_name", "")[:24]
-        host = r.get("host", "")[:17]
-        status = r.get("status", "unknown")[:11]
+        name = (r.get("camera_name") or "")[:24]
+        host = (r.get("host") or "")[:17]
+        status = (r.get("status") or "unknown")[:11]
         model = r.get("version_info", {}).get("model_name", "N/A")[:19]
         fw = r.get("version_info", {}).get("firmware_version", "N/A")[:11]
-        gen = r.get("camera_generation", "N/A")
+        gen = r.get("camera_generation") or "N/A"
 
-        # Color coding for status (ANSI)
+        # ANSI color for status
         if status == "success":
-            status_display = f"\033[92m{status}\033[0m"  # Green
+            status_display = f"\033[92m{status:<12}\033[0m"
         elif status == "partial":
-            status_display = f"\033[93m{status}\033[0m"  # Yellow
+            status_display = f"\033[93m{status:<12}\033[0m"
         else:
-            status_display = f"\033[91m{status}\033[0m"  # Red
+            status_display = f"\033[91m{status:<12}\033[0m"
 
-        print(f"{i:<4} {name:<25} {host:<18} {status_display:<23} {model:<20} {fw:<12} {gen}")
+        print(f"{i:<4} {name:<25} {host:<18} {status_display} "
+              f"{model:<20} {fw:<12} {gen}")
 
     print()
 
-    # Stats
     total = len(results)
     success = sum(1 for r in results if r["status"] == "success")
     partial = sum(1 for r in results if r["status"] == "partial")
     failed = total - success - partial
 
-    print(f"  Total: {total}  |  Success: {success}  |  Partial: {partial}  |  Failed: {failed}")
+    print(f"  Total: {total}  |  Success: {success}  "
+          f"|  Partial: {partial}  |  Failed: {failed}")
     print()
 
 
 # ---------------------------------------------------------------------------
-# Main
+# Main Entry Point
 # ---------------------------------------------------------------------------
 
 def main():
@@ -643,8 +619,8 @@ Output:
     parser.add_argument(
         "-t", "--timeout",
         type=int,
-        default=SOCKET_TIMEOUT,
-        help=f"Socket timeout in seconds (default: {SOCKET_TIMEOUT})"
+        default=DEFAULT_TIMEOUT,
+        help=f"Socket timeout in seconds (default: {DEFAULT_TIMEOUT})"
     )
     parser.add_argument(
         "-p", "--port",
@@ -655,9 +631,8 @@ Output:
 
     args = parser.parse_args()
 
-    # Update global timeout
-    global SOCKET_TIMEOUT
-    SOCKET_TIMEOUT = args.timeout
+    # Store the timeout value from args — NO global mutation needed
+    timeout = args.timeout
 
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
@@ -665,6 +640,7 @@ Output:
 ║                                                              ║
 ║  Protocol: VISCA over IP (TCP port {VISCA_DEFAULT_PORT})                  ║
 ║  Queries:  CAM_VersionInq, SoftVersionInq, IF_InfInq        ║
+║  Timeout:  {timeout} seconds                                        ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
 
@@ -686,7 +662,7 @@ Output:
         name = cam["name"]
 
         print(f"\n[Camera {idx}/{len(cameras)}]")
-        result = query_camera(host, port, name)
+        result = query_camera(host, port, name, timeout)
         all_results.append(result)
 
         # Small delay between cameras
@@ -701,6 +677,7 @@ Output:
         "query_timestamp": datetime.now().isoformat(),
         "csv_source": args.csv_file,
         "total_cameras": len(all_results),
+        "timeout_seconds": timeout,
         "results": all_results,
     }
 
