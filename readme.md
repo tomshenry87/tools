@@ -3,17 +3,26 @@ these programs are utilities to query network routers and projectors to check fi
 
 Mikrotik Firmware Checker
 
-# Just run it — reads routers.csv, writes results.json
+# Default — reads routers.csv, writes results.json
 python3 mikrotik_checker.py
 
-# With debug logging
+# Override input file only
+python3 mikrotik_checker.py --csv my_other_routers.csv
+
+# Override output file only
+python3 mikrotik_checker.py --output my_report.json
+
+# Override both
+python3 mikrotik_checker.py --csv site_a.csv --output site_a_results.json
+
+# Debug mode
 python3 mikrotik_checker.py --verbose
 
-# With raw SSH output saved in results.json
+# Include raw SSH output in JSON
 python3 mikrotik_checker.py --include-raw
 
-# Both
-python3 mikrotik_checker.py --verbose --include-raw
+# Everything at once
+python3 mikrotik_checker.py --csv site_b.csv --output site_b.json --verbose --include-raw
 
 your_folder/
 ├── mikrotik_checker.py    ← the script

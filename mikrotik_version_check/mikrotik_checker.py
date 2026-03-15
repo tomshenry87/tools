@@ -2,15 +2,15 @@
 """
 MikroTik Router Version Checker
 ================================
-Reads router credentials from routers.csv, connects via SSH,
-runs /system/package/print, extracts name + version for
-each package, writes results to results.json, and prints
-a summary table.
+Reads router credentials from routers.csv (default), connects via SSH,
+runs /system/package/print, extracts name + version for each package,
+writes results to results.json (default), and prints a summary table.
 
 Usage:
     python3 mikrotik_checker.py
     python3 mikrotik_checker.py --verbose
-    python3 mikrotik_checker.py --include-raw
+    python3 mikrotik_checker.py --csv other_routers.csv --output other_results.json
+    python3 mikrotik_checker.py --include-raw --verbose
 """
 
 from __future__ import annotations
@@ -24,10 +24,6 @@ import socket
 import sys
 import time
 from pathlib import Path
-
-# ── Default file paths ──
-DEFAULT_CSV    = Path("routers.csv")
-DEFAULT_OUTPUT = Path("results.json")
 
 try:
     import paramiko
@@ -419,48 +415,63 @@ def check_all_routers(
             result.pop("raw_output", None)
         all_results.append(result)
 
-    # Write JSON
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(all_results, fh, indent=2, ensure_ascii=False)
 
     log.info("Results written to %s", output_path)
-
-    # Print summary table
     print_results_table(all_results)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  CLI
+#  CLI  — runs with ZERO arguments by default
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main() -> None:
     p = argparse.ArgumentParser(
         description=(
             "Check MikroTik router versions via SSH.\n"
-            "Reads from routers.csv, writes to results.json."
+            "Defaults: reads routers.csv, writes results.json"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--verbose",     action="store_true",
-                   help="DEBUG logging - shows raw output line by line")
-    p.add_argument("--include-raw", action="store_true",
-                   help="Include raw SSH output in results.json for debugging")
+    p.add_argument(
+        "--csv",
+        type=Path,
+        default=Path("routers.csv"),
+        help="Input CSV file (default: routers.csv)",
+    )
+    p.add_argument(
+        "--output",
+        type=Path,
+        default=Path("results.json"),
+        help="Output JSON file (default: results.json)",
+    )
+    p.add_argument(
+        "--verbose",
+        action="store_true",
+        help="DEBUG logging - shows raw output line by line",
+    )
+    p.add_argument(
+        "--include-raw",
+        action="store_true",
+        help="Include raw SSH output in results.json for debugging",
+    )
     args = p.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    if not DEFAULT_CSV.is_file():
-        log.error("Cannot find %s in the current directory", DEFAULT_CSV)
-        log.error("Make sure routers.csv exists with columns: host,username,password,port")
+    if not args.csv.is_file():
+        log.error("Cannot find %s", args.csv)
+        log.error("Make sure the CSV exists with columns: host,username,password,port")
         sys.exit(1)
 
-    routers = read_router_csv(DEFAULT_CSV)
+    routers = read_router_csv(args.csv)
     if not routers:
-        log.error("No routers found in %s", DEFAULT_CSV)
+        log.error("No routers found in %s", args.csv)
         sys.exit(1)
 
-    check_all_routers(routers, DEFAULT_OUTPUT, include_raw=args.include_raw)
+    check_all_routers(routers, args.output, include_raw=args.include_raw)
 
 
 if __name__ == "__main__":
