@@ -34,23 +34,23 @@ host,username,password,port
 10.0.0.2,admin,MyP@ss2,22
 192.168.88.1,admin,,22
 
+# Run with all defaults (reads projectors.csv, writes results.json)
+python pjlink_query.py
 
-Pjlink Projector Firmware Version
+# Specify different input
+python pjlink_query.py -i my_devices.csv
 
-# Query firmware version from a projector
-python pjlink_firmware.py 192.168.1.100
+# Specify different output
+python pjlink_query.py -o report.json
 
-# With authentication
-python pjlink_firmware.py 192.168.1.100 --password mypassword
+# Both
+python pjlink_query.py -i my_devices.csv -o report.json
 
-# Custom port and output file
-python pjlink_firmware.py 192.168.1.100 -p 4352 -o my_projector.json
+# All commands + debug
+python pjlink_query.py --all --debug
 
-# Get ALL available information
-python pjlink_firmware.py 192.168.1.100 --all
-
-# With custom timeout
-python pjlink_firmware.py 192.168.1.100 -t 15
+# Diagnostic mode
+python pjlink_query.py --diagnostic --debug
 
 {
     "host": "192.168.1.100",

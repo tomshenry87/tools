@@ -17,6 +17,10 @@ Lamp response formats handled:
     Class 2:  "Lamp 1: 2340 1"
     Class 2:  "Lamp 1: 5432 1 Lamp 2: 3150 0"
 
+Defaults:
+    Input:  projectors.csv
+    Output: results.json
+
 CSV Format:
     host,port,password
     192.168.1.100,4352,mypassword
@@ -455,62 +459,39 @@ class PJLinkClient:
         return result
 
     def get_lamp_info_raw(self) -> str:
-        """LAMP query — returns raw response string."""
         return self._send_command("LAMP", "?", "%1")
 
     def _normalize_lamp_response(self, raw: str) -> str:
         """
         Normalize lamp response to consistent format.
 
-        Class 2 devices often return:
-            "Lamp 1: 2340 1"
-            "Lamp 1: 5432 1 Lamp 2: 3150 0"
-            "Lamp 1:2340 1"
-            "Lamp1: 2340 1"
+        Class 2 devices return: "Lamp 1: 2340 1" or "Lamp 1: 5432 1 Lamp 2: 3150 0"
+        Class 1 devices return: "2340 1" or "5432 1 3150 0"
 
-        Class 1 devices return:
-            "2340 1"
-            "5432 1 3150 0"
-
-        This method strips all "Lamp N:" prefixes to produce
-        a clean "hours status [hours status ...]" string.
+        Strips all "Lamp N:" prefixes to produce clean "hours status" pairs.
         """
         cleaned = raw.strip()
-
         log.debug(f"[{self.host}] Lamp raw before normalize: {repr(cleaned)}")
 
         # Remove all variations of "Lamp N:" prefix
-        # Handles: "Lamp 1:", "Lamp1:", "Lamp 1 :", "lamp 1:", "LAMP 1:"
-        cleaned = re.sub(
-            r'[Ll][Aa][Mm][Pp]\s*\d+\s*:\s*',
-            '',
-            cleaned,
-        )
-
-        # Collapse multiple spaces
+        cleaned = re.sub(r'[Ll][Aa][Mm][Pp]\s*\d+\s*:\s*', '', cleaned)
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
 
         log.debug(f"[{self.host}] Lamp after normalize: {repr(cleaned)}")
-
         return cleaned
 
     def get_lamp_info_parsed(self) -> list:
         """
         Parse LAMP response into structured data.
 
-        Handles both Class 1 and Class 2 response formats:
-            Class 1: "2340 1"  or  "5432 1 3150 0"
-            Class 2: "Lamp 1: 2340 1"  or  "Lamp 1: 5432 1 Lamp 2: 3150 0"
-
-        Returns list of dicts:
-            [{"lamp": 1, "hours": "1234h", "hours_int": 1234, "on": true, "status": "On"}, ...]
+        Handles both Class 1 and Class 2 response formats.
+        All hours values include "h" suffix for consistency.
         """
         raw = self.get_lamp_info_raw()
 
         if raw.startswith("ERROR"):
             return [{"error": raw}]
 
-        # Normalize: strip "Lamp N:" prefixes
         normalized = self._normalize_lamp_response(raw)
 
         if not normalized:
@@ -525,16 +506,13 @@ class PJLinkClient:
         while i < len(tokens):
             hours_str = tokens[i]
 
-            # Parse hours
             try:
                 hours_int = int(hours_str)
             except ValueError:
-                # Maybe there's a stray non-numeric token, skip it
                 log.debug(f"[{self.host}] Skipping non-numeric lamp token: {repr(hours_str)}")
                 i += 1
                 continue
 
-            # Parse on/off status (next token)
             on = None
             status_str = "Unknown"
             if i + 1 < len(tokens):
@@ -544,14 +522,8 @@ class PJLinkClient:
                     status_str = "On" if on else "Off"
                     i += 2
                 else:
-                    # No valid status token, just hours
-                    log.debug(
-                        f"[{self.host}] No status token for lamp {lamp_num}, "
-                        f"got {repr(status_token)}"
-                    )
                     i += 1
             else:
-                # Last token, no status
                 i += 1
 
             lamps.append({
@@ -571,13 +543,7 @@ class PJLinkClient:
         return lamps
 
     def get_lamp_hours_total(self) -> tuple:
-        """
-        Get total lamp hours across all lamps.
-
-        Returns (total_int, total_string):
-            (5432, "5432h")  — success
-            (-1, "N/A")     — error
-        """
+        """Returns (total_int, total_string) e.g. (5432, "5432h")."""
         lamps = self.get_lamp_info_parsed()
         total = 0
         count = 0
@@ -594,12 +560,7 @@ class PJLinkClient:
         return total, f"{total}h"
 
     def get_lamp_hours_summary(self) -> str:
-        """
-        Get human-readable lamp hours summary.
-
-        Single lamp:   "Lamp 1: 2340h (On)"
-        Multi lamp:    "Lamp 1: 5432h (On); Lamp 2: 3150h (Off)"
-        """
+        """Human-readable per-lamp summary with h suffix."""
         lamps = self.get_lamp_info_parsed()
         parts = []
         for lamp in lamps:
@@ -652,13 +613,10 @@ class PJLinkClient:
     # ------------------------------------------------------------------
 
     def get_firmware_info(self) -> dict:
-        """Query firmware + lamp hours. Auto-detects class."""
         info = {}
 
-        # Step 1: detect class (must be first command)
         info["pjlink_class"] = self.detect_class()
 
-        # Step 2: device identity
         for key, func in [
             ("manufacturer", self.get_manufacturer),
             ("product_name", self.get_product_name),
@@ -667,11 +625,9 @@ class PJLinkClient:
             val, err = self._safe_query(key, func)
             info[key] = val if val is not None else f"ERROR: {err}"
 
-        # Step 3: firmware — always try INFO
         val, err = self._safe_query("other_info", self.get_other_info)
         info["other_info"] = val if val is not None else f"ERROR: {err}"
 
-        # Class 2: also try SVER and SNUM
         if self.detected_class == "2":
             val, err = self._safe_query("software_version", self.get_software_version)
             info["software_version"] = val if val is not None else f"ERROR: {err}"
@@ -681,17 +637,14 @@ class PJLinkClient:
 
         info["firmware_version"] = self._derive_firmware_version(info)
 
-        # Step 4: lamp hours
         self._query_lamp_data(info)
 
-        # Step 5: power status
         val, err = self._safe_query("power_status", self.get_power_status)
         info["power_status"] = val if val is not None else f"ERROR: {err}"
 
         return info
 
     def get_all_info(self) -> dict:
-        """Query all available commands."""
         info = {}
 
         info["pjlink_class"] = self.detect_class()
@@ -712,16 +665,13 @@ class PJLinkClient:
             val, err = self._safe_query(key, func)
             info[key] = val if val is not None else f"ERROR: {err}"
 
-        # Lamp data
         self._query_lamp_data(info)
 
-        # Error status parsed
         try:
             info["error_status_parsed"] = self.get_error_status_parsed()
         except PJLinkError:
             pass
 
-        # Class 2
         if self.detected_class == "2":
             class2_queries = [
                 ("software_version", self.get_software_version),
@@ -739,18 +689,14 @@ class PJLinkClient:
         return info
 
     def _query_lamp_data(self, info: dict):
-        """Query and populate all lamp-related fields in info dict."""
-        # Raw lamp response
         val, err = self._safe_query("lamp_info_raw", self.get_lamp_info_raw)
         info["lamp_info_raw"] = val if val is not None else f"ERROR: {err}"
 
-        # Parsed lamp data
         try:
             info["lamp_info"] = self.get_lamp_info_parsed()
         except PJLinkError:
             info["lamp_info"] = []
 
-        # Total hours
         try:
             total_int, total_str = self.get_lamp_hours_total()
             info["lamp_hours_total"] = total_int
@@ -759,7 +705,6 @@ class PJLinkClient:
             info["lamp_hours_total"] = -1
             info["lamp_hours_total_display"] = "N/A"
 
-        # Summary string
         try:
             info["lamp_hours_summary"] = self.get_lamp_hours_summary()
         except PJLinkError:
@@ -997,7 +942,6 @@ def print_summary_table(results):
                 return "N/A"
             return s[:n]
 
-        # Lamp display: use total_display with h suffix, fallback to summary
         lamp_display = r.get("lamp_hours_total_display", "N/A")
         if lamp_display in ("N/A", "ERROR", "AUTH ERROR", "See diagnostic", None):
             lamp_display = clean(r.get("lamp_hours_summary"), w["lamp"])
@@ -1022,7 +966,6 @@ def print_summary_table(results):
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err = total - ok - auth
 
-    # Lamp stats
     lamp_values = [
         r.get("lamp_hours_total", -1)
         for r in results
@@ -1048,55 +991,75 @@ def print_summary_table(results):
 # Main
 # ---------------------------------------------------------------------------
 
+DEFAULT_CSV = "projectors.csv"
+DEFAULT_OUTPUT = "results.json"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="PJLink projector firmware & lamp hours query (Class 1 + 2)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
+Defaults:
+    Input CSV:   {DEFAULT_CSV}
+    Output JSON: {DEFAULT_OUTPUT}
+
+    Run with no arguments to use defaults:
+        %(prog)s
+
 CSV Format:
     host,port,password
     192.168.1.100,4352,mypassword
     192.168.1.101,,
 
-Output includes:
-    firmware_version       — from INFO (Class 1) or SVER (Class 2)
-    lamp_hours_total       — total hours as integer
-    lamp_hours_total_display — total hours with "h" suffix (e.g. "5432h")
-    lamp_hours_summary     — per-lamp breakdown (e.g. "Lamp 1: 5432h (On)")
-    lamp_info              — structured per-lamp data with hours_int and hours
-
 Examples:
-    %(prog)s projectors.csv
-    %(prog)s projectors.csv -o results.json --all
-    %(prog)s projectors.csv --diagnostic --debug
+    %(prog)s
+    %(prog)s -i my_projectors.csv
+    %(prog)s -o my_results.json
+    %(prog)s -i projectors.csv -o results.json --all
+    %(prog)s --diagnostic --debug
         """,
     )
 
-    parser.add_argument("csv_file", help="CSV file with projector hosts")
-    parser.add_argument("-o", "--output", default="projector_firmware.json")
-    parser.add_argument("-t", "--timeout", type=int, default=10)
-    parser.add_argument("--all", action="store_true", help="Query all commands")
+    parser.add_argument(
+        "-i", "--input",
+        default=DEFAULT_CSV,
+        help=f"Input CSV file (default: {DEFAULT_CSV})",
+    )
+    parser.add_argument(
+        "-o", "--output",
+        default=DEFAULT_OUTPUT,
+        help=f"Output JSON file (default: {DEFAULT_OUTPUT})",
+    )
+    parser.add_argument("-t", "--timeout", type=int, default=10,
+                        help="Timeout per projector in seconds (default: 10)")
+    parser.add_argument("--all", action="store_true",
+                        help="Query all commands")
     parser.add_argument("--diagnostic", action="store_true",
                         help="Diagnostic: raw hex dump of all commands")
-    parser.add_argument("--debug", action="store_true", help="Debug logging")
+    parser.add_argument("--debug", action="store_true",
+                        help="Debug logging")
 
     args = parser.parse_args()
 
     if args.debug:
         log.setLevel(logging.DEBUG)
 
+    csv_file = args.input
+    output_file = args.output
+
     print("=" * 62)
     print("  PJLink Projector Query (Firmware + Lamp Hours)")
     print("  Class 1 + Class 2 compatible")
     print("=" * 62)
-    print(f"  CSV:        {args.csv_file}")
-    print(f"  Output:     {args.output}")
+    print(f"  Input:      {csv_file}")
+    print(f"  Output:     {output_file}")
     print(f"  Timeout:    {args.timeout}s")
     print(f"  Mode:       {'diagnostic' if args.diagnostic else 'all' if args.all else 'firmware+lamp'}")
     print(f"  Debug:      {args.debug}")
     print("=" * 62)
 
-    projectors = load_csv(args.csv_file)
+    projectors = load_csv(csv_file)
     if not projectors:
         log.error("No projectors in CSV.")
         sys.exit(1)
@@ -1130,10 +1093,9 @@ Examples:
         else:
             log.error(f"  -> {result['status']}: {result.get('error')}")
 
-    # Build output
     output_data = {
         "query_info": {
-            "csv_file": str(Path(args.csv_file).resolve()),
+            "csv_file": str(Path(csv_file).resolve()),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "protocol": "PJLink Class 1 + Class 2",
             "mode": (
@@ -1148,15 +1110,15 @@ Examples:
         "projectors": results,
     }
 
-    save_to_json(output_data, args.output)
-    log.info(f"Saved to: {args.output}")
+    save_to_json(output_data, output_file)
+    log.info(f"Saved to: {output_file}")
 
     if not args.diagnostic:
         print_summary_table(results)
     else:
-        print("\nDiagnostic data written to:", args.output)
+        print("\nDiagnostic data written to:", output_file)
 
-    print(f"\nFull results: {args.output}")
+    print(f"\nFull results: {output_file}")
 
     if args.diagnostic:
         print("\n" + json.dumps(output_data, indent=2))
