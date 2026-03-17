@@ -1,5 +1,5 @@
 ﻿host,port,name
-lsc-100-ceiling-camera-1.openav.dartmouth.edu,52381,LSC CAMERA 1
-lsc-100-ceiling-camera-2.openav.dartmouth.edu,52381,LSC CAMERA 2
-lsc-100-ceiling-camera-3.openav.dartmouth.edu,52381,LSC CAMERA 3
-lsc-100-ceiling-camera-4.openav.dartmouth.edu,52381,LSC CAMERA 4
+10.8.129.78,52380,SANDBOX
+lsc-100-ceiling-camera-2.openav.dartmouth.edu,52380,LSC CAMERA 2
+lsc-100-ceiling-camera-3.openav.dartmouth.edu,52380,LSC CAMERA 3
+lsc-100-ceiling-camera-4.openav.dartmouth.edu,52380,LSC CAMERA 4

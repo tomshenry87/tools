@@ -11,12 +11,6 @@ Supports:
     - Class 1 v1.00 (2013): auth digest on every command
     - Class 2 v2.00 (2017): auth digest on first command only, SVER/SNUM
 
-Lamp response formats handled:
-    Class 1:  "2340 1"
-    Class 1:  "5432 1 3150 0"
-    Class 2:  "Lamp 1: 2340 1"
-    Class 2:  "Lamp 1: 5432 1 Lamp 2: 3150 0"
-
 Defaults:
     Input:  projectors.csv
     Output: results.json
@@ -57,13 +51,6 @@ class PJLinkAuthError(PJLinkError):
 
 
 class PJLinkClient:
-    """
-    PJLink client supporting Class 1 and Class 2.
-
-    Class 1 auth: MD5 digest prepended to EVERY command
-    Class 2 auth: MD5 digest prepended to FIRST command only
-    """
-
     DEFAULT_PORT = 4352
     BUFFER_SIZE = 4096
     DEFAULT_TIMEOUT = 10
@@ -138,7 +125,6 @@ class PJLinkClient:
         if parts[1] == "0":
             self.security_enabled = False
             log.debug(f"[{self.host}] No authentication required")
-
         elif parts[1] == "1":
             self.security_enabled = True
             if len(parts) < 3:
@@ -147,10 +133,8 @@ class PJLinkClient:
             log.debug(f"[{self.host}] Auth required, random: {self.random_number}")
             if not self.password:
                 raise PJLinkError("Authentication required but no password provided.")
-
         elif parts[1] == "ERRA":
             raise PJLinkAuthError("ERRA in greeting")
-
         else:
             raise PJLinkError(f"Unknown greeting: {repr(line)}")
 
@@ -170,7 +154,6 @@ class PJLinkClient:
     def _receive_raw_line(self) -> bytes:
         if not self.socket:
             raise PJLinkError("Not connected.")
-
         data = b""
         try:
             while True:
@@ -189,7 +172,6 @@ class PJLinkClient:
                 log.debug(f"[{self.host}] Partial recv ({len(data)} bytes): {repr(data)}")
             else:
                 raise PJLinkError(f"No response from {self.host} (timeout)")
-
         log.debug(f"[{self.host}] RX ({len(data)}b): hex=[{data.hex(' ')}] text={repr(data)}")
         return data
 
@@ -235,7 +217,6 @@ class PJLinkClient:
 
     def _build_packet(self, header, cmd, param, force_digest=None) -> bytes:
         cmd_str = f"{header}{cmd} {param}\r"
-
         if force_digest is True:
             digest = self._compute_digest()
             packet_str = f"{digest}{cmd_str}" if digest else cmd_str
@@ -247,51 +228,39 @@ class PJLinkClient:
                 packet_str = f"{digest}{cmd_str}" if digest else cmd_str
             else:
                 packet_str = cmd_str
-
         return packet_str.encode("utf-8")
 
     def _send_and_receive(self, header, cmd, param="?", force_digest=None) -> str:
         packet = self._build_packet(header, cmd, param, force_digest)
         self._send_raw(packet)
-
         if self.security_enabled and (
             force_digest is True
             or (force_digest is None and self._should_prepend_digest())
         ):
             self.auth_sent = True
-
         time.sleep(self.COMMAND_DELAY)
-
         raw = self._receive_raw_line()
-        response = raw.decode("utf-8", errors="replace").strip("\r\n \t")
-        return response
+        return raw.decode("utf-8", errors="replace").strip("\r\n \t")
 
     def _send_command(self, cmd, param="?", class_prefix=None) -> str:
         if not self.socket:
             raise PJLinkError("Not connected.")
-
         header = class_prefix if class_prefix else "%1"
-
         try:
             response = self._send_and_receive(header, cmd, param)
-
             if response:
                 if "PJLINK" in response.upper() and "ERRA" in response.upper():
                     raise PJLinkAuthError("PJLINK ERRA")
                 return self._parse_response(response, cmd)
-
             log.debug(f"[{self.host}] Empty response for {cmd}, retrying...")
-
         except socket.timeout:
             log.debug(f"[{self.host}] Timeout on {cmd}, retrying...")
         except OSError as e:
             log.debug(f"[{self.host}] Error on {cmd}: {e}")
-
         return self._retry_command(cmd, param, header)
 
     def _retry_command(self, cmd, param, original_header) -> str:
         alt_header = "%2" if original_header == "%1" else "%1"
-
         strategies = [
             ("drain+retry", original_header, None),
             ("force_digest", original_header, True),
@@ -300,26 +269,19 @@ class PJLinkClient:
             ("alt_header+digest", alt_header, True),
             ("alt_header+no_digest", alt_header, False),
         ]
-
         for desc, header, digest in strategies:
             log.debug(f"[{self.host}] Retry {cmd}: {desc}")
-
             try:
                 self._drain_socket()
                 time.sleep(0.1)
-
                 response = self._send_and_receive(header, cmd, param, digest)
-
                 if not response:
                     continue
-
                 if "PJLINK" in response.upper() and "ERRA" in response.upper():
                     continue
-
                 parsed = self._parse_response(response, cmd)
                 log.debug(f"[{self.host}] Success with {desc}: {repr(parsed)}")
                 return parsed
-
             except PJLinkAuthError:
                 continue
             except PJLinkError as e:
@@ -328,7 +290,6 @@ class PJLinkClient:
             except (socket.timeout, OSError) as e:
                 log.debug(f"[{self.host}] {desc} network error: {e}")
                 continue
-
         raise PJLinkError(
             f"No response for {cmd} after all retries. "
             f"Device may not support this command."
@@ -341,21 +302,15 @@ class PJLinkClient:
     def _parse_response(self, raw, expected_cmd) -> str:
         line = raw.strip("\r\n \t")
         log.debug(f"[{self.host}] Parse '{expected_cmd}': {repr(line)}")
-
         if not line:
             raise PJLinkError(f"Empty response for {expected_cmd}")
-
         if "PJLINK" in line.upper() and "ERRA" in line.upper():
             raise PJLinkAuthError("PJLINK ERRA")
-
-        # Strategy 1: exact prefix %1CMD= or %2CMD=
         for c in ("1", "2"):
             prefix = f"%{c}{expected_cmd}="
             if prefix in line:
                 value = line[line.index(prefix) + len(prefix):]
                 return self._check_error(value.strip(), expected_cmd)
-
-        # Strategy 2: case insensitive
         line_upper = line.upper()
         for c in ("1", "2"):
             prefix_upper = f"%{c}{expected_cmd.upper()}="
@@ -363,8 +318,6 @@ class PJLinkClient:
                 idx = line_upper.index(prefix_upper)
                 value = line[idx + len(prefix_upper):]
                 return self._check_error(value.strip(), expected_cmd)
-
-        # Strategy 3: any %X____= pattern
         match = re.search(r"%([12])([A-Za-z0-9]{4})=(.*)", line)
         if match:
             value = match.group(3).strip()
@@ -372,15 +325,12 @@ class PJLinkClient:
             if actual != expected_cmd.upper():
                 log.debug(f"[{self.host}] Got {actual} instead of {expected_cmd}")
             return self._check_error(value, expected_cmd)
-
-        # Strategy 4: find = sign
         if "=" in line:
             _, _, value = line.partition("=")
             value = value.strip()
             if value:
                 log.debug(f"[{self.host}] Fallback parse for {expected_cmd}: {repr(value)}")
                 return self._check_error(value, expected_cmd)
-
         raise PJLinkError(f"Cannot parse {expected_cmd}: {repr(raw)}")
 
     def _check_error(self, value, cmd) -> str:
@@ -410,7 +360,6 @@ class PJLinkClient:
     def detect_class(self) -> str:
         self.detected_class = "1"
         self.auth_sent = False
-
         try:
             value = self._send_command("CLSS", "?", class_prefix="%1")
             if value and not value.startswith("ERROR"):
@@ -420,13 +369,11 @@ class PJLinkClient:
         except PJLinkError as e:
             log.warning(f"[{self.host}] CLSS failed ({e}), assuming Class 1")
             self.detected_class = "1"
-
         if self.detected_class != "1":
             log.info(f"[{self.host}] PJLink Class {self.detected_class}")
         else:
             log.info(f"[{self.host}] PJLink Class 1")
             self.auth_sent = False
-
         return self.detected_class
 
     # ------------------------------------------------------------------
@@ -462,57 +409,33 @@ class PJLinkClient:
         return self._send_command("LAMP", "?", "%1")
 
     def _normalize_lamp_response(self, raw: str) -> str:
-        """
-        Normalize lamp response to consistent format.
-
-        Class 2 devices return: "Lamp 1: 2340 1" or "Lamp 1: 5432 1 Lamp 2: 3150 0"
-        Class 1 devices return: "2340 1" or "5432 1 3150 0"
-
-        Strips all "Lamp N:" prefixes to produce clean "hours status" pairs.
-        """
         cleaned = raw.strip()
         log.debug(f"[{self.host}] Lamp raw before normalize: {repr(cleaned)}")
-
-        # Remove all variations of "Lamp N:" prefix
         cleaned = re.sub(r'[Ll][Aa][Mm][Pp]\s*\d+\s*:\s*', '', cleaned)
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-
         log.debug(f"[{self.host}] Lamp after normalize: {repr(cleaned)}")
         return cleaned
 
     def get_lamp_info_parsed(self) -> list:
-        """
-        Parse LAMP response into structured data.
-
-        Handles both Class 1 and Class 2 response formats.
-        All hours values include "h" suffix for consistency.
-        """
         raw = self.get_lamp_info_raw()
-
         if raw.startswith("ERROR"):
             return [{"error": raw}]
-
         normalized = self._normalize_lamp_response(raw)
-
         if not normalized:
             log.warning(f"[{self.host}] Lamp response empty after normalization: {repr(raw)}")
             return [{"raw": raw, "error": "Could not parse lamp data"}]
-
         lamps = []
         tokens = normalized.split()
-
         i = 0
         lamp_num = 1
         while i < len(tokens):
             hours_str = tokens[i]
-
             try:
                 hours_int = int(hours_str)
             except ValueError:
                 log.debug(f"[{self.host}] Skipping non-numeric lamp token: {repr(hours_str)}")
                 i += 1
                 continue
-
             on = None
             status_str = "Unknown"
             if i + 1 < len(tokens):
@@ -525,7 +448,6 @@ class PJLinkClient:
                     i += 1
             else:
                 i += 1
-
             lamps.append({
                 "lamp": lamp_num,
                 "hours": f"{hours_int}h",
@@ -534,16 +456,13 @@ class PJLinkClient:
                 "status": status_str,
             })
             lamp_num += 1
-
         if not lamps:
             log.warning(f"[{self.host}] Could not parse any lamps from: {repr(raw)}")
             return [{"raw": raw, "error": "Could not parse lamp data"}]
-
         log.debug(f"[{self.host}] Parsed {len(lamps)} lamp(s): {lamps}")
         return lamps
 
     def get_lamp_hours_total(self) -> tuple:
-        """Returns (total_int, total_string) e.g. (5432, "5432h")."""
         lamps = self.get_lamp_info_parsed()
         total = 0
         count = 0
@@ -553,14 +472,11 @@ class PJLinkClient:
                 count += 1
             elif "error" in lamp:
                 return -1, "N/A"
-
         if count == 0:
             return -1, "N/A"
-
         return total, f"{total}h"
 
     def get_lamp_hours_summary(self) -> str:
-        """Human-readable per-lamp summary with h suffix."""
         lamps = self.get_lamp_info_parsed()
         parts = []
         for lamp in lamps:
@@ -571,7 +487,6 @@ class PJLinkClient:
                 return lamp["error"]
             elif "raw" in lamp:
                 return f"Raw: {lamp['raw']}"
-
         return "; ".join(parts) if parts else "N/A"
 
     def get_input_list(self) -> str:
@@ -614,9 +529,7 @@ class PJLinkClient:
 
     def get_firmware_info(self) -> dict:
         info = {}
-
         info["pjlink_class"] = self.detect_class()
-
         for key, func in [
             ("manufacturer", self.get_manufacturer),
             ("product_name", self.get_product_name),
@@ -624,31 +537,22 @@ class PJLinkClient:
         ]:
             val, err = self._safe_query(key, func)
             info[key] = val if val is not None else f"ERROR: {err}"
-
         val, err = self._safe_query("other_info", self.get_other_info)
         info["other_info"] = val if val is not None else f"ERROR: {err}"
-
         if self.detected_class == "2":
             val, err = self._safe_query("software_version", self.get_software_version)
             info["software_version"] = val if val is not None else f"ERROR: {err}"
-
             val, err = self._safe_query("serial_number", self.get_serial_number)
             info["serial_number"] = val if val is not None else f"ERROR: {err}"
-
         info["firmware_version"] = self._derive_firmware_version(info)
-
         self._query_lamp_data(info)
-
         val, err = self._safe_query("power_status", self.get_power_status)
         info["power_status"] = val if val is not None else f"ERROR: {err}"
-
         return info
 
     def get_all_info(self) -> dict:
         info = {}
-
         info["pjlink_class"] = self.detect_class()
-
         class1_queries = [
             ("power_status", self.get_power_status),
             ("manufacturer", self.get_manufacturer),
@@ -660,18 +564,14 @@ class PJLinkClient:
             ("mute_status", self.get_mute_status),
             ("error_status", self.get_error_status),
         ]
-
         for key, func in class1_queries:
             val, err = self._safe_query(key, func)
             info[key] = val if val is not None else f"ERROR: {err}"
-
         self._query_lamp_data(info)
-
         try:
             info["error_status_parsed"] = self.get_error_status_parsed()
         except PJLinkError:
             pass
-
         if self.detected_class == "2":
             class2_queries = [
                 ("software_version", self.get_software_version),
@@ -683,20 +583,16 @@ class PJLinkClient:
             for key, func in class2_queries:
                 val, err = self._safe_query(key, func)
                 info[key] = val if val is not None else f"ERROR: {err}"
-
         info["firmware_version"] = self._derive_firmware_version(info)
-
         return info
 
     def _query_lamp_data(self, info: dict):
         val, err = self._safe_query("lamp_info_raw", self.get_lamp_info_raw)
         info["lamp_info_raw"] = val if val is not None else f"ERROR: {err}"
-
         try:
             info["lamp_info"] = self.get_lamp_info_parsed()
         except PJLinkError:
             info["lamp_info"] = []
-
         try:
             total_int, total_str = self.get_lamp_hours_total()
             info["lamp_hours_total"] = total_int
@@ -704,7 +600,6 @@ class PJLinkClient:
         except PJLinkError:
             info["lamp_hours_total"] = -1
             info["lamp_hours_total_display"] = "N/A"
-
         try:
             info["lamp_hours_summary"] = self.get_lamp_hours_summary()
         except PJLinkError:
@@ -714,11 +609,9 @@ class PJLinkClient:
         sver = info.get("software_version", "")
         if sver and isinstance(sver, str) and not sver.startswith("ERROR"):
             return sver
-
         other = info.get("other_info", "")
         if other and isinstance(other, str) and not other.startswith("ERROR"):
             return other
-
         return "Not available"
 
     # ------------------------------------------------------------------
@@ -727,23 +620,18 @@ class PJLinkClient:
 
     def run_diagnostic(self) -> dict:
         diag = {
-            "host": self.host,
-            "port": self.port,
+            "host": self.host, "port": self.port,
             "security_enabled": self.security_enabled,
-            "random_number": self.random_number,
-            "commands": [],
+            "random_number": self.random_number, "commands": [],
         }
-
         tests = [
             ("%1", "CLSS"), ("%1", "POWR"), ("%1", "INF1"), ("%1", "INF2"),
             ("%1", "INFO"), ("%1", "NAME"), ("%1", "LAMP"), ("%1", "ERST"),
             ("%1", "INPT"), ("%1", "INST"), ("%1", "AVMT"),
             ("%2", "SVER"), ("%2", "SNUM"),
         ]
-
         for header, cmd in tests:
             entry = {"command": f"{header}{cmd} ?", "attempts": []}
-
             for use_digest in ([True, False] if self.security_enabled else [False]):
                 attempt = {
                     "digest": use_digest,
@@ -751,21 +639,17 @@ class PJLinkClient:
                     "recv_hex": None, "recv_text": None,
                     "recv_length": 0, "parsed": None, "error": None,
                 }
-
                 packet = self._build_packet(header, cmd, "?", force_digest=use_digest)
                 attempt["sent_hex"] = packet.hex(" ")
                 attempt["sent_text"] = repr(packet.decode("utf-8", errors="replace"))
-
                 try:
                     self._drain_socket()
                     self._send_raw(packet)
                     time.sleep(0.2)
                     raw = self._receive_raw_line()
-
                     attempt["recv_hex"] = raw.hex(" ")
                     attempt["recv_text"] = repr(raw.decode("utf-8", errors="replace"))
                     attempt["recv_length"] = len(raw)
-
                     decoded = raw.decode("utf-8", errors="replace").strip()
                     if decoded:
                         try:
@@ -775,16 +659,12 @@ class PJLinkClient:
                         break
                     else:
                         attempt["error"] = "Empty response"
-
                 except PJLinkError as e:
                     attempt["error"] = str(e)
                 except Exception as e:
                     attempt["error"] = f"{type(e).__name__}: {e}"
-
                 entry["attempts"].append(attempt)
-
             diag["commands"].append(entry)
-
         return diag
 
 
@@ -795,11 +675,9 @@ class PJLinkClient:
 def load_csv(csv_path: str) -> list:
     projectors = []
     csv_file = Path(csv_path)
-
     if not csv_file.exists():
         log.error(f"CSV not found: {csv_path}")
         sys.exit(1)
-
     with open(csv_file, "r", encoding="utf-8-sig") as f:
         sample = f.read(4096)
         f.seek(0)
@@ -807,23 +685,18 @@ def load_csv(csv_path: str) -> list:
             dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
         except csv.Error:
             dialect = csv.excel
-
         reader = csv.DictReader(f, dialect=dialect)
         if not reader.fieldnames:
             log.error("CSV is empty")
             sys.exit(1)
-
         col_map = {name.strip().lower(): name for name in reader.fieldnames}
-
         if "host" not in col_map:
             log.error(f"CSV needs 'host' column. Found: {reader.fieldnames}")
             sys.exit(1)
-
         for row_num, row in enumerate(reader, start=2):
             host = row.get(col_map["host"], "").strip()
             if not host or host.startswith("#"):
                 continue
-
             port = PJLinkClient.DEFAULT_PORT
             if "port" in col_map:
                 port_str = row.get(col_map["port"], "").strip()
@@ -832,13 +705,10 @@ def load_csv(csv_path: str) -> list:
                         port = int(port_str)
                     except ValueError:
                         pass
-
             password = None
             if "password" in col_map:
                 password = row.get(col_map["password"], "").strip() or None
-
             projectors.append({"host": host, "port": port, "password": password})
-
     return projectors
 
 
@@ -848,18 +718,13 @@ def load_csv(csv_path: str) -> list:
 
 def query_projector(host, port, password, timeout, query_all, diagnostic):
     result = {
-        "host": host,
-        "port": port,
+        "host": host, "port": port,
         "query_timestamp": datetime.now(timezone.utc).isoformat(),
-        "status": "success",
-        "error": None,
+        "status": "success", "error": None,
     }
-
     client = PJLinkClient(host=host, port=port, password=password, timeout=timeout)
-
     try:
         client.connect()
-
         if diagnostic:
             result["diagnostic"] = client.run_diagnostic()
             result["firmware_version"] = "See diagnostic"
@@ -867,12 +732,9 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
             result["lamp_hours_total_display"] = "See diagnostic"
             result["lamp_hours_summary"] = "See diagnostic"
         elif query_all:
-            info = client.get_all_info()
-            result.update(info)
+            result.update(client.get_all_info())
         else:
-            info = client.get_firmware_info()
-            result.update(info)
-
+            result.update(client.get_firmware_info())
     except PJLinkAuthError as e:
         result["status"] = "auth_error"
         result["error"] = str(e)
@@ -880,7 +742,6 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
         result["lamp_hours_total"] = -1
         result["lamp_hours_total_display"] = "AUTH ERROR"
         result["lamp_hours_summary"] = "AUTH ERROR"
-
     except PJLinkError as e:
         result["status"] = "error"
         result["error"] = str(e)
@@ -888,7 +749,6 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
         result["lamp_hours_total"] = -1
         result["lamp_hours_total_display"] = "ERROR"
         result["lamp_hours_summary"] = "ERROR"
-
     except Exception as e:
         result["status"] = "error"
         result["error"] = f"{type(e).__name__}: {e}"
@@ -897,10 +757,8 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
         result["lamp_hours_total_display"] = "ERROR"
         result["lamp_hours_summary"] = "ERROR"
         log.exception(f"[{host}] Unexpected error")
-
     finally:
         client.disconnect()
-
     return result
 
 
@@ -914,77 +772,130 @@ def save_to_json(data, path):
 
 
 def print_summary_table(results):
-    w = {
-        "host": 22, "mfr": 15, "model": 18,
-        "fw": 22, "lamp": 22, "cls": 6, "pwr": 12, "status": 10,
-    }
-    total_w = sum(w.values()) + len(w) - 1
+    """
+    Print results in a bordered table format:
 
-    header = (
-        f"{'HOST':<{w['host']}} "
-        f"{'MANUFACTURER':<{w['mfr']}} "
-        f"{'MODEL':<{w['model']}} "
-        f"{'FIRMWARE':<{w['fw']}} "
-        f"{'LAMP HOURS':<{w['lamp']}} "
-        f"{'CLASS':<{w['cls']}} "
-        f"{'POWER':<{w['pwr']}} "
-        f"{'STATUS':<{w['status']}}"
-    )
+    +-----------+----------------+------+...
+    | Status    | Host           | Port |...
+    +-----------+----------------+------+...
+    | ✓ OK      | 192.168.1.100  | 4352 |...
+    +-----------+----------------+------+...
+    """
 
-    print("\n" + "=" * total_w)
-    print(header)
-    print("-" * total_w)
+    # -- Define columns: (header, key, width, formatter) --
+    columns = [
+        ("Status",           "status",                  11, None),
+        ("Host",             "host",                    16, None),
+        ("Port",             "port",                     6, None),
+        ("Manufacturer",     "manufacturer",            16, None),
+        ("Model",            "product_name",            18, None),
+        ("Firmware",         "firmware_version",        20, None),
+        ("Lamp Hours",       "lamp_hours_total_display", 14, None),
+        ("Class",            "pjlink_class",             7, None),
+        ("Power",            "power_status",            16, None),
+        ("Projector Name",   "projector_name",          18, None),
+        ("Error",            "error",                   28, None),
+    ]
+
+    def clean_val(val):
+        """Clean a value for display."""
+        s = str(val) if val is not None else ""
+        if s in ("None", "-1"):
+            return ""
+        return s
+
+    def format_status(r):
+        """Format the status column with icon."""
+        s = r.get("status", "error")
+        if s == "success":
+            return "\u2713 OK"
+        elif s == "auth_error":
+            return "\u2717 AUTH ERR"
+        else:
+            return "\u2717 ERROR"
+
+    def get_cell(r, col_key):
+        """Get the display value for a cell."""
+        if col_key == "status":
+            return format_status(r)
+
+        val = r.get(col_key, "")
+        val = clean_val(val)
+
+        # Clean up ERROR prefixed values for non-error column
+        if col_key != "error" and val.startswith("ERROR"):
+            return "N/A"
+        if val in ("Not available", "N/A", "AUTH ERROR", "See diagnostic"):
+            if col_key == "error":
+                return val
+            return "N/A"
+
+        return val
+
+    # -- Calculate actual column widths (fit content) --
+    col_widths = []
+    for header, key, min_w, _ in columns:
+        max_content = len(header)
+        for r in results:
+            cell = get_cell(r, key)
+            max_content = max(max_content, len(cell))
+        col_widths.append(max(min_w, max_content))
+
+    # -- Build format strings --
+    def make_separator():
+        parts = [f"+{'-' * (w + 2)}" for w in col_widths]
+        return "".join(parts) + "+"
+
+    def make_row(cells):
+        parts = [f"| {cell:<{w}} " for cell, w in zip(cells, col_widths)]
+        return "".join(parts) + "|"
+
+    separator = make_separator()
+
+    # -- Print title banner --
+    banner_width = len(separator)
+    print()
+    print("=" * banner_width)
+    print("PJLink Projector Query Results — Firmware & Lamp Hours".center(banner_width))
+    print("=" * banner_width)
+
+    # -- Print table --
+    headers = [col[0] for col in columns]
+
+    print(separator)
+    print(make_row(headers))
+    print(separator)
 
     for r in results:
-        def clean(v, n):
-            s = str(v or "N/A")
-            if s.startswith("ERROR") or s in ("Not available", "-1", "N/A"):
-                return "N/A"
-            return s[:n]
+        cells = [get_cell(r, col[1]) for col in columns]
+        print(make_row(cells))
 
-        lamp_display = r.get("lamp_hours_total_display", "N/A")
-        if lamp_display in ("N/A", "ERROR", "AUTH ERROR", "See diagnostic", None):
-            lamp_display = clean(r.get("lamp_hours_summary"), w["lamp"])
-        else:
-            lamp_display = str(lamp_display)[:w["lamp"]]
+    print(separator)
 
-        print(
-            f"{clean(r.get('host'), w['host']):<{w['host']}} "
-            f"{clean(r.get('manufacturer'), w['mfr']):<{w['mfr']}} "
-            f"{clean(r.get('product_name'), w['model']):<{w['model']}} "
-            f"{clean(r.get('firmware_version'), w['fw']):<{w['fw']}} "
-            f"{lamp_display:<{w['lamp']}} "
-            f"{clean(r.get('pjlink_class'), w['cls']):<{w['cls']}} "
-            f"{clean(r.get('power_status'), w['pwr']):<{w['pwr']}} "
-            f"{str(r.get('status', ''))[:w['status']]:<{w['status']}}"
-        )
-
-    print("=" * total_w)
-
+    # -- Print summary stats --
     total = len(results)
     ok = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err = total - ok - auth
 
     lamp_values = [
-        r.get("lamp_hours_total", -1)
-        for r in results
+        r.get("lamp_hours_total", -1) for r in results
         if isinstance(r.get("lamp_hours_total"), int) and r.get("lamp_hours_total", -1) > 0
     ]
+
+    print(f"\nTotal: {total} | Success: {ok} | Auth Errors: {auth} | Failed: {err}")
+
     if lamp_values:
-        avg_lamp = sum(lamp_values) / len(lamp_values)
-        lamp_stats = (
-            f"Lamp Hours — "
-            f"Avg: {avg_lamp:.0f}h | "
-            f"Min: {min(lamp_values)}h | "
-            f"Max: {max(lamp_values)}h | "
+        avg_l = sum(lamp_values) / len(lamp_values)
+        print(
+            f"Lamp Hours — Avg: {avg_l:.0f}h | "
+            f"Min: {min(lamp_values)}h | Max: {max(lamp_values)}h | "
             f"Reported: {len(lamp_values)}/{total}"
         )
     else:
-        lamp_stats = "Lamp Hours — No data available"
+        print("Lamp Hours — No data available")
 
-    print(f"\nDevices: {total} | Success: {ok} | Auth Errors: {auth} | Other Errors: {err}")
-    print(lamp_stats)
+    print()
 
 
 # ---------------------------------------------------------------------------
@@ -1021,24 +932,16 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "-i", "--input",
-        default=DEFAULT_CSV,
-        help=f"Input CSV file (default: {DEFAULT_CSV})",
-    )
-    parser.add_argument(
-        "-o", "--output",
-        default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: {DEFAULT_OUTPUT})",
-    )
+    parser.add_argument("-i", "--input", default=DEFAULT_CSV,
+                        help=f"Input CSV file (default: {DEFAULT_CSV})")
+    parser.add_argument("-o", "--output", default=DEFAULT_OUTPUT,
+                        help=f"Output JSON file (default: {DEFAULT_OUTPUT})")
     parser.add_argument("-t", "--timeout", type=int, default=10,
                         help="Timeout per projector in seconds (default: 10)")
-    parser.add_argument("--all", action="store_true",
-                        help="Query all commands")
+    parser.add_argument("--all", action="store_true", help="Query all commands")
     parser.add_argument("--diagnostic", action="store_true",
                         help="Diagnostic: raw hex dump of all commands")
-    parser.add_argument("--debug", action="store_true",
-                        help="Debug logging")
+    parser.add_argument("--debug", action="store_true", help="Debug logging")
 
     args = parser.parse_args()
 
@@ -1073,12 +976,8 @@ Examples:
         log.info(f"[{i}/{len(projectors)}] {p['host']}:{p['port']} ({auth})")
 
         result = query_projector(
-            host=p["host"],
-            port=p["port"],
-            password=p["password"],
-            timeout=args.timeout,
-            query_all=args.all,
-            diagnostic=args.diagnostic,
+            host=p["host"], port=p["port"], password=p["password"],
+            timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
         )
         results.append(result)
 
@@ -1118,7 +1017,7 @@ Examples:
     else:
         print("\nDiagnostic data written to:", output_file)
 
-    print(f"\nFull results: {output_file}")
+    print(f"Full results: {output_file}")
 
     if args.diagnostic:
         print("\n" + json.dumps(output_data, indent=2))

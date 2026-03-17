@@ -84,7 +84,6 @@ def strip_ansi(text: str) -> str:
 def get_command_output(client: paramiko.SSHClient, command: str) -> str:
     output = ""
 
-    # ── Method 1: exec_command (clean output) ──
     try:
         log.debug("  Trying exec_command …")
         stdin, stdout, stderr = client.exec_command(command, timeout=15)
@@ -99,7 +98,6 @@ def get_command_output(client: paramiko.SSHClient, command: str) -> str:
     except Exception as exc:
         log.debug("  exec_command failed (%s), trying invoke_shell …", exc)
 
-    # ── Method 2: invoke_shell (fallback) ──
     try:
         channel = client.invoke_shell(width=200, height=50)
         time.sleep(2)
@@ -141,7 +139,6 @@ def parse_packages(raw: str) -> list[dict]:
     for i, line in enumerate(clean.splitlines()):
         log.debug("    [%d] %r", i, line)
 
-    # ── Pattern A: key="value" style ──
     kv_matches = re.findall(
         r'name\s*=\s*"([^"]+)".*?version\s*=\s*"([^"]+)"',
         clean,
@@ -159,7 +156,6 @@ def parse_packages(raw: str) -> list[dict]:
         log.debug("  Pattern A found %d packages", len(packages))
         return packages
 
-    # ── Pattern B: columnar table with row number ──
     for line in clean.splitlines():
         stripped = line.strip()
 
@@ -195,7 +191,6 @@ def parse_packages(raw: str) -> list[dict]:
                 log.debug("  Pattern B matched: name=%s version=%s", name, version)
             continue
 
-        # ── Pattern C: NAME  VERSION (no row number) ──
         m = re.match(
             r"^\s*(\S+)\s+"
             r"(\d+\.\d+\S*)\s*$",
@@ -315,16 +310,38 @@ def check_router(
 #  Print results table to console
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def print_results_table(results: list[dict]) -> None:
-    col_host    = "HOST"
-    col_status  = "STATUS"
-    col_version = "ROUTEROS VERSION"
-    col_pkgs    = "PACKAGES"
-    col_error   = "ERROR"
+    """
+    Print a bordered table matching this format:
 
+    +----------+----------------+------+------------------+---------------------+
+    | Status   | Host           | Port | RouterOS Version | Packages            |
+    +----------+----------------+------+------------------+---------------------+
+    | ✓ OK     | 10.0.0.1       | 22   | 7.16.2           | routeros(7.16.2)    |
+    | ✗ FAIL   | 10.0.0.2       | 22   | N/A              | N/A                 |
+    +----------+----------------+------+------------------+---------------------+
+    Total: 2 | Success: 1 | Failed: 1
+    """
+
+    # ── Column definitions ──
+    columns = [
+        {"header": "Status",           "key": "status"},
+        {"header": "Host",             "key": "host"},
+        {"header": "Port",             "key": "port"},
+        {"header": "Username",         "key": "username"},
+        {"header": "RouterOS Version", "key": "version"},
+        {"header": "Packages",         "key": "pkgs"},
+        {"header": "Error",            "key": "error"},
+    ]
+
+    # ── Build row data ──
     rows: list[dict] = []
     for r in results:
-        status = "OK" if r["success"] else "FAIL"
-        version = r.get("routeros_version") or "-"
+        if r["success"]:
+            status = "\u2713 OK"
+        else:
+            status = "\u2717 FAIL"
+
+        version = r.get("routeros_version") or "N/A"
 
         pkg_list = r.get("packages", [])
         if pkg_list:
@@ -334,62 +351,74 @@ def print_results_table(results: list[dict]) -> None:
                 pkg_strs.append(f"{pkg['name']}({pkg['version']}){disabled}")
             pkg_text = ", ".join(pkg_strs)
         else:
-            pkg_text = "-"
+            pkg_text = "N/A"
 
-        error = r.get("error") or "-"
+        error = r.get("error") or ""
 
         rows.append({
-            "host":    r["host"],
-            "status":  status,
-            "version": version,
-            "pkgs":    pkg_text,
-            "error":   error,
+            "status":   status,
+            "host":     r["host"],
+            "port":     str(r.get("port", 22)),
+            "username": r.get("username", "admin"),
+            "version":  version,
+            "pkgs":     pkg_text,
+            "error":    error,
         })
 
-    w_host    = max(len(col_host),    max((len(row["host"])    for row in rows), default=4))
-    w_status  = max(len(col_status),  max((len(row["status"])  for row in rows), default=6))
-    w_version = max(len(col_version), max((len(row["version"]) for row in rows), default=16))
-    w_pkgs    = max(len(col_pkgs),    max((len(row["pkgs"])    for row in rows), default=8))
-    w_error   = max(len(col_error),   max((len(row["error"])   for row in rows), default=5))
+    # ── Calculate column widths ──
+    widths: list[int] = []
+    for col in columns:
+        key = col["key"]
+        header_len = len(col["header"])
+        data_len = max((len(row[key]) for row in rows), default=0) if rows else 0
+        widths.append(max(header_len, data_len))
 
-    w_pkgs  = min(w_pkgs, 60)
-    w_error = min(w_error, 40)
+    # Cap packages and error columns so table doesn't get too wide
+    pkg_idx   = next(i for i, c in enumerate(columns) if c["key"] == "pkgs")
+    error_idx = next(i for i, c in enumerate(columns) if c["key"] == "error")
+    widths[pkg_idx]   = min(widths[pkg_idx], 50)
+    widths[error_idx] = min(widths[error_idx], 30)
 
-    fmt = (
-        f"  {{:<{w_host}}}  "
-        f"{{:<{w_status}}}  "
-        f"{{:<{w_version}}}  "
-        f"{{:<{w_pkgs}}}  "
-        f"{{:<{w_error}}}"
-    )
+    # ── Build separator and row format ──
+    def make_separator() -> str:
+        parts = ["-" * (w + 2) for w in widths]
+        return "+" + "+".join(parts) + "+"
 
-    total_width = w_host + w_status + w_version + w_pkgs + w_error + 10
-    separator = "-" * total_width
+    def make_row(values: list[str]) -> str:
+        cells = []
+        for i, val in enumerate(values):
+            truncated = val[:widths[i]] if len(val) > widths[i] else val
+            cells.append(f" {truncated:<{widths[i]}} ")
+        return "|" + "|".join(cells) + "|"
 
+    sep = make_separator()
+
+    # ── Print title ──
+    title = "MikroTik RouterOS — Package Version Query Results"
+    title_width = len(sep)
     print()
-    print(f"  {'=' * total_width}")
-    print(f"  MIKROTIK VERSION CHECK RESULTS")
-    print(f"  {'=' * total_width}")
-    print()
-    print(fmt.format(col_host, col_status, col_version, col_pkgs, col_error))
-    print(f"  {separator}")
+    print("#", "=" * (title_width - 2))
+    print(f"  {title}")
+    print("#", "=" * (title_width - 2))
 
+    # ── Print header ──
+    print(sep)
+    header_values = [col["header"] for col in columns]
+    print(make_row(header_values))
+    print(sep)
+
+    # ── Print data rows ──
     for row in rows:
-        pkgs_display  = row["pkgs"][:w_pkgs]  if len(row["pkgs"])  > w_pkgs  else row["pkgs"]
-        error_display = row["error"][:w_error] if len(row["error"]) > w_error else row["error"]
-        print(fmt.format(
-            row["host"],
-            row["status"],
-            row["version"],
-            pkgs_display,
-            error_display,
-        ))
+        row_values = [row[col["key"]] for col in columns]
+        print(make_row(row_values))
 
-    print(f"  {separator}")
+    # ── Print bottom border ──
+    print(sep)
+
+    # ── Print summary ──
     ok   = sum(1 for r in results if r["success"])
     fail = len(results) - ok
-    print()
-    print(f"  TOTAL: {len(results)}   OK: {ok}   FAILED: {fail}")
+    print(f"Total: {len(results)} | Success: {ok} | Failed: {fail}")
     print()
 
 
@@ -424,7 +453,7 @@ def check_all_routers(
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  CLI  — runs with ZERO arguments by default
+#  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main() -> None:
     p = argparse.ArgumentParser(
