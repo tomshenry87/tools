@@ -30,17 +30,123 @@ import sys
 import re
 import logging
 import time
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S",
-)
-log = logging.getLogger("pjlink")
+# ---------------------------------------------------------------------------
+# Logging — custom handler that clears progress bar before writing log lines
+# ---------------------------------------------------------------------------
 
+class ProgressAwareHandler(logging.StreamHandler):
+    """Log handler that clears the progress bar line before printing."""
+
+    def __init__(self, progress_bar=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.progress_bar = progress_bar
+
+    def emit(self, record):
+        if self.progress_bar:
+            self.progress_bar.clear_line()
+        super().emit(record)
+        if self.progress_bar:
+            self.progress_bar.redraw()
+
+
+# Set up logging with our custom handler
+log = logging.getLogger("pjlink")
+log.setLevel(logging.INFO)
+_handler = ProgressAwareHandler()
+_handler.setFormatter(logging.Formatter(
+    "%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
+))
+log.addHandler(_handler)
+log.propagate = False
+
+
+# ---------------------------------------------------------------------------
+# Progress Bar
+# ---------------------------------------------------------------------------
+
+class ProgressBar:
+    """
+    Terminal progress bar with status text.
+
+    [\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591]  3/5  60%  192.168.1.102 — querying...
+    """
+
+    FILL = "\u2588"   # █
+    EMPTY = "\u2591"   # ░
+
+    def __init__(self, total: int, bar_width: int = 30, enabled: bool = True):
+        self.total = total
+        self.current = 0
+        self.bar_width = bar_width
+        self.enabled = enabled and sys.stderr.isatty()
+        self.status_text = ""
+        self._last_line_len = 0
+
+    def update(self, current: int, status: str = ""):
+        """Update progress bar to position `current` with optional status text."""
+        self.current = current
+        self.status_text = status
+        self.redraw()
+
+    def advance(self, status: str = ""):
+        """Advance progress by 1."""
+        self.current += 1
+        self.status_text = status
+        self.redraw()
+
+    def redraw(self):
+        """Redraw the progress bar on the current line."""
+        if not self.enabled:
+            return
+
+        pct = self.current / self.total if self.total > 0 else 0
+        filled = int(self.bar_width * pct)
+        empty = self.bar_width - filled
+
+        bar = f"{self.FILL * filled}{self.EMPTY * empty}"
+        counter = f"{self.current}/{self.total}"
+        pct_str = f"{pct * 100:5.1f}%"
+
+        line = f"\r  [{bar}] {counter:>7}  {pct_str}  {self.status_text}"
+
+        # Pad with spaces to overwrite any previous longer line
+        term_width = shutil.get_terminal_size((120, 24)).columns
+        line = line[:term_width]
+        padding = max(0, self._last_line_len - len(line))
+        full_line = line + " " * padding
+
+        sys.stderr.write(full_line)
+        sys.stderr.flush()
+
+        self._last_line_len = len(line)
+
+    def clear_line(self):
+        """Clear the progress bar line (for log messages to print cleanly)."""
+        if not self.enabled:
+            return
+        term_width = shutil.get_terminal_size((120, 24)).columns
+        sys.stderr.write("\r" + " " * term_width + "\r")
+        sys.stderr.flush()
+
+    def finish(self, final_text: str = "Done"):
+        """Complete the progress bar and move to next line."""
+        if not self.enabled:
+            return
+        self.current = self.total
+        self.status_text = final_text
+        self.redraw()
+        sys.stderr.write("\n")
+        sys.stderr.flush()
+
+
+# ---------------------------------------------------------------------------
+# PJLink Client
+# ---------------------------------------------------------------------------
 
 class PJLinkError(Exception):
     pass
@@ -88,24 +194,16 @@ class PJLinkClient:
         if self.password and len(self.password.encode("utf-8")) > self.MAX_PASSWORD_LENGTH:
             raise PJLinkError(f"Password exceeds {self.MAX_PASSWORD_LENGTH} bytes")
 
-    # ------------------------------------------------------------------
-    # Connection
-    # ------------------------------------------------------------------
-
     def connect(self):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(self.timeout)
             self.socket.connect((self.host, self.port))
-
             raw = self._receive_raw_line()
             greeting = raw.decode("utf-8", errors="replace")
-
             log.debug(f"[{self.host}] Greeting bytes: {raw.hex(' ')}")
             log.debug(f"[{self.host}] Greeting text:  {repr(greeting)}")
-
             self._parse_greeting(greeting)
-
         except socket.timeout:
             raise PJLinkError(f"Connection timed out: {self.host}:{self.port}")
         except ConnectionRefusedError:
@@ -117,11 +215,9 @@ class PJLinkClient:
         line = greeting.strip()
         if not line.startswith("PJLINK"):
             raise PJLinkError(f"Not a PJLink device: {repr(line)}")
-
         parts = line.split(None, 2)
         if len(parts) < 2:
             raise PJLinkError(f"Malformed greeting: {repr(line)}")
-
         if parts[1] == "0":
             self.security_enabled = False
             log.debug(f"[{self.host}] No authentication required")
@@ -146,10 +242,6 @@ class PJLinkClient:
                 pass
             finally:
                 self.socket = None
-
-    # ------------------------------------------------------------------
-    # Raw I/O
-    # ------------------------------------------------------------------
 
     def _receive_raw_line(self) -> bytes:
         if not self.socket:
@@ -203,10 +295,6 @@ class PJLinkClient:
             raise PJLinkError("Not connected.")
         log.debug(f"[{self.host}] TX ({len(data)}b): hex=[{data.hex(' ')}] text={repr(data)}")
         self.socket.sendall(data)
-
-    # ------------------------------------------------------------------
-    # Command building and sending
-    # ------------------------------------------------------------------
 
     def _should_prepend_digest(self) -> bool:
         if not self.security_enabled:
@@ -295,10 +383,6 @@ class PJLinkClient:
             f"Device may not support this command."
         )
 
-    # ------------------------------------------------------------------
-    # Response parsing
-    # ------------------------------------------------------------------
-
     def _parse_response(self, raw, expected_cmd) -> str:
         line = raw.strip("\r\n \t")
         log.debug(f"[{self.host}] Parse '{expected_cmd}': {repr(line)}")
@@ -341,10 +425,6 @@ class PJLinkClient:
             return f"ERROR: {desc} ({upper})"
         return value
 
-    # ------------------------------------------------------------------
-    # Safe query wrapper
-    # ------------------------------------------------------------------
-
     def _safe_query(self, label, func):
         try:
             value = func()
@@ -352,10 +432,6 @@ class PJLinkClient:
         except PJLinkError as e:
             log.debug(f"[{self.host}] {label}: {e}")
             return None, str(e)
-
-    # ------------------------------------------------------------------
-    # Class detection
-    # ------------------------------------------------------------------
 
     def detect_class(self) -> str:
         self.detected_class = "1"
@@ -376,9 +452,7 @@ class PJLinkClient:
             self.auth_sent = False
         return self.detected_class
 
-    # ------------------------------------------------------------------
-    # Class 1 commands
-    # ------------------------------------------------------------------
+    # -- Class 1 commands --
 
     def get_power_status(self) -> str:
         value = self._send_command("POWR", "?", "%1")
@@ -422,44 +496,32 @@ class PJLinkClient:
             return [{"error": raw}]
         normalized = self._normalize_lamp_response(raw)
         if not normalized:
-            log.warning(f"[{self.host}] Lamp response empty after normalization: {repr(raw)}")
             return [{"raw": raw, "error": "Could not parse lamp data"}]
         lamps = []
         tokens = normalized.split()
         i = 0
         lamp_num = 1
         while i < len(tokens):
-            hours_str = tokens[i]
             try:
-                hours_int = int(hours_str)
+                hours_int = int(tokens[i])
             except ValueError:
-                log.debug(f"[{self.host}] Skipping non-numeric lamp token: {repr(hours_str)}")
                 i += 1
                 continue
             on = None
             status_str = "Unknown"
-            if i + 1 < len(tokens):
-                status_token = tokens[i + 1]
-                if status_token in ("0", "1"):
-                    on = status_token == "1"
-                    status_str = "On" if on else "Off"
-                    i += 2
-                else:
-                    i += 1
+            if i + 1 < len(tokens) and tokens[i + 1] in ("0", "1"):
+                on = tokens[i + 1] == "1"
+                status_str = "On" if on else "Off"
+                i += 2
             else:
                 i += 1
             lamps.append({
-                "lamp": lamp_num,
-                "hours": f"{hours_int}h",
-                "hours_int": hours_int,
-                "on": on,
-                "status": status_str,
+                "lamp": lamp_num, "hours": f"{hours_int}h",
+                "hours_int": hours_int, "on": on, "status": status_str,
             })
             lamp_num += 1
         if not lamps:
-            log.warning(f"[{self.host}] Could not parse any lamps from: {repr(raw)}")
             return [{"raw": raw, "error": "Could not parse lamp data"}]
-        log.debug(f"[{self.host}] Parsed {len(lamps)} lamp(s): {lamps}")
         return lamps
 
     def get_lamp_hours_total(self) -> tuple:
@@ -481,12 +543,9 @@ class PJLinkClient:
         parts = []
         for lamp in lamps:
             if "hours" in lamp:
-                status = lamp.get("status", "Unknown")
-                parts.append(f"Lamp {lamp['lamp']}: {lamp['hours']} ({status})")
+                parts.append(f"Lamp {lamp['lamp']}: {lamp['hours']} ({lamp.get('status', '?')})")
             elif "error" in lamp:
                 return lamp["error"]
-            elif "raw" in lamp:
-                return f"Raw: {lamp['raw']}"
         return "; ".join(parts) if parts else "N/A"
 
     def get_input_list(self) -> str:
@@ -504,9 +563,7 @@ class PJLinkClient:
     def get_other_info(self) -> str:
         return self._send_command("INFO", "?", "%1")
 
-    # ------------------------------------------------------------------
-    # Class 2 commands
-    # ------------------------------------------------------------------
+    # -- Class 2 commands --
 
     def get_software_version(self) -> str:
         return self._send_command("SVER", "?", "%2")
@@ -523,9 +580,7 @@ class PJLinkClient:
     def get_recommended_resolution(self) -> str:
         return self._send_command("RRES", "?", "%2")
 
-    # ------------------------------------------------------------------
-    # High-level queries
-    # ------------------------------------------------------------------
+    # -- High-level queries --
 
     def get_firmware_info(self) -> dict:
         info = {}
@@ -553,7 +608,7 @@ class PJLinkClient:
     def get_all_info(self) -> dict:
         info = {}
         info["pjlink_class"] = self.detect_class()
-        class1_queries = [
+        for key, func in [
             ("power_status", self.get_power_status),
             ("manufacturer", self.get_manufacturer),
             ("product_name", self.get_product_name),
@@ -563,8 +618,7 @@ class PJLinkClient:
             ("input_list", self.get_input_list),
             ("mute_status", self.get_mute_status),
             ("error_status", self.get_error_status),
-        ]
-        for key, func in class1_queries:
+        ]:
             val, err = self._safe_query(key, func)
             info[key] = val if val is not None else f"ERROR: {err}"
         self._query_lamp_data(info)
@@ -573,14 +627,13 @@ class PJLinkClient:
         except PJLinkError:
             pass
         if self.detected_class == "2":
-            class2_queries = [
+            for key, func in [
                 ("software_version", self.get_software_version),
                 ("serial_number", self.get_serial_number),
                 ("filter_usage", self.get_filter_usage),
                 ("input_resolution", self.get_input_resolution),
                 ("recommended_resolution", self.get_recommended_resolution),
-            ]
-            for key, func in class2_queries:
+            ]:
                 val, err = self._safe_query(key, func)
                 info[key] = val if val is not None else f"ERROR: {err}"
         info["firmware_version"] = self._derive_firmware_version(info)
@@ -614,9 +667,7 @@ class PJLinkClient:
             return other
         return "Not available"
 
-    # ------------------------------------------------------------------
-    # Diagnostic
-    # ------------------------------------------------------------------
+    # -- Diagnostic --
 
     def run_diagnostic(self) -> dict:
         diag = {
@@ -634,10 +685,9 @@ class PJLinkClient:
             entry = {"command": f"{header}{cmd} ?", "attempts": []}
             for use_digest in ([True, False] if self.security_enabled else [False]):
                 attempt = {
-                    "digest": use_digest,
-                    "sent_hex": None, "sent_text": None,
-                    "recv_hex": None, "recv_text": None,
-                    "recv_length": 0, "parsed": None, "error": None,
+                    "digest": use_digest, "sent_hex": None, "sent_text": None,
+                    "recv_hex": None, "recv_text": None, "recv_length": 0,
+                    "parsed": None, "error": None,
                 }
                 packet = self._build_packet(header, cmd, "?", force_digest=use_digest)
                 attempt["sent_hex"] = packet.hex(" ")
@@ -771,108 +821,106 @@ def save_to_json(data, path):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 
+def truncate_error(error_str, max_len=30):
+    if not error_str:
+        return ""
+    s = str(error_str)
+    short_labels = [
+        (r"[Cc]onnection timed out",       "Timed out"),
+        (r"[Cc]onnection refused",          "Conn refused"),
+        (r"[Nn]o response .* timeout",      "No response"),
+        (r"[Nn]o route to host",            "No route"),
+        (r"[Nn]etwork is unreachable",      "Net unreachable"),
+        (r"[Nn]ame or service not known",   "DNS failed"),
+        (r"[Nn]etwork error",               "Network error"),
+        (r"[Aa]uthentication required",     "Auth required"),
+        (r"PJLINK ERRA",                    "Auth failed"),
+        (r"ERRA",                           "Auth error"),
+        (r"[Nn]ot a PJLink device",         "Not PJLink"),
+        (r"[Mm]alformed greeting",          "Bad greeting"),
+    ]
+    for pattern, label in short_labels:
+        if re.search(pattern, s):
+            return label
+    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
+    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
+    s = re.sub(r'^(Network error|Socket error|Connection error)\s*:\s*', '', s, flags=re.IGNORECASE)
+    s = re.sub(r'\s+', ' ', s).strip(': ')
+    if not s:
+        return "Error"
+    if len(s) > max_len:
+        return s[:max_len - 3] + "..."
+    return s
+
+
 def print_summary_table(results):
-    """
-    Print results in a bordered table format:
-
-    +-----------+----------------+------+...
-    | Status    | Host           | Port |...
-    +-----------+----------------+------+...
-    | ✓ OK      | 192.168.1.100  | 4352 |...
-    +-----------+----------------+------+...
-    """
-
-    # -- Define columns: (header, key, width, formatter) --
     columns = [
-        ("Status",           "status",                  11, None),
-        ("Host",             "host",                    16, None),
-        ("Port",             "port",                     6, None),
-        ("Manufacturer",     "manufacturer",            16, None),
-        ("Model",            "product_name",            18, None),
-        ("Firmware",         "firmware_version",        20, None),
-        ("Lamp Hours",       "lamp_hours_total_display", 14, None),
-        ("Class",            "pjlink_class",             7, None),
-        ("Power",            "power_status",            16, None),
-        ("Projector Name",   "projector_name",          18, None),
-        ("Error",            "error",                   28, None),
+        ("Status",       "status",                  11),
+        ("Host",         "host",                    16),
+        ("Port",         "port",                     6),
+        ("Manufacturer", "manufacturer",            14),
+        ("Model",        "product_name",            16),
+        ("Firmware",     "firmware_version",        18),
+        ("Lamp Hours",   "lamp_hours_total_display", 12),
+        ("Class",        "pjlink_class",             7),
+        ("Power",        "power_status",            16),
+        ("Name",         "projector_name",          16),
+        ("Error",        "error",                   20),
     ]
 
     def clean_val(val):
-        """Clean a value for display."""
         s = str(val) if val is not None else ""
-        if s in ("None", "-1"):
-            return ""
-        return s
+        return "" if s in ("None", "-1") else s
 
     def format_status(r):
-        """Format the status column with icon."""
         s = r.get("status", "error")
         if s == "success":
             return "\u2713 OK"
         elif s == "auth_error":
             return "\u2717 AUTH ERR"
-        else:
-            return "\u2717 ERROR"
+        return "\u2717 ERROR"
 
     def get_cell(r, col_key):
-        """Get the display value for a cell."""
         if col_key == "status":
             return format_status(r)
-
-        val = r.get(col_key, "")
-        val = clean_val(val)
-
-        # Clean up ERROR prefixed values for non-error column
-        if col_key != "error" and val.startswith("ERROR"):
+        if col_key == "error":
+            return truncate_error(r.get("error", ""))
+        val = clean_val(r.get(col_key, ""))
+        if val.startswith("ERROR") or val in (
+            "Not available", "N/A", "AUTH ERROR", "See diagnostic"
+        ):
             return "N/A"
-        if val in ("Not available", "N/A", "AUTH ERROR", "See diagnostic"):
-            if col_key == "error":
-                return val
-            return "N/A"
-
         return val
 
-    # -- Calculate actual column widths (fit content) --
     col_widths = []
-    for header, key, min_w, _ in columns:
-        max_content = len(header)
+    for header, key, min_w in columns:
+        max_w = len(header)
         for r in results:
-            cell = get_cell(r, key)
-            max_content = max(max_content, len(cell))
-        col_widths.append(max(min_w, max_content))
+            max_w = max(max_w, len(get_cell(r, key)))
+        col_widths.append(max(min_w, max_w))
 
-    # -- Build format strings --
-    def make_separator():
-        parts = [f"+{'-' * (w + 2)}" for w in col_widths]
-        return "".join(parts) + "+"
+    def sep():
+        return "+" + "+".join(f"{'-' * (w + 2)}" for w in col_widths) + "+"
 
-    def make_row(cells):
-        parts = [f"| {cell:<{w}} " for cell, w in zip(cells, col_widths)]
-        return "".join(parts) + "|"
+    def row(cells):
+        return "|" + "|".join(
+            f" {c:<{w}} " for c, w in zip(cells, col_widths)
+        ) + "|"
 
-    separator = make_separator()
+    s = sep()
+    bw = len(s)
 
-    # -- Print title banner --
-    banner_width = len(separator)
     print()
-    print("=" * banner_width)
-    print("PJLink Projector Query Results — Firmware & Lamp Hours".center(banner_width))
-    print("=" * banner_width)
-
-    # -- Print table --
-    headers = [col[0] for col in columns]
-
-    print(separator)
-    print(make_row(headers))
-    print(separator)
-
+    print("=" * bw)
+    print("PJLink Projector Query Results \u2014 Firmware & Lamp Hours".center(bw))
+    print("=" * bw)
+    print(s)
+    print(row([c[0] for c in columns]))
+    print(s)
     for r in results:
-        cells = [get_cell(r, col[1]) for col in columns]
-        print(make_row(cells))
+        print(row([get_cell(r, c[1]) for c in columns]))
+    print(s)
 
-    print(separator)
-
-    # -- Print summary stats --
     total = len(results)
     ok = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
@@ -888,13 +936,12 @@ def print_summary_table(results):
     if lamp_values:
         avg_l = sum(lamp_values) / len(lamp_values)
         print(
-            f"Lamp Hours — Avg: {avg_l:.0f}h | "
+            f"Lamp Hours \u2014 Avg: {avg_l:.0f}h | "
             f"Min: {min(lamp_values)}h | Max: {max(lamp_values)}h | "
             f"Reported: {len(lamp_values)}/{total}"
         )
     else:
-        print("Lamp Hours — No data available")
-
+        print("Lamp Hours \u2014 No data available")
     print()
 
 
@@ -942,6 +989,8 @@ Examples:
     parser.add_argument("--diagnostic", action="store_true",
                         help="Diagnostic: raw hex dump of all commands")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
+    parser.add_argument("--no-progress", action="store_true",
+                        help="Disable progress bar")
 
     args = parser.parse_args()
 
@@ -967,31 +1016,65 @@ Examples:
         log.error("No projectors in CSV.")
         sys.exit(1)
 
-    log.info(f"Loaded {len(projectors)} projector(s)\n")
+    total = len(projectors)
+    log.info(f"Loaded {total} projector(s)")
+
+    # -- Set up progress bar --
+    progress = ProgressBar(
+        total=total,
+        bar_width=30,
+        enabled=not args.no_progress and not args.debug,
+    )
+
+    # Wire progress bar into the log handler so log lines don't collide
+    _handler.progress_bar = progress
+
+    print()  # blank line before progress bar starts
 
     results = []
+    start_time = time.time()
 
     for i, p in enumerate(projectors, 1):
+        host = p["host"]
+        port = p["port"]
         auth = "auth" if p["password"] else "no-auth"
-        log.info(f"[{i}/{len(projectors)}] {p['host']}:{p['port']} ({auth})")
+
+        # Update progress bar: show current host being queried
+        progress.update(i - 1, f"{host} \u2014 connecting...")
+
+        log.info(f"[{i}/{total}] {host}:{port} ({auth})")
+
+        # Update status to querying
+        progress.update(i - 1, f"{host} \u2014 querying...")
 
         result = query_projector(
-            host=p["host"], port=p["port"], password=p["password"],
+            host=host, port=port, password=p["password"],
             timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
         )
         results.append(result)
 
+        # Update progress bar with result
         if result["status"] == "success":
             fw = result.get("firmware_version", "N/A")
             lamp = result.get("lamp_hours_summary", "N/A")
             model = result.get("product_name", "")
             mfr = result.get("manufacturer", "")
+            progress.update(i, f"{host} \u2014 \u2713 {mfr} {model}")
             log.info(f"  -> {mfr} {model}")
             log.info(f"     Firmware:   {fw}")
             log.info(f"     Lamp Hours: {lamp}")
         else:
+            short_err = truncate_error(result.get("error", ""))
+            progress.update(i, f"{host} \u2014 \u2717 {short_err}")
             log.error(f"  -> {result['status']}: {result.get('error')}")
 
+    elapsed = time.time() - start_time
+    progress.finish(f"Complete \u2014 {total} devices in {elapsed:.1f}s")
+
+    # Disconnect progress bar from log handler
+    _handler.progress_bar = None
+
+    # -- Build output --
     output_data = {
         "query_info": {
             "csv_file": str(Path(csv_file).resolve()),
@@ -1002,9 +1085,10 @@ Examples:
                 else "all" if args.all
                 else "firmware+lamp"
             ),
-            "total": len(results),
+            "total": total,
             "success": sum(1 for r in results if r["status"] == "success"),
             "errors": sum(1 for r in results if r["status"] != "success"),
+            "elapsed_seconds": round(elapsed, 1),
         },
         "projectors": results,
     }

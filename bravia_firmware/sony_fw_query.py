@@ -5,7 +5,7 @@ Sony Bravia BZ40H/BZ40L Firmware Version Query Tool
 Uses the Sony BRAVIA REST API (JSON-RPC) documented in:
   - Sony BRAVIA Professional Display IP Control API
   - Endpoint: /sony/system
-  - Method: getSystemInformation (v1.7 with fallback to v1.0)
+  - Method: getSystemInformation (v1.7)
   - Method: getInterfaceInformation (v1.0)
 
 Supports three authentication modes:
@@ -46,11 +46,6 @@ DEFAULT_TIMEOUT = 10
 DEFAULT_PORT = 80
 API_ENDPOINT = "/sony/system"
 
-# Ordered list of API versions to try for getSystemInformation
-# v1.7 includes the 'version' field with firmware version directly
-# v1.0 is the baseline supported by all models
-SYSTEM_INFO_VERSIONS = ["1.7", "1.4", "1.0"]
-
 
 def build_headers(psk: str = None) -> dict:
     """
@@ -72,36 +67,45 @@ def build_headers(psk: str = None) -> dict:
     return headers
 
 
-def call_sony_api(host: str, port: int, method: str, params: list,
-                  version: str, request_id: int = 1, psk: str = None,
-                  timeout: int = DEFAULT_TIMEOUT) -> dict:
+def get_system_information(host: str, port: int, psk: str = None,
+                           timeout: int = DEFAULT_TIMEOUT) -> dict:
     """
-    Generic Sony BRAVIA JSON-RPC API caller.
+    Calls the Sony BRAVIA REST API method 'getSystemInformation' via JSON-RPC.
 
-    Args:
-        host: Display IP or hostname
-        port: Display port (80 or 443)
-        method: API method name
-        params: Method parameters list
-        version: API method version string
-        request_id: JSON-RPC request ID
-        psk: Pre-Shared Key (None for no auth)
-        timeout: Request timeout in seconds
+    Sony BRAVIA Professional Display API Reference:
+        Service: system
+        Method: getSystemInformation
+        Version: 1.7
+        Parameters: [] (empty array)
 
-    Returns:
-        Parsed JSON response dict
-
-    Raises:
-        Exception on API errors or connection failures
+    Version 1.7 response contains:
+        - product: Product category (e.g., "Professional Display")
+        - region: Region code
+        - language: Current language
+        - model: Model name (e.g., "FW-50BZ40H")
+        - serial: Serial number
+        - macAddr: MAC address
+        - name: Device name
+        - generation: Generation string
+        - area: Area code
+        - cid: Client ID
+        - icon: Icon URL
+        - bdAddr: Bluetooth device address
+        - version: Software/firmware version string
+        - chipId: Chip identifier
+        - uuid: Universally unique identifier
+        - helpUrl: Help URL
+        - storageSize: Storage size
+        - essid: Connected Wi-Fi SSID
     """
     scheme = "https" if port == 443 else "http"
     url = f"{scheme}://{host}:{port}{API_ENDPOINT}"
 
     payload = {
-        "method": method,
-        "id": request_id,
-        "params": params,
-        "version": version
+        "method": "getSystemInformation",
+        "id": 1,
+        "params": [],
+        "version": "1.7"
     }
 
     response = requests.post(
@@ -113,86 +117,14 @@ def call_sony_api(host: str, port: int, method: str, params: list,
     )
     response.raise_for_status()
 
-    return response.json()
+    result = response.json()
 
+    if "error" in result:
+        error_code = result["error"][0] if isinstance(result["error"], list) else result["error"]
+        error_msg = result["error"][1] if isinstance(result["error"], list) and len(result["error"]) > 1 else "Unknown"
+        raise Exception(f"API Error {error_code}: {error_msg}")
 
-def get_system_information(host: str, port: int, psk: str = None,
-                           timeout: int = DEFAULT_TIMEOUT) -> tuple:
-    """
-    Calls the Sony BRAVIA REST API method 'getSystemInformation' via JSON-RPC.
-    Tries v1.7 first, then falls back through v1.4 and v1.0.
-
-    Sony BRAVIA Professional Display API Reference:
-        Service: system
-        Method: getSystemInformation
-
-    v1.0 response contains:
-        - product, region, language, model, serial, macAddr,
-          name, generation, area, cid
-
-    v1.4+ adds:
-        - version: Software/firmware version string
-
-    v1.7 adds:
-        - chipId, uuid, helpUrl, storageSize, essid, bdAddr, icon
-
-    Returns:
-        tuple of (result_dict, api_version_used)
-    """
-    last_error = None
-
-    for api_version in SYSTEM_INFO_VERSIONS:
-        try:
-            result = call_sony_api(
-                host=host,
-                port=port,
-                method="getSystemInformation",
-                params=[],
-                version=api_version,
-                request_id=1,
-                psk=psk,
-                timeout=timeout
-            )
-
-            # Check for JSON-RPC error response
-            if "error" in result:
-                error_code = result["error"][0] if isinstance(result["error"], list) else result["error"]
-                error_msg = result["error"][1] if isinstance(result["error"], list) and len(result["error"]) > 1 else "Unknown"
-
-                # Error code 15 = "Unsupported version"
-                # Error code 12 = "No such method" (unlikely but possible)
-                # Try next version on these errors
-                if isinstance(error_code, int) and error_code in [12, 15]:
-                    last_error = f"v{api_version} not supported (error {error_code})"
-                    continue
-                else:
-                    raise Exception(f"API Error {error_code}: {error_msg}")
-
-            # Success
-            data = result.get("result", [{}])[0]
-            return data, api_version
-
-        except requests.exceptions.HTTPError:
-            # Re-raise HTTP errors (403, 404, etc.) — these aren't version issues
-            raise
-        except Timeout:
-            # Re-raise timeouts — not a version issue
-            raise
-        except RequestsConnectionError:
-            # Re-raise connection errors — not a version issue
-            raise
-        except Exception as e:
-            error_str = str(e)
-            # If it's an API version error, try next version
-            if "API Error" in error_str:
-                last_error = error_str
-                continue
-            else:
-                raise
-
-    # All versions failed
-    raise Exception(f"getSystemInformation failed on all versions "
-                    f"({', '.join(SYSTEM_INFO_VERSIONS)}). Last error: {last_error}")
+    return result.get("result", [{}])[0]
 
 
 def get_interface_information(host: str, port: int, psk: str = None,
@@ -211,16 +143,26 @@ def get_interface_information(host: str, port: int, psk: str = None,
         - interfaceVersion: API interface version
         - serverName
     """
-    result = call_sony_api(
-        host=host,
-        port=port,
-        method="getInterfaceInformation",
-        params=[],
-        version="1.0",
-        request_id=2,
-        psk=psk,
-        timeout=timeout
+    scheme = "https" if port == 443 else "http"
+    url = f"{scheme}://{host}:{port}{API_ENDPOINT}"
+
+    payload = {
+        "method": "getInterfaceInformation",
+        "id": 2,
+        "params": [],
+        "version": "1.0"
+    }
+
+    response = requests.post(
+        url,
+        json=payload,
+        headers=build_headers(psk),
+        timeout=timeout,
+        verify=False
     )
+    response.raise_for_status()
+
+    result = response.json()
 
     if "error" in result:
         return {}
@@ -238,17 +180,26 @@ def get_network_settings(host: str, port: int, psk: str = None,
     Version: 1.0
     Parameters: [{"netif": ""}] — empty string returns all interfaces
     """
+    scheme = "https" if port == 443 else "http"
+    url = f"{scheme}://{host}:{port}{API_ENDPOINT}"
+
+    payload = {
+        "method": "getNetworkSettings",
+        "id": 3,
+        "params": [{"netif": ""}],
+        "version": "1.0"
+    }
+
     try:
-        result = call_sony_api(
-            host=host,
-            port=port,
-            method="getNetworkSettings",
-            params=[{"netif": ""}],
-            version="1.0",
-            request_id=3,
-            psk=psk,
-            timeout=timeout
+        response = requests.post(
+            url,
+            json=payload,
+            headers=build_headers(psk),
+            timeout=timeout,
+            verify=False
         )
+        response.raise_for_status()
+        result = response.json()
 
         if "error" in result:
             return []
@@ -262,7 +213,8 @@ def query_display(host: str, port: int, psk: str = None,
                   timeout: int = DEFAULT_TIMEOUT) -> dict:
     """
     Query a single Sony Bravia display for firmware/system information.
-    Tries getSystemInformation v1.7 first, falls back to v1.4 then v1.0.
+    Uses getSystemInformation v1.7 which includes the 'version' field
+    containing the firmware/software version string directly.
     """
     result = {
         "host": host,
@@ -276,16 +228,14 @@ def query_display(host: str, port: int, psk: str = None,
         "interface_version": "N/A",
         "product_name": "N/A",
         "generation": "N/A",
-        "api_version_used": "N/A",
         "error": None,
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
 
     try:
-        # Primary call: getSystemInformation (tries v1.7 -> v1.4 -> v1.0)
-        sys_info, api_version = get_system_information(host, port, psk, timeout)
+        # Primary call: getSystemInformation v1.7
+        sys_info = get_system_information(host, port, psk, timeout)
 
-        result["api_version_used"] = api_version
         result["model"] = sys_info.get("model", "N/A")
         result["serial"] = sys_info.get("serial", "N/A")
         result["mac_address"] = sys_info.get("macAddr", "N/A")
@@ -293,29 +243,22 @@ def query_display(host: str, port: int, psk: str = None,
         result["generation"] = sys_info.get("generation", "N/A")
         result["product_name"] = sys_info.get("product", "N/A")
 
-        # v1.4+ provides the 'version' field directly with firmware version
-        # v1.0 does not have it, so fall back to generation
+        # v1.7 provides the 'version' field directly with firmware version
         firmware = sys_info.get("version", "")
         if not firmware:
+            # Fallback to generation if version field is not populated
             firmware = sys_info.get("generation", "N/A")
         result["firmware_version"] = firmware
 
         result["status"] = "OK"
 
-        # Supplementary call: getInterfaceInformation for API version info
-        # Also used as firmware fallback if version and generation are both empty
+        # Supplementary call: getInterfaceInformation
         try:
             iface_info = get_interface_information(host, port, psk, timeout)
             if iface_info:
                 result["interface_version"] = iface_info.get("interfaceVersion", "N/A")
                 if result["product_name"] == "N/A":
                     result["product_name"] = iface_info.get("productName", "N/A")
-
-                # If we still don't have firmware version, try serverName
-                if result["firmware_version"] == "N/A" or not result["firmware_version"]:
-                    server_name = iface_info.get("serverName", "")
-                    if server_name:
-                        result["firmware_version"] = server_name
         except Exception:
             pass
 
@@ -430,19 +373,18 @@ def print_results_table(results: list):
             r["serial"],
             r["mac_address"],
             r["device_name"],
-            r["api_version_used"],
             error_info[:50] + "..." if len(error_info) > 50 else error_info
         ])
 
     headers = [
         "Status", "Host", "Port", "Model",
         "Firmware Version", "Serial", "MAC Address",
-        "Device Name", "API Ver", "Error"
+        "Device Name", "Error"
     ]
 
-    print("\n" + "=" * 130)
+    print("\n" + "=" * 120)
     print("Sony Bravia BZ40H/BZ40L — Firmware Version Query Results")
-    print("=" * 130)
+    print("=" * 120)
     print(tabulate(table_data, headers=headers, tablefmt="grid"))
     print(f"\nTotal: {len(results)} | "
           f"Success: {sum(1 for r in results if r['status'] == 'OK')} | "
@@ -472,12 +414,6 @@ Authentication:
   Display setting for PSK auth:
     Settings > Network > Home Network > IP Control > Authentication > Normal and Pre-Shared Key
     Settings > Network > Home Network > IP Control > Pre-Shared Key > <your key>
-
-API Version:
-  The script automatically tries getSystemInformation v1.7 first (which
-  includes a direct 'version' firmware field), then falls back to v1.4
-  and finally v1.0 for older firmware. The API version used is shown in
-  the results.
 
 CSV Format (default: displays.csv):
   host,port
@@ -511,13 +447,12 @@ CSV Format (default: displays.csv):
 
     args = parser.parse_args()
 
-    # Print configuration
+    # Print auth mode
     if args.psk:
         print(f"Authentication: PSK (Pre-Shared Key)")
     else:
         print(f"Authentication: None (no X-Auth-PSK header)")
 
-    print(f"API versions:   Will try {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)")
     print(f"Reading display list from: {args.input}")
     displays = read_csv_input(args.input)
     print(f"Found {len(displays)} display(s) to query.\n")
@@ -532,9 +467,7 @@ CSV Format (default: displays.csv):
         results.append(result)
 
         if result["status"] == "OK":
-            print(f"OK — Model: {result['model']}, "
-                  f"FW: {result['firmware_version']} "
-                  f"(API v{result['api_version_used']})")
+            print(f"OK — Model: {result['model']}, FW: {result['firmware_version']}")
         else:
             print(f"FAILED — {result['error']}")
 
