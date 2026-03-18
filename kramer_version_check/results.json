@@ -1,65 +1,65 @@
 [
   {
     "host": "silsby-029a-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 03220001900100 )",
     "VERSION": "ERR (~01@ERR 002)"
   },
   {
     "host": "silsby-029b-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 03220001900001 )",
     "VERSION": "ERR (~01@ERR 002)"
   },
   {
     "host": "silsby-113-hdmi-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 03230004900073 )",
     "VERSION": "ERR (~01@ERR 002)"
   },
   {
     "host": "silsby-119-hdmi-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 10240004100004 )",
     "VERSION": "ERR (~01@ERR 002)"
   },
   {
     "host": "silsby-213-hdmi-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 11220032400108 )",
     "VERSION": "ERR (~01@ERR 002)"
   },
   {
     "host": "silsby-215-hdmi-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "UNREACHABLE (timed out)",
+    "BUILDDATE": "UNREACHABLE (timed out)",
     "MODEL": "UNREACHABLE (timed out)",
-    "PROT-VERSION": "UNREACHABLE (timed out)",
+    "PROT-VER": "UNREACHABLE (timed out)",
     "SN": "UNREACHABLE (timed out)",
     "VERSION": "UNREACHABLE (timed out)"
   },
   {
     "host": "silsby-310-HDMI-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 11220032400170 )",
     "VERSION": "ERR (~01@ERR 002)"
   },
   {
     "host": "silsby-312-hdmi-switcher.openav.dartmouth.edu",
-    "BUILD-DATE": "ERR (~01@ERR 002)",
+    "BUILDDATE": "ERR (~01@ERR 002)",
     "MODEL": "ERR (~01@ERR 002)",
-    "PROT-VERSION": "ERR (~01@ERR 002)",
+    "PROT-VER": "ERR (~01@ERR 002)",
     "SN": "ERR (SN: 03230004900083 )",
     "VERSION": "ERR (~01@ERR 002)"
   }
