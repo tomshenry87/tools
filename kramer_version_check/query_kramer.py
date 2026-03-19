@@ -4,10 +4,10 @@ Kramer VP-440H2 - Protocol 3000 Device Query Tool
 ===================================================
 Reads a list of hosts from switchers.csv (one column: "host", optionally a
 second column "port").  For each host it opens a TCP socket, sends the
-standard Protocol 3000 queries for model, serial number, firmware version,
-and MAC address, then prints a tabulate table to the CLI and saves results.json.
+standard Protocol 3000 queries, then prints a formatted table to the CLI
+and saves results.json.
 
-Protocol 3000 reference (VP-440H2 User Manual, pages 43-44):
+Protocol 3000 reference (VP-440H2 User Manual):
   Command syntax : #<COMMAND>\r
   Response syntax: ~nn@<COMMAND> <value>\r\n
   Default TCP port: 5000
@@ -52,10 +52,12 @@ JSON_FILE        = "results.json"
 
 # Scalar queries: key -> (command, response regex)
 SCALAR_QUERIES = {
-    "model":    ("#MODEL?\r",    re.compile(r"~\d+@MODEL\s+(.+)",   re.IGNORECASE)),
-    "serial":   ("#SN?\r",      re.compile(r"~\d+@SN\s+(.+)",      re.IGNORECASE)),
-    "firmware": ("#VERSION?\r", re.compile(r"~\d+@VERSION\s+(.+)", re.IGNORECASE)),
-    "mac":      ("#NET-MAC?\r", re.compile(r"~\d+@NET-MAC\s+(.+)", re.IGNORECASE)),
+    "model":      ("#MODEL?\r",      re.compile(r"~\d+@MODEL\s+(.+)",      re.IGNORECASE)),
+    "build_date": ("#BUILD-DATE?\r", re.compile(r"~\d+@BUILD-DATE\s+(.+)", re.IGNORECASE)),
+    "prot_ver":   ("#PROT-VER?\r",   re.compile(r"~\d+@PROT-VER\s+(.+)",   re.IGNORECASE)),
+    "serial":     ("#SN?\r",         re.compile(r"~\d+@SN\s+(.+)",         re.IGNORECASE)),
+    "firmware":   ("#VERSION?\r",    re.compile(r"~\d+@VERSION\s+(.+)",    re.IGNORECASE)),
+    "mac":        ("#NET-MAC?\r",    re.compile(r"~\d+@NET-MAC\s+(.+)",    re.IGNORECASE)),
 }
 
 ALL_CMD_KEYS = list(SCALAR_QUERIES.keys())
@@ -120,13 +122,14 @@ def send_query(sock, command, host=""):
 
 def query_device(host, port):
     result = {
-        "host":     host,
-        "port":     port,
-        "model":    "N/A",
-        "serial":   "N/A",
-        "firmware": "N/A",
-        "mac":      "N/A",
-        "status":   "OK",
+        "host":       host,
+        "build_date": "N/A",
+        "model":      "N/A",
+        "prot_ver":   "N/A",
+        "serial":     "N/A",
+        "firmware":   "N/A",
+        "mac":        "N/A",
+        "status":     "OK",
     }
     try:
         with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
@@ -256,29 +259,29 @@ def main():
     with tqdm(hosts, total=len(hosts), unit="device",
               bar_format=("  {l_bar}{bar}| {n_fmt}/{total_fmt} devices "
                           "[{elapsed}<{remaining}, {rate_fmt}]"),
-              colour="cyan", ncols=80) as progress:
+              colour="cyan", ncols=120) as progress:
         for host, port in progress:
             progress.set_description(f"  {host}:{port}")
             result = query_device(host, port)
             results.append(result)
             icon = "v" if result["status"] == "OK" else "x"
             progress.write(
-                f"  [{icon}] {host}:{port}  "
-                f"model={result['model']}  sn={result['serial']}  "
-                f"fw={result['firmware']}  mac={result['mac']}  "
+                f"  [{icon}] {host}  "
+                f"build={result['build_date']}  model={result['model']}  "
+                f"prot={result['prot_ver']}  sn={result['serial']}  "
+                f"ver={result['firmware']}  mac={result['mac']}  "
                 f"[{result['status']}]"
             )
 
     table_rows = [
-        [r["host"], r["port"], r["model"], r["serial"], r["firmware"], r["mac"], r["status"]]
+        [r["host"], r["build_date"], r["model"], r["prot_ver"],
+         r["serial"], r["firmware"], r["mac"], r["status"]]
         for r in results
     ]
-    headers = ["Host", "Port", "Model", "Serial Number", "Firmware", "MAC Address", "Status"]
+    headers = ["Host", "Build Date", "Model", "Protocol Ver", "Serial", "Firmware Ver", "Mac", "Status"]
 
-    print("\n" + "=" * 80)
-    print("  Kramer VP-440H2 - Device Inventory")
-    print("=" * 80)
-    print(tabulate(table_rows, headers=headers, tablefmt="rounded_outline"))
+    print()
+    print(tabulate(table_rows, headers=headers, tablefmt="outline"))
     print()
 
     with open(JSON_FILE, "w", encoding="utf-8") as fh:
