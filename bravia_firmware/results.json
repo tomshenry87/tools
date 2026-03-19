@@ -1,5 +1,5 @@
 {
-  "query_timestamp": "2026-03-18T16:46:30.290629Z",
+  "query_timestamp": "2026-03-19T23:22:47.447697Z",
   "total_displays": 67,
   "successful_queries": 41,
   "failed_queries": 26,
@@ -18,7 +18,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:02.172325Z"
+      "timestamp": "2026-03-19T23:22:05.451047Z"
     },
     {
       "host": "lsc-100-display-1.openav.dartmouth.edu",
@@ -34,7 +34,7 @@
       "generation": "1.0.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:02.508022Z"
+      "timestamp": "2026-03-19T23:22:06.046289Z"
     },
     {
       "host": "lsc-100-display-2.openav.dartmouth.edu",
@@ -50,7 +50,7 @@
       "generation": "1.0.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:02.661288Z"
+      "timestamp": "2026-03-19T23:22:06.360725Z"
     },
     {
       "host": "lsc-105-1-display-1.openav.dartmouth.edu",
@@ -66,7 +66,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:02.770778Z"
+      "timestamp": "2026-03-19T23:22:06.679508Z"
     },
     {
       "host": "lsc-105-1-display-2.openav.dartmouth.edu",
@@ -82,7 +82,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:03.132799Z"
+      "timestamp": "2026-03-19T23:22:07.261262Z"
     },
     {
       "host": "lsc-105-2-display-1.openav.dartmouth.edu",
@@ -98,7 +98,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:03.511091Z"
+      "timestamp": "2026-03-19T23:22:07.842897Z"
     },
     {
       "host": "lsc-105-2-display-2.openav.dartmouth.edu",
@@ -114,7 +114,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:03.873532Z"
+      "timestamp": "2026-03-19T23:22:08.413170Z"
     },
     {
       "host": "lsc-105-2-display-3.openav.dartmouth.edu",
@@ -130,7 +130,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:04.233819Z"
+      "timestamp": "2026-03-19T23:22:08.981083Z"
     },
     {
       "host": "lsc-205-1-display-1.openav.dartmouth.edu",
@@ -146,7 +146,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:04.574700Z"
+      "timestamp": "2026-03-19T23:22:09.535403Z"
     },
     {
       "host": "lsc-205-1-display-2.openav.dartmouth.edu",
@@ -162,7 +162,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:04.919263Z"
+      "timestamp": "2026-03-19T23:22:10.106888Z"
     },
     {
       "host": "lsc-205-2-display-1.openav.dartmouth.edu",
@@ -178,7 +178,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:05.268867Z"
+      "timestamp": "2026-03-19T23:22:10.698678Z"
     },
     {
       "host": "lsc-205-2-display-2.openav.dartmouth.edu",
@@ -194,7 +194,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:05.608173Z"
+      "timestamp": "2026-03-19T23:22:11.265119Z"
     },
     {
       "host": "lsc-205-2-display-3.openav.dartmouth.edu",
@@ -210,7 +210,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:05.923947Z"
+      "timestamp": "2026-03-19T23:22:11.823247Z"
     },
     {
       "host": "4-currier-101b-display.openav.dartmouth.edu",
@@ -225,8 +225,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-101b-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.269290Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:12.391492Z"
     },
     {
       "host": "4-currier-101e-display.openav.dartmouth.edu",
@@ -241,8 +241,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-101e-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.332614Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:12.715339Z"
     },
     {
       "host": "4-currier-213-display.openav.dartmouth.edu",
@@ -257,8 +257,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-213-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.429705Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:12.961722Z"
     },
     {
       "host": "4-currier-214-display.openav.dartmouth.edu",
@@ -273,8 +273,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-214-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.524585Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:13.233176Z"
     },
     {
       "host": "4-currier-215-display.openav.dartmouth.edu",
@@ -289,8 +289,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-215-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.594601Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:13.498766Z"
     },
     {
       "host": "4-currier-223-display.openav.dartmouth.edu",
@@ -305,8 +305,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-223-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.691120Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:13.758170Z"
     },
     {
       "host": "4-currier-227-display.openav.dartmouth.edu",
@@ -321,8 +321,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-227-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.845744Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:14.019455Z"
     },
     {
       "host": "4-currier-232-vr-display.openav.dartmouth.edu",
@@ -337,8 +337,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-232-vr-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:06.940918Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:14.264323Z"
     },
     {
       "host": "4-currier-collaboration-display.openav.dartmouth.edu",
@@ -353,8 +353,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-collaboration-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:07.001349Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:14.511976Z"
     },
     {
       "host": "4-currier-lounge-display.openav.dartmouth.edu",
@@ -369,8 +369,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://4-currier-lounge-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:07.099139Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:14.787821Z"
     },
     {
       "host": "baker-102-display.openav.dartmouth.edu",
@@ -386,7 +386,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:07.191311Z"
+      "timestamp": "2026-03-19T23:22:15.054593Z"
     },
     {
       "host": "bartlett-105a-display.openav.dartmouth.edu",
@@ -401,8 +401,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://bartlett-105a-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:07.516274Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:15.623225Z"
     },
     {
       "host": "berry-180-display.openav.dartmouth.edu",
@@ -418,7 +418,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:07.594037Z"
+      "timestamp": "2026-03-19T23:22:15.878832Z"
     },
     {
       "host": "berrysport-045-display.openav.dartmouth.edu",
@@ -434,7 +434,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:07.946254Z"
+      "timestamp": "2026-03-19T23:22:16.457835Z"
     },
     {
       "host": "berrysport-010-display.openav.dartmouth.edu",
@@ -450,7 +450,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:08.267677Z"
+      "timestamp": "2026-03-19T23:22:17.032838Z"
     },
     {
       "host": "berrysport-206-display.openav.dartmouth.edu",
@@ -466,7 +466,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:09.631415Z"
+      "timestamp": "2026-03-19T23:22:18.663848Z"
     },
     {
       "host": "carson-061-2-display-1.openav.dartmouth.edu",
@@ -482,7 +482,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:09.949182Z"
+      "timestamp": "2026-03-19T23:22:19.254854Z"
     },
     {
       "host": "carson-061-2-display-2.openav.dartmouth.edu",
@@ -498,7 +498,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:10.260658Z"
+      "timestamp": "2026-03-19T23:22:19.855266Z"
     },
     {
       "host": "carson-061-2-display-3.openav.dartmouth.edu",
@@ -514,7 +514,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:10.576622Z"
+      "timestamp": "2026-03-19T23:22:20.411441Z"
     },
     {
       "host": "carson-061-2-display-4.openav.dartmouth.edu",
@@ -530,7 +530,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:10.921432Z"
+      "timestamp": "2026-03-19T23:22:21.029393Z"
     },
     {
       "host": "carson-061-2-display-5.openav.dartmouth.edu",
@@ -546,7 +546,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:11.277088Z"
+      "timestamp": "2026-03-19T23:22:21.595923Z"
     },
     {
       "host": "carson-061-2-display-6.openav.dartmouth.edu",
@@ -562,7 +562,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:11.637423Z"
+      "timestamp": "2026-03-19T23:22:22.138972Z"
     },
     {
       "host": "court01-211-display.openav.dartmouth.edu",
@@ -577,8 +577,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://court01-211-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:11.961085Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:22.684479Z"
     },
     {
       "host": "court01-215-display.openav.dartmouth.edu",
@@ -593,8 +593,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://court01-215-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:12.042290Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:22.957205Z"
     },
     {
       "host": "cts-4-currier-104-display.dartmouth.edu",
@@ -610,7 +610,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "Connection timed out",
-      "timestamp": "2026-03-18T16:46:12.137487Z"
+      "timestamp": "2026-03-19T23:22:23.228657Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -625,8 +625,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://doc-house-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:22.165187Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:33.299710Z"
     },
     {
       "host": "fairchild-217a-display.openav.dartmouth.edu",
@@ -641,8 +641,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://fairchild-217a-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:22.258553Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:33.569738Z"
     },
     {
       "host": "floren-332-display-1.openav.dartmouth.edu",
@@ -658,7 +658,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:22.351152Z"
+      "timestamp": "2026-03-19T23:22:33.952174Z"
     },
     {
       "host": "floren-332-display-2.openav.dartmouth.edu",
@@ -674,7 +674,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:22.703411Z"
+      "timestamp": "2026-03-19T23:22:34.518356Z"
     },
     {
       "host": "hopkins-051-display.openav.dartmouth.edu",
@@ -690,7 +690,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:23.031339Z"
+      "timestamp": "2026-03-19T23:22:35.079399Z"
     },
     {
       "host": "lewinstein-111-display.openav.dartmouth.edu",
@@ -706,7 +706,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:23.393314Z"
+      "timestamp": "2026-03-19T23:22:35.629567Z"
     },
     {
       "host": "lsc-200-1-display-1.openav.dartmouth.edu",
@@ -722,7 +722,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:23.751455Z"
+      "timestamp": "2026-03-19T23:22:36.219078Z"
     },
     {
       "host": "lsc-200-1-display-2.openav.dartmouth.edu",
@@ -738,7 +738,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:24.087299Z"
+      "timestamp": "2026-03-19T23:22:36.818374Z"
     },
     {
       "host": "lsc-200-2-display-1.openav.dartmouth.edu",
@@ -754,7 +754,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:24.428294Z"
+      "timestamp": "2026-03-19T23:22:37.388600Z"
     },
     {
       "host": "lsc-200-2-display-2.openav.dartmouth.edu",
@@ -770,7 +770,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:24.744051Z"
+      "timestamp": "2026-03-19T23:22:37.947679Z"
     },
     {
       "host": "lsc-200-2-display-3.openav.dartmouth.edu",
@@ -786,7 +786,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:25.074772Z"
+      "timestamp": "2026-03-19T23:22:38.530498Z"
     },
     {
       "host": "lsc-200-2-display-4.openav.dartmouth.edu",
@@ -802,7 +802,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:25.432431Z"
+      "timestamp": "2026-03-19T23:22:39.105973Z"
     },
     {
       "host": "lsc-200-2-display-5.openav.dartmouth.edu",
@@ -818,7 +818,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:25.755713Z"
+      "timestamp": "2026-03-19T23:22:39.677120Z"
     },
     {
       "host": "lsc-200-2-display-6.openav.dartmouth.edu",
@@ -834,7 +834,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:26.069029Z"
+      "timestamp": "2026-03-19T23:22:40.248094Z"
     },
     {
       "host": "lsc-200-2-display-7.openav.dartmouth.edu",
@@ -850,7 +850,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:26.399164Z"
+      "timestamp": "2026-03-19T23:22:40.792573Z"
     },
     {
       "host": "lsc-200-2-display-8.openav.dartmouth.edu",
@@ -866,7 +866,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:26.727854Z"
+      "timestamp": "2026-03-19T23:22:41.374532Z"
     },
     {
       "host": "parkhurst-06a-display.openav.dartmouth.edu",
@@ -881,8 +881,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://parkhurst-06a-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:27.069809Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:41.946227Z"
     },
     {
       "host": "preshouse-b02-display.openav.dartmouth.edu",
@@ -897,8 +897,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://preshouse-b02-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:27.170326Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:43.234443Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -913,8 +913,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://rockefeller-100-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:28.243463Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:43.510636Z"
     },
     {
       "host": "dewey-010-display.openav.dartmouth.edu",
@@ -930,7 +930,7 @@
       "generation": "5.7.0",
       "api_version_used": "1.7",
       "error": null,
-      "timestamp": "2026-03-18T16:46:28.338065Z"
+      "timestamp": "2026-03-19T23:22:43.783799Z"
     },
     {
       "host": "kemeny-307-display.openav.dartmouth.edu",
@@ -945,8 +945,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://kemeny-307-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:28.918650Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:44.446694Z"
     },
     {
       "host": "robinson-322-display.openav.dartmouth.edu",
@@ -961,8 +961,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://robinson-322-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:29.007190Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:44.720701Z"
     },
     {
       "host": "mcnutt-001-display.openav.dartmouth.edu",
@@ -978,7 +978,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:29.103675Z"
+      "timestamp": "2026-03-19T23:22:44.979791Z"
     },
     {
       "host": "parkhurst-009b-display.openav.dartmouth.edu",
@@ -993,8 +993,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://parkhurst-009b-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:29.478569Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:45.563522Z"
     },
     {
       "host": "wentworth-205-display.openav.dartmouth.edu",
@@ -1010,7 +1010,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-18T16:46:29.572046Z"
+      "timestamp": "2026-03-19T23:22:45.825328Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -1025,8 +1025,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://doc-house-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:29.933511Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:46.416387Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -1041,8 +1041,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://rockefeller-100-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:30.025340Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:46.687717Z"
     },
     {
       "host": "osher-3a-display.openav.dartmouth.edu",
@@ -1057,8 +1057,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://osher-3a-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:30.116101Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:46.912431Z"
     },
     {
       "host": "osher-3a-confidence-display.openav.dartmouth.edu",
@@ -1073,8 +1073,8 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
-      "error": "HTTP Error Unknown: 403 Client Error: Forbidden for url: http://osher-3a-confidence-display.openav.dartmouth.edu:80/sony/system",
-      "timestamp": "2026-03-18T16:46:30.211073Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-19T23:22:47.171955Z"
     }
   ]
 }

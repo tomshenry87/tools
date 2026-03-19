@@ -8,7 +8,7 @@ Uses the Sony BRAVIA REST API (JSON-RPC) documented in:
   - Method: getSystemInformation (v1.7 with fallback to v1.0)
   - Method: getInterfaceInformation (v1.0)
 
-Supports three authentication modes:
+Supports two authentication modes:
   - None: No authentication (X-Auth-PSK header omitted)
   - PSK:  Pre-Shared Key via X-Auth-PSK header
 """
@@ -17,6 +17,7 @@ import csv
 import json
 import sys
 import os
+import shutil
 import argparse
 from datetime import datetime
 
@@ -34,6 +35,12 @@ except ImportError:
     print("ERROR: 'tabulate' library is required. Install with: pip install tabulate")
     sys.exit(1)
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    print("ERROR: 'tqdm' library is required. Install with: pip install tqdm")
+    sys.exit(1)
+
 # Suppress InsecureRequestWarning for HTTPS without cert verification
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -41,26 +48,45 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Defaults
 DEFAULT_CSV = "displays.csv"
 DEFAULT_OUTPUT = "results.json"
-DEFAULT_PSK = None  # None = no authentication
+DEFAULT_PSK = None
 DEFAULT_TIMEOUT = 10
 DEFAULT_PORT = 80
 API_ENDPOINT = "/sony/system"
 
+# ANSI color codes
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
 # Ordered list of API versions to try for getSystemInformation
-# v1.7 includes the 'version' field with firmware version directly
-# v1.0 is the baseline supported by all models
 SYSTEM_INFO_VERSIONS = ["1.7", "1.4", "1.0"]
+
+
+def get_terminal_width() -> int:
+    """Get current terminal width, with a safe fallback."""
+    try:
+        return shutil.get_terminal_size().columns
+    except Exception:
+        return 120
+
+
+def get_error_truncate_length() -> int:
+    """Scale error truncation length based on terminal width."""
+    width = get_terminal_width()
+    if width >= 200:
+        return 50
+    elif width >= 150:
+        return 35
+    elif width >= 120:
+        return 25
+    elif width >= 80:
+        return 15
+    else:
+        return 10
 
 
 def build_headers(psk: str = None) -> dict:
     """
     Build request headers based on authentication mode.
-
-    When PSK is None or empty, the X-Auth-PSK header is omitted entirely,
-    which corresponds to Authentication mode 'None' on the display.
-
-    When PSK is provided, the X-Auth-PSK header is included,
-    which corresponds to Authentication mode 'Normal and Pre-Shared Key'.
     """
     headers = {
         "Content-Type": "application/json"
@@ -77,22 +103,6 @@ def call_sony_api(host: str, port: int, method: str, params: list,
                   timeout: int = DEFAULT_TIMEOUT) -> dict:
     """
     Generic Sony BRAVIA JSON-RPC API caller.
-
-    Args:
-        host: Display IP or hostname
-        port: Display port (80 or 443)
-        method: API method name
-        params: Method parameters list
-        version: API method version string
-        request_id: JSON-RPC request ID
-        psk: Pre-Shared Key (None for no auth)
-        timeout: Request timeout in seconds
-
-    Returns:
-        Parsed JSON response dict
-
-    Raises:
-        Exception on API errors or connection failures
     """
     scheme = "https" if port == 443 else "http"
     url = f"{scheme}://{host}:{port}{API_ENDPOINT}"
@@ -119,22 +129,7 @@ def call_sony_api(host: str, port: int, method: str, params: list,
 def get_system_information(host: str, port: int, psk: str = None,
                            timeout: int = DEFAULT_TIMEOUT) -> tuple:
     """
-    Calls the Sony BRAVIA REST API method 'getSystemInformation' via JSON-RPC.
-    Tries v1.7 first, then falls back through v1.4 and v1.0.
-
-    Sony BRAVIA Professional Display API Reference:
-        Service: system
-        Method: getSystemInformation
-
-    v1.0 response contains:
-        - product, region, language, model, serial, macAddr,
-          name, generation, area, cid
-
-    v1.4+ adds:
-        - version: Software/firmware version string
-
-    v1.7 adds:
-        - chipId, uuid, helpUrl, storageSize, essid, bdAddr, icon
+    Calls getSystemInformation. Tries v1.7 -> v1.4 -> v1.0.
 
     Returns:
         tuple of (result_dict, api_version_used)
@@ -154,62 +149,40 @@ def get_system_information(host: str, port: int, psk: str = None,
                 timeout=timeout
             )
 
-            # Check for JSON-RPC error response
             if "error" in result:
                 error_code = result["error"][0] if isinstance(result["error"], list) else result["error"]
                 error_msg = result["error"][1] if isinstance(result["error"], list) and len(result["error"]) > 1 else "Unknown"
 
-                # Error code 15 = "Unsupported version"
-                # Error code 12 = "No such method" (unlikely but possible)
-                # Try next version on these errors
                 if isinstance(error_code, int) and error_code in [12, 15]:
                     last_error = f"v{api_version} not supported (error {error_code})"
                     continue
                 else:
                     raise Exception(f"API Error {error_code}: {error_msg}")
 
-            # Success
             data = result.get("result", [{}])[0]
             return data, api_version
 
         except requests.exceptions.HTTPError:
-            # Re-raise HTTP errors (403, 404, etc.) — these aren't version issues
             raise
         except Timeout:
-            # Re-raise timeouts — not a version issue
             raise
         except RequestsConnectionError:
-            # Re-raise connection errors — not a version issue
             raise
         except Exception as e:
             error_str = str(e)
-            # If it's an API version error, try next version
             if "API Error" in error_str:
                 last_error = error_str
                 continue
             else:
                 raise
 
-    # All versions failed
-    raise Exception(f"getSystemInformation failed on all versions "
-                    f"({', '.join(SYSTEM_INFO_VERSIONS)}). Last error: {last_error}")
+    raise Exception(f"All API versions failed. Last: {last_error}")
 
 
 def get_interface_information(host: str, port: int, psk: str = None,
                               timeout: int = DEFAULT_TIMEOUT) -> dict:
     """
-    Calls the Sony BRAVIA REST API method 'getInterfaceInformation'.
-
-    Service: system
-    Method: getInterfaceInformation
-    Version: 1.0
-
-    Response contains:
-        - productName
-        - modelName
-        - productCategory
-        - interfaceVersion: API interface version
-        - serverName
+    Calls getInterfaceInformation v1.0.
     """
     result = call_sony_api(
         host=host,
@@ -231,12 +204,7 @@ def get_interface_information(host: str, port: int, psk: str = None,
 def get_network_settings(host: str, port: int, psk: str = None,
                          timeout: int = DEFAULT_TIMEOUT) -> list:
     """
-    Calls the Sony BRAVIA REST API method 'getNetworkSettings'.
-
-    Service: system
-    Method: getNetworkSettings
-    Version: 1.0
-    Parameters: [{"netif": ""}] — empty string returns all interfaces
+    Calls getNetworkSettings v1.0.
     """
     try:
         result = call_sony_api(
@@ -262,7 +230,6 @@ def query_display(host: str, port: int, psk: str = None,
                   timeout: int = DEFAULT_TIMEOUT) -> dict:
     """
     Query a single Sony Bravia display for firmware/system information.
-    Tries getSystemInformation v1.7 first, falls back to v1.4 then v1.0.
     """
     result = {
         "host": host,
@@ -282,7 +249,6 @@ def query_display(host: str, port: int, psk: str = None,
     }
 
     try:
-        # Primary call: getSystemInformation (tries v1.7 -> v1.4 -> v1.0)
         sys_info, api_version = get_system_information(host, port, psk, timeout)
 
         result["api_version_used"] = api_version
@@ -293,8 +259,6 @@ def query_display(host: str, port: int, psk: str = None,
         result["generation"] = sys_info.get("generation", "N/A")
         result["product_name"] = sys_info.get("product", "N/A")
 
-        # v1.4+ provides the 'version' field directly with firmware version
-        # v1.0 does not have it, so fall back to generation
         firmware = sys_info.get("version", "")
         if not firmware:
             firmware = sys_info.get("generation", "N/A")
@@ -302,8 +266,6 @@ def query_display(host: str, port: int, psk: str = None,
 
         result["status"] = "OK"
 
-        # Supplementary call: getInterfaceInformation for API version info
-        # Also used as firmware fallback if version and generation are both empty
         try:
             iface_info = get_interface_information(host, port, psk, timeout)
             if iface_info:
@@ -311,7 +273,6 @@ def query_display(host: str, port: int, psk: str = None,
                 if result["product_name"] == "N/A":
                     result["product_name"] = iface_info.get("productName", "N/A")
 
-                # If we still don't have firmware version, try serverName
                 if result["firmware_version"] == "N/A" or not result["firmware_version"]:
                     server_name = iface_info.get("serverName", "")
                     if server_name:
@@ -319,7 +280,6 @@ def query_display(host: str, port: int, psk: str = None,
         except Exception:
             pass
 
-        # Supplementary: get MAC from network settings if not in sys info
         if result["mac_address"] == "N/A" or not result["mac_address"]:
             try:
                 net_settings = get_network_settings(host, port, psk, timeout)
@@ -334,16 +294,15 @@ def query_display(host: str, port: int, psk: str = None,
     except Timeout:
         result["error"] = "Connection timed out"
     except RequestsConnectionError:
-        result["error"] = f"Could not connect to {host}:{port}"
+        result["error"] = f"Cannot connect to {host}:{port}"
     except requests.exceptions.HTTPError as e:
         status_code = e.response.status_code if e.response else "Unknown"
         if status_code == 403:
-            result["error"] = ("HTTP 403 Forbidden — display requires authentication. "
-                               "Use -k to provide a PSK or set display authentication to 'None'")
+            result["error"] = "HTTP 403 — check PSK or set auth to None"
         elif status_code == 404:
-            result["error"] = "HTTP 404 — API endpoint not found. Verify IP control is enabled."
+            result["error"] = "HTTP 404 — IP control not enabled"
         else:
-            result["error"] = f"HTTP Error {status_code}: {str(e)}"
+            result["error"] = f"HTTP {status_code}"
     except Exception as e:
         result["error"] = str(e)
 
@@ -414,39 +373,101 @@ def save_results_json(results: list, filepath: str = DEFAULT_OUTPUT):
     print(f"\nResults saved to: {filepath}")
 
 
+def truncate(text: str, length: int = None) -> str:
+    """Truncate a string to specified length with ellipsis."""
+    if length is None:
+        length = get_error_truncate_length()
+    if not text:
+        return ""
+    if len(text) <= length:
+        return text
+    return text[:length - 3] + "..."
+
+
 def print_results_table(results: list):
-    """Print results as a formatted table."""
+    """Print results as a formatted table scaled to terminal width."""
+    term_width = get_terminal_width()
+    error_max = get_error_truncate_length()
+
+    # Determine which columns to show based on terminal width
+    # Minimum columns: Status, Host, Model, Firmware Version
+    # Added progressively: Serial, MAC Address, API Ver, Error
+    wide = term_width >= 160
+    medium = term_width >= 120
+    narrow = term_width >= 80
+
     table_data = []
     for r in results:
         status_icon = "✓" if r["status"] == "OK" else "✗"
-        error_info = r.get("error", "") or ""
+        error_info = truncate(r.get("error", "") or "", error_max)
 
-        table_data.append([
+        row = [
             f"{status_icon} {r['status']}",
             r["host"],
-            r["port"],
             r["model"],
             r["firmware_version"],
-            r["serial"],
-            r["mac_address"],
-            r["device_name"],
-            r["api_version_used"],
-            error_info[:50] + "..." if len(error_info) > 50 else error_info
-        ])
+        ]
+
+        if narrow:
+            row.append(r["serial"])
+        if medium:
+            row.append(r["mac_address"])
+            row.append(r["api_version_used"])
+        if wide:
+            row.append(error_info)
+
+        table_data.append(row)
 
     headers = [
-        "Status", "Host", "Port", "Model",
-        "Firmware Version", "Serial", "MAC Address",
-        "Device Name", "API Ver", "Error"
+        "Status", "Host", "Model", "Firmware Version",
     ]
 
-    print("\n" + "=" * 130)
-    print("Sony Bravia BZ40H/BZ40L — Firmware Version Query Results")
-    print("=" * 130)
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
-    print(f"\nTotal: {len(results)} | "
-          f"Success: {sum(1 for r in results if r['status'] == 'OK')} | "
-          f"Failed: {sum(1 for r in results if r['status'] == 'ERROR')}")
+    if narrow:
+        headers.append("Serial")
+    if medium:
+        headers.extend(["MAC Address", "API Ver"])
+    if wide:
+        headers.append("Error")
+
+    separator = "=" * term_width
+    title = "Sony Bravia BZ40H/BZ40L — Firmware Version Query Results"
+
+    print(f"\n{separator}")
+    print(title.center(term_width))
+    print(separator)
+
+    # Use maxcolwidths to prevent table from exceeding terminal
+    try:
+        print(tabulate(
+            table_data,
+            headers=headers,
+            tablefmt="pipe",
+            maxcolwidths=[None] * len(headers)
+        ))
+    except TypeError:
+        # Older tabulate versions don't support maxcolwidths
+        print(tabulate(table_data, headers=headers, tablefmt="pipe"))
+
+    summary = (f"Total: {len(results)} | "
+               f"Success: {sum(1 for r in results if r['status'] == 'OK')} | "
+               f"Failed: {sum(1 for r in results if r['status'] == 'ERROR')}")
+
+    # Show hidden columns hint if terminal is too narrow
+    hidden = []
+    if not narrow:
+        hidden.extend(["Serial"])
+    if not medium:
+        hidden.extend(["MAC Address", "API Ver"])
+    if not wide:
+        hidden.extend(["Error"])
+
+    print(f"\n{summary}")
+
+    if hidden:
+        print(f"(Columns hidden due to terminal width: {', '.join(hidden)} — "
+              f"widen terminal or see {DEFAULT_OUTPUT} for full data)")
+
+    print(f"Terminal width: {term_width} cols")
 
 
 def main():
@@ -511,6 +532,8 @@ CSV Format (default: displays.csv):
 
     args = parser.parse_args()
 
+    term_width = get_terminal_width()
+
     # Print configuration
     if args.psk:
         print(f"Authentication: PSK (Pre-Shared Key)")
@@ -518,25 +541,35 @@ CSV Format (default: displays.csv):
         print(f"Authentication: None (no X-Auth-PSK header)")
 
     print(f"API versions:   Will try {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)")
-    print(f"Reading display list from: {args.input}")
+    print(f"Reading:        {args.input}")
+
     displays = read_csv_input(args.input)
-    print(f"Found {len(displays)} display(s) to query.\n")
+    print(f"Displays:       {len(displays)} found")
+    print(f"Terminal:       {term_width} cols\n")
 
+    # Scale progress bar to terminal width with padding for text
+    # tqdm uses ~30 chars for labels/stats, rest is the bar
+    bar_width = max(40, term_width - 2)
+
+    # Query displays with cyan progress bar, white text
     results = []
-    for i, display in enumerate(displays, start=1):
-        host = display["host"]
-        port = display["port"]
-        print(f"[{i}/{len(displays)}] Querying {host}:{port}...", end=" ", flush=True)
+    with tqdm(
+        total=len(displays),
+        desc="Querying displays",
+        bar_format=f"{{l_bar}}{CYAN}{{bar}}{RESET}{{r_bar}}",
+        ncols=bar_width,
+        unit="display"
+    ) as pbar:
+        for display in displays:
+            host = display["host"]
+            port = display["port"]
 
-        result = query_display(host, port, psk=args.psk, timeout=args.timeout)
-        results.append(result)
+            pbar.set_postfix_str(host, refresh=True)
 
-        if result["status"] == "OK":
-            print(f"OK — Model: {result['model']}, "
-                  f"FW: {result['firmware_version']} "
-                  f"(API v{result['api_version_used']})")
-        else:
-            print(f"FAILED — {result['error']}")
+            result = query_display(host, port, psk=args.psk, timeout=args.timeout)
+            results.append(result)
+
+            pbar.update(1)
 
     print_results_table(results)
     save_results_json(results, args.output)
