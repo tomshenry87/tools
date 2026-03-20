@@ -531,13 +531,13 @@
   },
   {
     "host": "silsby-215-hdmi-switcher.openav.dartmouth.edu",
-    "build_date": "2021/03/19",
-    "model": "VP-440H2",
-    "prot_ver": "3000:v2.4",
-    "serial": "11220032400130",
-    "firmware": "1.14",
-    "mac": "00-1D-56-09-CA-7B",
-    "status": "OK"
+    "build_date": "N/A",
+    "model": "N/A",
+    "prot_ver": "N/A",
+    "serial": "N/A",
+    "firmware": "N/A",
+    "mac": "N/A",
+    "status": "ERROR: Timeout"
   },
   {
     "host": "silsby-310-hdmi-switcher.openav.dartmouth.edu",

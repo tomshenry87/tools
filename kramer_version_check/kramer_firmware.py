@@ -1,221 +1,297 @@
 #!/usr/bin/env python3
 """
-query_vp440h2_fixed.py
+Kramer VP-440H2 - Protocol 3000 Device Query Tool
+===================================================
+Reads a list of hosts from switchers.csv (one column: "host", optionally a
+second column "port").  For each host it opens a TCP socket, sends the
+standard Protocol 3000 queries, then prints a formatted table to the CLI
+and saves results.json.
 
-Query a Kramer VP‑440H2 (or any 3000‑series unit that follows the same
-TCP/IP control protocol) for the five pieces of information listed in the
-VP‑440H2 manual:
+Protocol 3000 reference (VP-440H2 User Manual):
+  Command syntax : #<COMMAND>\r
+  Response syntax: ~nn@<COMMAND> <value>\r\n
+  Default TCP port: 5000
 
-    • Build‑date   → GET BUILDDATE?
-    • Model        → GET MODEL?
-    • Protocol version → GET PROT‑VER?
-    • Serial number (SN or SERIAL)
-    • Firmware version → GET VERSION?
+Usage:
+  Normal run   : python3 query_kramer.py
+  Full debug   : python3 query_kramer.py --debug
+  Single host  : python3 query_kramer.py --debug --host 192.168.1.100
+  Single cmd   : python3 query_kramer.py --debug --host 192.168.1.100 --cmd firmware
 
-The script reads a CSV file called `switchers.csv` (host[,port]),
-prints a table with `tabulate`, and writes `results.json`.
-
-Optional flag:
-    --debug    – print the raw protocol reply for each command (useful
-                 when troubleshooting spelling/format issues).
-
-Author : ChatGPT
-Date   : 2026‑03‑18
+Dependencies: pip install tabulate tqdm
 """
 
 import argparse
 import csv
 import json
+import re
+import shutil
 import socket
 import sys
+import time
 from pathlib import Path
-from typing import Dict, List, Tuple
 
-from tabulate import tabulate
-
-# --------------------------------------------------------------
-# OPTIONAL tqdm – nice progress bar, but not required
-# --------------------------------------------------------------
 try:
-    from tqdm import tqdm  # type: ignore
-except ModuleNotFoundError:          # pragma: no cover
-    def tqdm(iterable, *args, **kwargs):
-        return iterable
-# --------------------------------------------------------------
+    from tabulate import tabulate
+except ImportError:
+    print("[ERROR] tabulate not installed.  Run: pip install tabulate tqdm")
+    sys.exit(1)
 
-DEFAULT_PORT = 5000          # default TCP port for the VP‑440H2 control interface
-TIMEOUT_SEC = 5
-BUFFER_SIZE = 4096
+try:
+    from tqdm import tqdm
+except ImportError:
+    print("[ERROR] tqdm not installed.  Run: pip install tabulate tqdm")
+    sys.exit(1)
 
-# ----------------------------------------------------------------------
-# Helper to make key comparison tolerant of hyphens and case.
-# The protocol replies may contain hyphens (e.g. PROT‑VER) while we store
-# the "canonical" keyword without hyphens (PROTVERSION) in the code.
-# ----------------------------------------------------------------------
-def _norm(k: str) -> str:
-    """Return a normalized version of a protocol keyword:
-       uppercase and without any hyphens."""
-    return k.replace("-", "").upper()
+# constants
+DEFAULT_TCP_PORT = 5000
+CONNECT_TIMEOUT  = 8.0
+RECV_TIMEOUT     = 8.0
+BUFFER_SIZE      = 4096
+CSV_FILE         = "switchers.csv"
+JSON_FILE        = "results.json"
 
+# Scalar queries: key -> (command, response regex)
+SCALAR_QUERIES = {
+    "model":      ("#MODEL?\r",      re.compile(r"~\d+@MODEL\s+(.+)",      re.IGNORECASE)),
+    "build_date": ("#BUILD-DATE?\r", re.compile(r"~\d+@BUILD-DATE\s+(.+)", re.IGNORECASE)),
+    "prot_ver":   ("#PROT-VER?\r",   re.compile(r"~\d+@PROT-VER\s+(.+)",   re.IGNORECASE)),
+    "serial":     ("#SN?\r",         re.compile(r"~\d+@SN\s+(.+)",         re.IGNORECASE)),
+    "firmware":   ("#VERSION?\r",    re.compile(r"~\d+@VERSION\s+(.+)",    re.IGNORECASE)),
+    "mac":        ("#NET-MAC?\r",    re.compile(r"~\d+@NET-MAC\s+(.+)",    re.IGNORECASE)),
+}
 
-# ----------------------------------------------------------------------
-# Commands as they appear in the VP‑440H2 manual.
-# The first element is the **exact** keyword we must send (including hyphens
-# where the manual requires them).  The second element is the column title
-# we display in the table.
-# ----------------------------------------------------------------------
-COMMANDS = [
-    ("BUILDDATE",   "Build‑date"),
-    ("MODEL",       "Model"),
-    ("PROT-VER",    "Prot‑ver"),   # <-- hyphen is part of the official command
-    ("SN",          "SN"),         # device may also answer with SERIAL=
-    ("VERSION",     "Version"),
-]
+ALL_CMD_KEYS = list(SCALAR_QUERIES.keys())
 
-# ----------------------------------------------------------------------
-# Helper functions
-# ----------------------------------------------------------------------
-def read_switcher_csv(csv_path: Path) -> List[Tuple[str, int]]:
-    """Read host[,port] lines from switchers.csv."""
-    hosts = []
-    with csv_path.open(newline="") as f:
-        for row in csv.reader(f):
-            if not row or not row[0].strip():
-                continue
-            host = row[0].strip()
-            port = int(row[1]) if len(row) > 1 and row[1].strip() else DEFAULT_PORT
-            hosts.append((host, port))
-    return hosts
+# Style guide: single accent colour (bright cyan) used only for the progress
+# bar fill. All other output is default terminal white. Debug hex dump retains
+# its own colours as it is a diagnostic tool, not normal output.
+CYAN  = "\033[96m"   # bright cyan - progress bar fill only
+RST   = "\033[0m"
+
+# Debug-only ANSI colours (not used in normal output)
+_YLW = "\033[33m"
+_GRN = "\033[32m"
+_DIM = "\033[2m"
+_RED = "\033[31m"
+_MGT = "\033[35m"
+
+DEBUG = False
 
 
-def send_cmd(sock: socket.socket, cmd: str) -> str:
-    """
-    Send a fully‑formed command (the trailing '?' is already in *cmd*)
-    and return the **raw reply line**, stripped only of the final CRLF.
-    """
-    full_cmd = cmd + "\r\n"
-    sock.sendall(full_cmd.encode("utf-8"))
+def debug_print(host, label, data):
+    if not DEBUG:
+        return
+    dir_col   = _MGT if "SEND" in label.upper() else _GRN
+    hex_width = 16
+    header    = f"DEBUG [{host}] {label} ({len(data)} bytes)"
+    box_w     = max(len(header) + 4, 62)
+    print(f"\n{_YLW}  +-- {dir_col}{header}{_YLW} {'-' * max(0, box_w - len(header) - 4)}+{RST}")
+    if not data:
+        print(f"{_YLW}  |{RST}  (empty)")
+    else:
+        for offset in range(0, len(data), hex_width):
+            chunk     = data[offset: offset + hex_width]
+            hex_cols  = " ".join(f"{b:02X}" for b in chunk)
+            hex_cols += "   " * (hex_width - len(chunk))
+            ascii_col = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
+            print(f"{_YLW}  |{RST} {_DIM}{offset:04X}{RST}  {CYAN}{hex_cols}{RST}  {_GRN}|{ascii_col.ljust(hex_width)}|{RST}")
+        decoded = data.decode("ascii", errors="replace")
+        visible = (decoded
+                   .replace("\r", f"{_RED}{{CR}}{RST}")
+                   .replace("\n", f"{_RED}{{LF}}{RST}")
+                   .replace("\x00", f"{_RED}{{NUL}}{RST}"))
+        print(f"{_YLW}  |{RST}  decoded : {visible}")
+    print(f"{_YLW}  +{'-' * box_w}+{RST}\n")
 
-    data = b""
-    while not data.endswith(b"\r\n"):
-        chunk = sock.recv(BUFFER_SIZE)
-        if not chunk:            # connection closed unexpectedly
+
+def send_query(sock, command, host=""):
+    payload = command.encode("ascii")
+    debug_print(host, f"SEND  {command.strip()!r}", payload)
+    sock.sendall(payload)
+    time.sleep(0.1)
+    response = b""
+    deadline = time.time() + RECV_TIMEOUT
+    while time.time() < deadline:
+        try:
+            chunk = sock.recv(BUFFER_SIZE)
+            if chunk:
+                response += chunk
+                if b"\n" in response:
+                    break
+        except socket.timeout:
             break
-        data += chunk
-        if len(data) > 4096:     # safety guard – replies are tiny
-            break
-    # Decode using replacement for any unexpected bytes (should never happen)
-    return data.decode("utf-8", errors="replace").rstrip("\r\n")
+    debug_print(host, f"RECV  {command.strip()!r}", response)
+    return response.decode("ascii", errors="replace").strip()
 
 
-def _clean_error(val: str) -> str:
-    """
-    Keep the value unless the device explicitly returned an error.
-    According to the manual, errors start with the literal text
-    'ERROR='.
-    """
-    if not val:
-        return ""
-    if val.upper().startswith("ERROR="):
-        return ""            # true protocol error → blank field
-    return val
-
-
-def query_one_switch(host: str,
-                     port: int = DEFAULT_PORT,
-                     debug: bool = False) -> Dict[str, str]:
-    """
-    Open a TCP socket to the VP‑440H2, issue each command from COMMANDS,
-    and return a dict containing the host and the five values.
-    """
-    result = {"host": host}
+def query_device(host, port):
+    result = {
+        "host":       host,
+        "build_date": "N/A",
+        "model":      "N/A",
+        "prot_ver":   "N/A",
+        "serial":     "N/A",
+        "firmware":   "N/A",
+        "mac":        "N/A",
+        "status":     "OK",
+    }
     try:
-        with socket.create_connection((host, port), timeout=TIMEOUT_SEC) as sock:
-            for key, _ in COMMANDS:
-                try:
-                    # Build the exact command the manual requires.
-                    reply = send_cmd(sock, f"GET {key}?")
-                    if debug:
-                        print(f"[DEBUG] {host}:{port} → GET {key}? → raw reply: {repr(reply)}")
-                except (socket.timeout, socket.error) as exc:
-                    result[key] = _clean_error(f"COMM‑ERR ({exc})")
-                    continue
+        with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
+            sock.settimeout(RECV_TIMEOUT)
+            hs = b"#\r"
+            debug_print(host, "SEND  handshake", hs)
+            sock.sendall(hs)
+            time.sleep(0.15)
+            try:
+                hs_resp = sock.recv(BUFFER_SIZE)
+                debug_print(host, "RECV  handshake", hs_resp)
+            except socket.timeout:
+                debug_print(host, "RECV  handshake", b"(timeout - no banner)")
 
-                # Expected successful reply:  KEY=VALUE
-                if "=" in reply:
-                    r_key, r_val = reply.split("=", 1)
-                    r_key_norm = _norm(r_key.strip())
+            for key, (command, pattern) in SCALAR_QUERIES.items():
+                raw = send_query(sock, command, host=host)
+                for line in raw.splitlines():
+                    m = pattern.search(line)
+                    if m:
+                        result[key] = m.group(1).strip()
+                        break
 
-                    # Normal case – the key we asked for matches the reply key
-                    if r_key_norm == _norm(key):
-                        result[key] = _clean_error(r_val.strip())
-                    # Serial‑number fallback: device may answer with SERIAL=
-                    elif key == "SN" and r_key_norm == _norm("SERIAL"):
-                        result[key] = _clean_error(r_val.strip())
-                    else:
-                        # Unexpected key – treat as an error (blank it)
-                        result[key] = _clean_error(f"UNEXPECTED ({reply})")
-                else:
-                    # No '=' means we got something that is not a proper key‑value line
-                    result[key] = _clean_error(f"ERR ({reply})")
-    except (socket.timeout, socket.error) as exc:
-        # Whole device unreachable – blank every field
-        for key, _ in COMMANDS:
-            result[key] = _clean_error(f"UNREACHABLE ({exc})")
+    except ConnectionRefusedError:
+        result["status"] = "ERROR: Connection refused"
+    except socket.timeout:
+        result["status"] = "ERROR: Timeout"
+    except OSError as exc:
+        result["status"] = f"ERROR: {exc}"
     return result
 
 
-def build_table(data: List[Dict[str, str]]) -> str:
-    """Render a pretty table using the column titles defined in COMMANDS."""
-    headers = ["host"] + [col_title for _, col_title in COMMANDS]
-    rows = []
-    for entry in data:
-        row = [entry.get("host", "")]
-        for key, _ in COMMANDS:
-            row.append(_clean_error(entry.get(key, "")))
-        rows.append(row)
-    return tabulate(rows, headers=headers, tablefmt="grid")
+def debug_probe(host, port, cmd_key):
+    print(f"\n  == Debug probe: {host}:{port} ==\n")
+    try:
+        with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
+            sock.settimeout(RECV_TIMEOUT)
+            hs = b"#\r"
+            debug_print(host, "SEND  handshake", hs)
+            sock.sendall(hs)
+            time.sleep(0.15)
+            try:
+                hs_resp = sock.recv(BUFFER_SIZE)
+                debug_print(host, "RECV  handshake", hs_resp)
+            except socket.timeout:
+                debug_print(host, "RECV  handshake", b"(timeout)")
+
+            targets = (
+                {cmd_key: SCALAR_QUERIES[cmd_key]}
+                if cmd_key
+                else SCALAR_QUERIES
+            )
+            for key, (command, pattern) in targets.items():
+                raw    = send_query(sock, command, host=host)
+                parsed = "N/A"
+                for line in raw.splitlines():
+                    m = pattern.search(line)
+                    if m:
+                        parsed = m.group(1).strip()
+                        break
+                print(f"  parsed [{key}] => {parsed!r}\n")
+
+    except (ConnectionRefusedError, socket.timeout, OSError) as exc:
+        print(f"\n  Connection failed: {exc}\n")
+    sys.exit(0)
 
 
-# ----------------------------------------------------------------------
-# Main entry point
-# ----------------------------------------------------------------------
-def main() -> None:
+def load_hosts(csv_path):
+    hosts = []
+    path  = Path(csv_path)
+    if not path.exists():
+        print(f"[ERROR] CSV file not found: {csv_path}")
+        sys.exit(1)
+    with open(path, newline="", encoding="utf-8") as fh:
+        reader = csv.reader(fh)
+        for i, row in enumerate(reader):
+            if not row or not row[0].strip():
+                continue
+            raw_host = row[0].strip()
+            if i == 0 and not _looks_like_host(raw_host):
+                continue
+            port = DEFAULT_TCP_PORT
+            if len(row) >= 2 and row[1].strip().isdigit():
+                port = int(row[1].strip())
+            hosts.append((raw_host, port))
+    if not hosts:
+        print("[ERROR] No hosts found in switchers.csv.")
+        sys.exit(1)
+    return hosts
+
+
+def _looks_like_host(value):
+    ip = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
+    hn = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9\-\.]*[A-Za-z0-9])?$")
+    return bool(ip.match(value) or hn.match(value))
+
+
+def main():
+    global DEBUG
+
     parser = argparse.ArgumentParser(
-        description="Query Kramer VP‑440H2 (or any 3000‑series) for firmware info."
+        description="Query Kramer VP-440H2 devices via Protocol 3000 TCP."
     )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Print raw protocol replies – useful for troubleshooting.",
-    )
+    parser.add_argument("--debug", action="store_true",
+                        help="Print hex+ASCII dump of every socket exchange.")
+    parser.add_argument("--host", metavar="IP",
+                        help="(Debug) Target a single host instead of switchers.csv.")
+    parser.add_argument("--port", metavar="PORT", type=int, default=DEFAULT_TCP_PORT,
+                        help=f"TCP port (default: {DEFAULT_TCP_PORT}).")
+    parser.add_argument("--cmd", metavar="CMD", choices=ALL_CMD_KEYS,
+                        help="(Debug) Probe only one command. Choices: " + ", ".join(ALL_CMD_KEYS))
     args = parser.parse_args()
 
-    csv_path = Path("switchers.csv")
-    if not csv_path.is_file():
-        sys.stderr.write(f"❌  File not found: {csv_path}\n")
-        sys.exit(1)
+    DEBUG = args.debug
 
-    switchers = read_switcher_csv(csv_path)
-    if not switchers:
-        sys.stderr.write("❌  No hosts found in switchers.csv\n")
-        sys.exit(1)
+    if args.debug and args.host:
+        debug_probe(args.host, args.port, args.cmd)
+        return
+    if args.cmd:
+        parser.error("--cmd requires --debug and --host")
 
-    results: List[Dict[str, str]] = []
+    hosts   = load_hosts(CSV_FILE)
+    results = []
 
-    print(f"🔎  Querying {len(switchers)} VP‑440H2 switcher(s)...")
-    for host, port in tqdm(switchers, desc="Switchers", unit="switch"):
-        results.append(query_one_switch(host, port, debug=args.debug))
+    debug_label = "  [DEBUG ON]" if DEBUG else ""
+    print(f"\nQuerying {len(hosts)} device(s) via Kramer Protocol 3000 (TCP){debug_label}...\n")
 
-    # ----- DISPLAY -----
-    print("\n📊  Query Results")
-    print(build_table(results))
+    term_width = shutil.get_terminal_size().columns
+    bar_width  = term_width - 2
 
-    # ----- SAVE -----
-    json_path = Path("results.json")
-    with json_path.open("w", encoding="utf-8") as jf:
-        json.dump(results, jf, indent=2, ensure_ascii=False)
-    print(f"\n💾  Results written to {json_path}")
+    with tqdm(
+        hosts,
+        total=len(hosts),
+        unit="device",
+        bar_format="{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}",
+        colour="cyan",
+        ncols=bar_width,
+    ) as progress:
+        for host, port in progress:
+            progress.set_postfix_str(host)
+            result = query_device(host, port)
+            results.append(result)
+
+
+    table_rows = [
+        [r["host"], r["build_date"], r["model"], r["prot_ver"],
+         r["serial"], r["firmware"], r["mac"], r["status"]]
+        for r in results
+    ]
+    headers = ["Host", "Build Date", "Model", "Protocol Ver", "Serial", "Firmware Ver", "Mac", "Status"]
+
+    print()
+    print(tabulate(table_rows, headers=headers, tablefmt="outline"))
+    print()
+
+    with open(JSON_FILE, "w", encoding="utf-8") as fh:
+        json.dump(results, fh, indent=2)
+    print(f"Results saved to: {JSON_FILE}\n")
 
 
 if __name__ == "__main__":
