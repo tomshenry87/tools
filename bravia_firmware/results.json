@@ -1,5 +1,5 @@
 {
-  "query_timestamp": "2026-03-20T00:08:25.229482Z",
+  "query_timestamp": "2026-03-24T11:39:46.624997Z",
   "total_displays": 67,
   "successful_queries": 41,
   "failed_queries": 26,
@@ -18,7 +18,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:43.657110Z"
+      "timestamp": "2026-03-24T11:38:56.978669Z"
     },
     {
       "host": "lsc-100-display-1.openav.dartmouth.edu",
@@ -34,7 +34,7 @@
       "generation": "1.0.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:44.264760Z"
+      "timestamp": "2026-03-24T11:38:57.700129Z"
     },
     {
       "host": "lsc-100-display-2.openav.dartmouth.edu",
@@ -50,7 +50,7 @@
       "generation": "1.0.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:44.595512Z"
+      "timestamp": "2026-03-24T11:38:58.187091Z"
     },
     {
       "host": "lsc-105-1-display-1.openav.dartmouth.edu",
@@ -66,7 +66,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:44.897458Z"
+      "timestamp": "2026-03-24T11:38:58.696768Z"
     },
     {
       "host": "lsc-105-1-display-2.openav.dartmouth.edu",
@@ -82,7 +82,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:45.475889Z"
+      "timestamp": "2026-03-24T11:38:59.391014Z"
     },
     {
       "host": "lsc-105-2-display-1.openav.dartmouth.edu",
@@ -98,7 +98,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:46.045995Z"
+      "timestamp": "2026-03-24T11:39:00.132118Z"
     },
     {
       "host": "lsc-105-2-display-2.openav.dartmouth.edu",
@@ -114,7 +114,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:46.617318Z"
+      "timestamp": "2026-03-24T11:39:00.835955Z"
     },
     {
       "host": "lsc-105-2-display-3.openav.dartmouth.edu",
@@ -130,7 +130,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:47.187863Z"
+      "timestamp": "2026-03-24T11:39:01.566176Z"
     },
     {
       "host": "lsc-205-1-display-1.openav.dartmouth.edu",
@@ -146,7 +146,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:47.767978Z"
+      "timestamp": "2026-03-24T11:39:02.282695Z"
     },
     {
       "host": "lsc-205-1-display-2.openav.dartmouth.edu",
@@ -162,7 +162,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:48.334927Z"
+      "timestamp": "2026-03-24T11:39:02.979157Z"
     },
     {
       "host": "lsc-205-2-display-1.openav.dartmouth.edu",
@@ -178,7 +178,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:48.883789Z"
+      "timestamp": "2026-03-24T11:39:03.657626Z"
     },
     {
       "host": "lsc-205-2-display-2.openav.dartmouth.edu",
@@ -194,7 +194,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:49.454554Z"
+      "timestamp": "2026-03-24T11:39:04.354124Z"
     },
     {
       "host": "lsc-205-2-display-3.openav.dartmouth.edu",
@@ -210,7 +210,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:50.034805Z"
+      "timestamp": "2026-03-24T11:39:05.058395Z"
     },
     {
       "host": "4-currier-101b-display.openav.dartmouth.edu",
@@ -226,7 +226,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:50.633934Z"
+      "timestamp": "2026-03-24T11:39:05.755864Z"
     },
     {
       "host": "4-currier-101e-display.openav.dartmouth.edu",
@@ -242,7 +242,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:51.002257Z"
+      "timestamp": "2026-03-24T11:39:06.094605Z"
     },
     {
       "host": "4-currier-213-display.openav.dartmouth.edu",
@@ -258,7 +258,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:51.259213Z"
+      "timestamp": "2026-03-24T11:39:06.433943Z"
     },
     {
       "host": "4-currier-214-display.openav.dartmouth.edu",
@@ -274,7 +274,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:51.544384Z"
+      "timestamp": "2026-03-24T11:39:06.775344Z"
     },
     {
       "host": "4-currier-215-display.openav.dartmouth.edu",
@@ -290,7 +290,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:51.781791Z"
+      "timestamp": "2026-03-24T11:39:07.102818Z"
     },
     {
       "host": "4-currier-223-display.openav.dartmouth.edu",
@@ -306,7 +306,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:52.045658Z"
+      "timestamp": "2026-03-24T11:39:07.448831Z"
     },
     {
       "host": "4-currier-227-display.openav.dartmouth.edu",
@@ -322,7 +322,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:52.352068Z"
+      "timestamp": "2026-03-24T11:39:07.783939Z"
     },
     {
       "host": "4-currier-232-vr-display.openav.dartmouth.edu",
@@ -338,7 +338,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:52.644115Z"
+      "timestamp": "2026-03-24T11:39:08.117236Z"
     },
     {
       "host": "4-currier-collaboration-display.openav.dartmouth.edu",
@@ -354,7 +354,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:52.896720Z"
+      "timestamp": "2026-03-24T11:39:08.436647Z"
     },
     {
       "host": "4-currier-lounge-display.openav.dartmouth.edu",
@@ -370,7 +370,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:53.130211Z"
+      "timestamp": "2026-03-24T11:39:08.778875Z"
     },
     {
       "host": "baker-102-display.openav.dartmouth.edu",
@@ -386,7 +386,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:53.353997Z"
+      "timestamp": "2026-03-24T11:39:09.129452Z"
     },
     {
       "host": "bartlett-105a-display.openav.dartmouth.edu",
@@ -402,7 +402,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:07:53.900833Z"
+      "timestamp": "2026-03-24T11:39:09.836135Z"
     },
     {
       "host": "berry-180-display.openav.dartmouth.edu",
@@ -418,7 +418,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:54.304848Z"
+      "timestamp": "2026-03-24T11:39:10.195478Z"
     },
     {
       "host": "berrysport-045-display.openav.dartmouth.edu",
@@ -434,7 +434,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:54.868093Z"
+      "timestamp": "2026-03-24T11:39:10.880582Z"
     },
     {
       "host": "berrysport-010-display.openav.dartmouth.edu",
@@ -450,7 +450,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:55.432581Z"
+      "timestamp": "2026-03-24T11:39:11.604937Z"
     },
     {
       "host": "berrysport-206-display.openav.dartmouth.edu",
@@ -466,7 +466,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:57.029464Z"
+      "timestamp": "2026-03-24T11:39:13.339660Z"
     },
     {
       "host": "carson-061-2-display-1.openav.dartmouth.edu",
@@ -482,7 +482,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:57.600132Z"
+      "timestamp": "2026-03-24T11:39:14.043856Z"
     },
     {
       "host": "carson-061-2-display-2.openav.dartmouth.edu",
@@ -498,7 +498,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:58.150764Z"
+      "timestamp": "2026-03-24T11:39:14.788151Z"
     },
     {
       "host": "carson-061-2-display-3.openav.dartmouth.edu",
@@ -514,7 +514,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:58.732396Z"
+      "timestamp": "2026-03-24T11:39:15.498959Z"
     },
     {
       "host": "carson-061-2-display-4.openav.dartmouth.edu",
@@ -530,7 +530,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:59.269116Z"
+      "timestamp": "2026-03-24T11:39:16.206292Z"
     },
     {
       "host": "carson-061-2-display-5.openav.dartmouth.edu",
@@ -546,7 +546,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:07:59.816332Z"
+      "timestamp": "2026-03-24T11:39:16.908106Z"
     },
     {
       "host": "carson-061-2-display-6.openav.dartmouth.edu",
@@ -562,7 +562,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:00.386780Z"
+      "timestamp": "2026-03-24T11:39:17.621667Z"
     },
     {
       "host": "court01-211-display.openav.dartmouth.edu",
@@ -578,7 +578,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:00.946922Z"
+      "timestamp": "2026-03-24T11:39:18.325368Z"
     },
     {
       "host": "court01-215-display.openav.dartmouth.edu",
@@ -594,7 +594,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:01.199803Z"
+      "timestamp": "2026-03-24T11:39:18.685668Z"
     },
     {
       "host": "cts-4-currier-104-display.dartmouth.edu",
@@ -610,7 +610,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "Connection timed out",
-      "timestamp": "2026-03-20T00:08:01.435617Z"
+      "timestamp": "2026-03-24T11:39:19.063447Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -626,7 +626,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:11.497549Z"
+      "timestamp": "2026-03-24T11:39:29.156372Z"
     },
     {
       "host": "fairchild-217a-display.openav.dartmouth.edu",
@@ -642,7 +642,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:11.740177Z"
+      "timestamp": "2026-03-24T11:39:29.496174Z"
     },
     {
       "host": "floren-332-display-1.openav.dartmouth.edu",
@@ -658,7 +658,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:11.999768Z"
+      "timestamp": "2026-03-24T11:39:29.864991Z"
     },
     {
       "host": "floren-332-display-2.openav.dartmouth.edu",
@@ -674,7 +674,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:12.562826Z"
+      "timestamp": "2026-03-24T11:39:30.567928Z"
     },
     {
       "host": "hopkins-051-display.openav.dartmouth.edu",
@@ -690,7 +690,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:13.124589Z"
+      "timestamp": "2026-03-24T11:39:31.261043Z"
     },
     {
       "host": "lewinstein-111-display.openav.dartmouth.edu",
@@ -706,7 +706,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:13.713816Z"
+      "timestamp": "2026-03-24T11:39:31.975612Z"
     },
     {
       "host": "lsc-200-1-display-1.openav.dartmouth.edu",
@@ -722,7 +722,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:14.268320Z"
+      "timestamp": "2026-03-24T11:39:32.699340Z"
     },
     {
       "host": "lsc-200-1-display-2.openav.dartmouth.edu",
@@ -738,7 +738,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:14.853455Z"
+      "timestamp": "2026-03-24T11:39:33.398544Z"
     },
     {
       "host": "lsc-200-2-display-1.openav.dartmouth.edu",
@@ -754,7 +754,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:15.420781Z"
+      "timestamp": "2026-03-24T11:39:34.091935Z"
     },
     {
       "host": "lsc-200-2-display-2.openav.dartmouth.edu",
@@ -770,7 +770,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:15.983382Z"
+      "timestamp": "2026-03-24T11:39:34.794037Z"
     },
     {
       "host": "lsc-200-2-display-3.openav.dartmouth.edu",
@@ -786,7 +786,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:16.553075Z"
+      "timestamp": "2026-03-24T11:39:35.490836Z"
     },
     {
       "host": "lsc-200-2-display-4.openav.dartmouth.edu",
@@ -802,7 +802,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:17.125028Z"
+      "timestamp": "2026-03-24T11:39:36.204386Z"
     },
     {
       "host": "lsc-200-2-display-5.openav.dartmouth.edu",
@@ -818,7 +818,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:17.680425Z"
+      "timestamp": "2026-03-24T11:39:36.908632Z"
     },
     {
       "host": "lsc-200-2-display-6.openav.dartmouth.edu",
@@ -834,7 +834,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:18.263359Z"
+      "timestamp": "2026-03-24T11:39:37.596377Z"
     },
     {
       "host": "lsc-200-2-display-7.openav.dartmouth.edu",
@@ -850,7 +850,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:18.820207Z"
+      "timestamp": "2026-03-24T11:39:38.297624Z"
     },
     {
       "host": "lsc-200-2-display-8.openav.dartmouth.edu",
@@ -866,7 +866,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:19.387440Z"
+      "timestamp": "2026-03-24T11:39:38.993574Z"
     },
     {
       "host": "parkhurst-06a-display.openav.dartmouth.edu",
@@ -882,7 +882,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:19.934901Z"
+      "timestamp": "2026-03-24T11:39:39.725882Z"
     },
     {
       "host": "preshouse-b02-display.openav.dartmouth.edu",
@@ -898,7 +898,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:21.228192Z"
+      "timestamp": "2026-03-24T11:39:40.089623Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -914,7 +914,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:21.470878Z"
+      "timestamp": "2026-03-24T11:39:41.510075Z"
     },
     {
       "host": "dewey-010-display.openav.dartmouth.edu",
@@ -930,7 +930,7 @@
       "generation": "5.7.0",
       "api_version_used": "1.7",
       "error": null,
-      "timestamp": "2026-03-20T00:08:21.719280Z"
+      "timestamp": "2026-03-24T11:39:41.877726Z"
     },
     {
       "host": "kemeny-307-display.openav.dartmouth.edu",
@@ -946,7 +946,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:22.390963Z"
+      "timestamp": "2026-03-24T11:39:42.614891Z"
     },
     {
       "host": "robinson-322-display.openav.dartmouth.edu",
@@ -962,7 +962,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:22.658835Z"
+      "timestamp": "2026-03-24T11:39:42.995391Z"
     },
     {
       "host": "mcnutt-001-display.openav.dartmouth.edu",
@@ -978,7 +978,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:22.886411Z"
+      "timestamp": "2026-03-24T11:39:43.364159Z"
     },
     {
       "host": "parkhurst-009b-display.openav.dartmouth.edu",
@@ -994,7 +994,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:23.448859Z"
+      "timestamp": "2026-03-24T11:39:44.073395Z"
     },
     {
       "host": "wentworth-205-display.openav.dartmouth.edu",
@@ -1010,7 +1010,7 @@
       "generation": "5.5.0",
       "api_version_used": "1.0",
       "error": null,
-      "timestamp": "2026-03-20T00:08:23.690564Z"
+      "timestamp": "2026-03-24T11:39:44.434483Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -1026,7 +1026,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:24.257687Z"
+      "timestamp": "2026-03-24T11:39:45.179476Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -1042,7 +1042,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:24.501082Z"
+      "timestamp": "2026-03-24T11:39:45.534917Z"
     },
     {
       "host": "osher-3a-display.openav.dartmouth.edu",
@@ -1058,7 +1058,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:24.719360Z"
+      "timestamp": "2026-03-24T11:39:45.851264Z"
     },
     {
       "host": "osher-3a-confidence-display.openav.dartmouth.edu",
@@ -1074,7 +1074,7 @@
       "generation": "N/A",
       "api_version_used": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-20T00:08:24.971077Z"
+      "timestamp": "2026-03-24T11:39:46.244332Z"
     }
   ]
 }
