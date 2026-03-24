@@ -1,0 +1,524 @@
+[
+  {
+    "host": "baker-102-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "35 °C",
+    "error": null
+  },
+  {
+    "host": "baker-213-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "baker-219-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.14",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "baker-227-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "44 °C",
+    "error": null
+  },
+  {
+    "host": "baker-234-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "bartlett-105-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "45 °C",
+    "error": null
+  },
+  {
+    "host": "bartlett-105a-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "38 °C",
+    "error": null
+  },
+  {
+    "host": "berrysport-010-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "36 °C",
+    "error": null
+  },
+  {
+    "host": "berrysport-045-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "berrysport-206-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "brace-008-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "carson-060-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.13",
+    "cpu_temp": "40 °C",
+    "error": null
+  },
+  {
+    "host": "carson-061-1-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "46 °C",
+    "error": null
+  },
+  {
+    "host": "carson-061-2-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "carson-l01-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "carson-l02-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "dewey-010-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "fairchild-101-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "40 °C",
+    "error": null
+  },
+  {
+    "host": "floren-332-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "37 °C",
+    "error": null
+  },
+  {
+    "host": "haldeman-028-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.8",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "haldeman-046-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "hopkins-051-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "hopkins-052-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "37 °C",
+    "error": null
+  },
+  {
+    "host": "hopkins-054-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "45 °C",
+    "error": null
+  },
+  {
+    "host": "hopkins-138-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "39 °C",
+    "error": null
+  },
+  {
+    "host": "kemeny-004-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "kemeny-006-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "kemeny-007-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "kemeny-008-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "kemeny-105-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": false,
+    "firmware_version": null,
+    "cpu_temp": null,
+    "error": "SSH/network error: timed out"
+  },
+  {
+    "host": "kemeny-108-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.14",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "lewinstein-111-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.5.14",
+    "cpu_temp": "46 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-100-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-104-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "40 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-105-1-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "45 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-105-2-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-200-1-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "44 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-200-2-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-201-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-204-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-205-1-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.8",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-205-2-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.13",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "lsc-135-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "moore-110-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "37 °C",
+    "error": null
+  },
+  {
+    "host": "moore-150-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "42 °C",
+    "error": null
+  },
+  {
+    "host": "rockefeller-001-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "38 °C",
+    "error": null
+  },
+  {
+    "host": "rockefeller-002-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "rockefeller-003-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "rockefeller-208-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.13",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "rockefeller-209-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "36 °C",
+    "error": null
+  },
+  {
+    "host": "steele-007-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "sudikoff-003-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "31 °C",
+    "error": null
+  },
+  {
+    "host": "sudikoff-045-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": false,
+    "firmware_version": null,
+    "cpu_temp": null,
+    "error": "SSH/network error: timed out"
+  },
+  {
+    "host": "sudikoff-143-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "33 °C",
+    "error": null
+  },
+  {
+    "host": "wilder-111-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "44 °C",
+    "error": null
+  },
+  {
+    "host": "wilder-115-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  },
+  {
+    "host": "wilson-205-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "43 °C",
+    "error": null
+  },
+  {
+    "host": "wilson-219-router.openav.dartmouth.edu",
+    "username": "admin",
+    "port": 22,
+    "success": true,
+    "firmware_version": "13.0.4.9",
+    "cpu_temp": "41 °C",
+    "error": null
+  }
+]
