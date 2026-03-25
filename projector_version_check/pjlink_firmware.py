@@ -10,6 +10,11 @@ Queries projectors via PJLink protocol for:
     - Lamp hours (LAMP for all classes)
     - Manufacturer, model, and other device info
 
+Features:
+    - Concurrent workers for fast scanning
+    - Cyan progress bar scaled to terminal width
+    - White text results table
+
 Defaults:
     Input:  projectors.csv
     Output: results.json
@@ -24,13 +29,15 @@ import sys
 import re
 import logging
 import time
+import shutil
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
 from tabulate import tabulate
 from tqdm import tqdm
 
-# Paramiko available for future SSH-based management
 try:
     import paramiko  # noqa: F401
     HAS_PARAMIKO = True
@@ -39,7 +46,7 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Logging — suppress during normal runs, only show in debug mode
+# Logging
 # ---------------------------------------------------------------------------
 
 log = logging.getLogger("pjlink")
@@ -47,7 +54,6 @@ log.addHandler(logging.NullHandler())
 
 
 def setup_logging(debug: bool):
-    """Configure logging. Only emit to stderr in debug mode."""
     log.handlers.clear()
     if debug:
         handler = logging.StreamHandler(sys.stderr)
@@ -59,6 +65,19 @@ def setup_logging(debug: bool):
     else:
         log.addHandler(logging.NullHandler())
         log.setLevel(logging.WARNING)
+
+
+# ---------------------------------------------------------------------------
+# ANSI
+# ---------------------------------------------------------------------------
+
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+RED = "\033[91m"
+YELLOW = "\033[93m"
+WHITE = "\033[97m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
 
 
 # ---------------------------------------------------------------------------
@@ -111,8 +130,6 @@ class PJLinkClient:
         if self.password and len(self.password.encode("utf-8")) > self.MAX_PASSWORD_LENGTH:
             raise PJLinkError(f"Password exceeds {self.MAX_PASSWORD_LENGTH} bytes")
 
-    # -- Connection --
-
     def connect(self):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -158,8 +175,6 @@ class PJLinkClient:
                 pass
             finally:
                 self.socket = None
-
-    # -- Raw I/O --
 
     def _receive_raw_line(self) -> bytes:
         if not self.socket:
@@ -210,8 +225,6 @@ class PJLinkClient:
             raise PJLinkError("Not connected.")
         log.debug(f"[{self.host}] TX: {repr(data)}")
         self.socket.sendall(data)
-
-    # -- Command sending --
 
     def _should_prepend_digest(self) -> bool:
         if not self.security_enabled:
@@ -278,8 +291,6 @@ class PJLinkClient:
                 continue
         raise PJLinkError(f"No response for {cmd} after retries.")
 
-    # -- Response parsing --
-
     def _parse_response(self, raw, expected_cmd) -> str:
         line = raw.strip("\r\n \t")
         if not line:
@@ -317,8 +328,6 @@ class PJLinkClient:
         except PJLinkError as e:
             return None, str(e)
 
-    # -- Class detection --
-
     def detect_class(self) -> str:
         self.detected_class = "1"
         self.auth_sent = False
@@ -332,7 +341,7 @@ class PJLinkClient:
             self.auth_sent = False
         return self.detected_class
 
-    # -- Class 1 commands --
+    # -- Class 1 --
 
     def get_power_status(self) -> str:
         v = self._send_command("POWR", "?", "%1")
@@ -410,7 +419,7 @@ class PJLinkClient:
     def get_mute_status(self) -> str:
         return self._send_command("AVMT", "?", "%1")
 
-    # -- Class 2 commands --
+    # -- Class 2 --
 
     def get_software_version(self) -> str:
         return self._send_command("SVER", "?", "%2")
@@ -508,8 +517,6 @@ class PJLinkClient:
             return oi
         return "Not available"
 
-    # -- Diagnostic --
-
     def run_diagnostic(self) -> dict:
         diag = {"host": self.host, "port": self.port,
                 "security": self.security_enabled, "commands": []}
@@ -553,7 +560,7 @@ def load_csv(csv_path: str) -> list:
     projectors = []
     p = Path(csv_path)
     if not p.exists():
-        print(f"\n\033[91mError: CSV not found: {csv_path}\033[0m")
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
         sys.exit(1)
     with open(p, "r", encoding="utf-8-sig") as f:
         sample = f.read(4096)
@@ -564,11 +571,11 @@ def load_csv(csv_path: str) -> list:
             dialect = csv.excel
         reader = csv.DictReader(f, dialect=dialect)
         if not reader.fieldnames:
-            print("\n\033[91mError: CSV is empty\033[0m")
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
             sys.exit(1)
         col_map = {n.strip().lower(): n for n in reader.fieldnames}
         if "host" not in col_map:
-            print(f"\n\033[91mError: CSV needs 'host' column. Found: {reader.fieldnames}\033[0m")
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs 'host' column. Found: {reader.fieldnames}{RESET}")
             sys.exit(1)
         for row in reader:
             host = row.get(col_map["host"], "").strip()
@@ -627,7 +634,7 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
 
 
 # ---------------------------------------------------------------------------
-# Output helpers
+# Output
 # ---------------------------------------------------------------------------
 
 def save_to_json(data, path):
@@ -662,18 +669,7 @@ def truncate_error(err, max_len=30):
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-# -- ANSI color helpers --
-CYAN = "\033[96m"
-GREEN = "\033[92m"
-RED = "\033[91m"
-YELLOW = "\033[93m"
-BOLD = "\033[1m"
-RESET = "\033[0m"
-
-
 def print_results_table(results):
-    """Print final results table using tabulate."""
-
     def clean(val):
         s = str(val) if val is not None else "N/A"
         if s in ("None", "-1", ""):
@@ -685,10 +681,10 @@ def print_results_table(results):
     def status_icon(r):
         s = r.get("status", "error")
         if s == "success":
-            return f"{GREEN}\u2713 OK{RESET}"
+            return f"{GREEN}\u2713 OK{RESET}{WHITE}"
         elif s == "auth_error":
-            return f"{YELLOW}\u2717 AUTH ERR{RESET}"
-        return f"{RED}\u2717 ERROR{RESET}"
+            return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+        return f"{RED}\u2717 ERROR{RESET}{WHITE}"
 
     rows = []
     for r in results:
@@ -707,17 +703,8 @@ def print_results_table(results):
         ])
 
     headers = [
-        f"{BOLD}Status{RESET}",
-        f"{BOLD}Host{RESET}",
-        f"{BOLD}Port{RESET}",
-        f"{BOLD}Manufacturer{RESET}",
-        f"{BOLD}Model{RESET}",
-        f"{BOLD}Firmware{RESET}",
-        f"{BOLD}Lamp Hours{RESET}",
-        f"{BOLD}Class{RESET}",
-        f"{BOLD}Power{RESET}",
-        f"{BOLD}Name{RESET}",
-        f"{BOLD}Error{RESET}",
+        "Status", "Host", "Port", "Manufacturer", "Model",
+        "Firmware", "Lamp Hours", "Class", "Power", "Name", "Error",
     ]
 
     table = tabulate(
@@ -727,22 +714,20 @@ def print_results_table(results):
         numalign="right",
     )
 
-    # Title banner
-    # Find the width from the first line of the table
     first_line = table.split("\n")[0]
-    # Strip ANSI codes to get true width
     raw_width = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
-    banner_width = max(raw_width, 60)
+    bw = max(raw_width, 60)
 
-    print()
-    print(f"{CYAN}{'=' * banner_width}{RESET}")
+    print(f"{WHITE}")
+    print(f"  {'=' * bw}")
     title = "PJLink Projector Query Results \u2014 Firmware & Lamp Hours"
-    pad = (banner_width - len(title)) // 2
-    print(f"{CYAN}{' ' * pad}{BOLD}{title}{RESET}")
-    print(f"{CYAN}{'=' * banner_width}{RESET}")
-    print(table)
+    pad = (bw - len(title)) // 2
+    print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
+    print(f"  {'=' * bw}")
 
-    # Stats
+    for line in table.split("\n"):
+        print(f"  {line}")
+
     total = len(results)
     ok = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
@@ -755,23 +740,23 @@ def print_results_table(results):
 
     print()
     print(
-        f"  {BOLD}Total:{RESET} {total}  |  "
-        f"{GREEN}{BOLD}Success:{RESET} {ok}  |  "
-        f"{YELLOW}{BOLD}Auth Errors:{RESET} {auth}  |  "
-        f"{RED}{BOLD}Failed:{RESET} {err}"
+        f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
+        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
     if lamp_vals:
         avg = sum(lamp_vals) / len(lamp_vals)
         print(
-            f"  {CYAN}{BOLD}Lamp Hours{RESET} \u2014 "
+            f"  {BOLD}Lamp Hours{RESET}{WHITE} \u2014 "
             f"Avg: {avg:.0f}h  |  Min: {min(lamp_vals)}h  |  "
             f"Max: {max(lamp_vals)}h  |  Reported: {len(lamp_vals)}/{total}"
         )
     else:
-        print(f"  {CYAN}Lamp Hours{RESET} \u2014 No data available")
+        print(f"  {BOLD}Lamp Hours{RESET}{WHITE} \u2014 No data available")
 
-    print()
+    print(f"{RESET}")
 
 
 # ---------------------------------------------------------------------------
@@ -780,6 +765,7 @@ def print_results_table(results):
 
 DEFAULT_CSV = "projectors.csv"
 DEFAULT_OUTPUT = "results.json"
+DEFAULT_WORKERS = 5
 
 
 def main():
@@ -790,8 +776,7 @@ def main():
 Defaults:
     Input CSV:   {DEFAULT_CSV}
     Output JSON: {DEFAULT_OUTPUT}
-
-    Run with no arguments:  %(prog)s
+    Workers:     {DEFAULT_WORKERS}
 
 CSV Format:
     host,port,password
@@ -801,7 +786,7 @@ CSV Format:
 Examples:
     %(prog)s
     %(prog)s -i my_projectors.csv -o my_results.json
-    %(prog)s --all --debug
+    %(prog)s -w 10 --all
     %(prog)s --diagnostic --debug
         """,
     )
@@ -812,6 +797,8 @@ Examples:
                         help=f"Output JSON (default: {DEFAULT_OUTPUT})")
     parser.add_argument("-t", "--timeout", type=int, default=10,
                         help="Timeout per device in seconds (default: 10)")
+    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
+                        help=f"Concurrent workers (default: {DEFAULT_WORKERS})")
     parser.add_argument("--all", action="store_true", help="Query all commands")
     parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
@@ -821,80 +808,144 @@ Examples:
 
     csv_file = args.input
     output_file = args.output
+    workers = max(1, args.workers)
 
-    # Header
-    print()
-    print(f"  {CYAN}{BOLD}PJLink Projector Query{RESET}")
-    print(f"  {CYAN}Firmware + Lamp Hours | Class 1 + 2{RESET}")
-    print(f"  Input:  {csv_file}")
-    print(f"  Output: {output_file}")
-    print()
+    # -- Header --
+    print(f"{WHITE}")
+    print(f"  {BOLD}PJLink Projector Query{RESET}{WHITE}")
+    print(f"  Firmware + Lamp Hours | Class 1 + 2")
+    print(f"  Input:   {csv_file}")
+    print(f"  Output:  {output_file}")
+    print(f"  Workers: {workers}")
+    print(f"  Timeout: {args.timeout}s")
+    print(f"{RESET}")
 
     projectors = load_csv(csv_file)
     if not projectors:
-        print(f"{RED}No projectors found in CSV.{RESET}")
+        print(f"  {WHITE}No projectors found in CSV.{RESET}")
         sys.exit(1)
 
     total = len(projectors)
-    results = []
+
+    # -- Thread-safe host tracking --
+    active_lock = threading.Lock()
+    active_hosts = set()
+
+    def get_host_display():
+        """Return only the active host IPs for progress bar display."""
+        with active_lock:
+            hosts = sorted(active_hosts)
+        if not hosts:
+            return ""
+        return ", ".join(hosts)
+
+    def worker_task(proj):
+        host = proj["host"]
+        with active_lock:
+            active_hosts.add(host)
+        try:
+            return proj, query_projector(
+                host=host, port=proj["port"], password=proj["password"],
+                timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
+            )
+        finally:
+            with active_lock:
+                active_hosts.discard(host)
+
+    # -- Run with thread pool + tqdm --
+    results_map = {}
     start = time.time()
 
-    # -- TQDM progress bar: cyan, shows current host --
-    bar_format = (
-        "  {l_bar}{bar}{r_bar}"
+    # Get terminal width for dynamic bar sizing
+    term_width = shutil.get_terminal_size((120, 24)).columns
+
+    # Bar format:
+    #   white text, cyan bar, white stats, host display right-aligned
+    #   {l_bar} = "  Scanning |"
+    #   {bar}   = the actual bar characters (cyan)
+    #   {r_bar} = "| 3/50 [00:12<00:48, 4.0s/dev]"
+    #   {postfix} = active hosts
+    bar_fmt = (
+        f"  {WHITE}Scanning{RESET} "
+        f"{CYAN}{{bar}}{RESET}"
+        f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
+        f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
+        f"  {WHITE}{{postfix}}{RESET}"
     )
 
     with tqdm(
         total=total,
-        bar_format=bar_format,
-        colour="cyan",
-        unit="dev",
+        bar_format=bar_fmt,
+        ncols=term_width,
         dynamic_ncols=True,
         file=sys.stderr,
         leave=True,
     ) as pbar:
-        for p in projectors:
-            host = p["host"]
 
-            # Show current host in progress bar description
-            pbar.set_description(f"\033[96m{host:<20}\033[0m")
+        pbar.set_postfix_str("", refresh=False)
 
-            result = query_projector(
-                host=host, port=p["port"], password=p["password"],
-                timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
-            )
-            results.append(result)
-            pbar.update(1)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(worker_task, p): idx
+                for idx, p in enumerate(projectors)
+            }
 
-        # Final state
+            for future in as_completed(futures):
+                idx = futures[future]
+                try:
+                    proj, result = future.result()
+                    results_map[idx] = result
+                except Exception as e:
+                    p = projectors[idx]
+                    results_map[idx] = {
+                        "host": p["host"], "port": p["port"],
+                        "query_timestamp": datetime.now(timezone.utc).isoformat(),
+                        "status": "error", "error": f"Worker error: {e}",
+                        "firmware_version": "ERROR",
+                        "lamp_hours_total": -1,
+                        "lamp_hours_total_display": "N/A",
+                        "lamp_hours_summary": "N/A",
+                    }
+
+                # Update bar with currently active hosts only
+                pbar.set_postfix_str(get_host_display(), refresh=False)
+                pbar.update(1)
+
         elapsed = time.time() - start
-        pbar.set_description(f"\033[92m{'Complete':<20}\033[0m")
+        pbar.set_postfix_str(
+            f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
+            refresh=True,
+        )
 
-    # -- Build and save JSON --
+    # -- Reassemble in CSV order --
+    results = [results_map[i] for i in range(total)]
+
+    # -- Save JSON --
     output_data = {
         "query_info": {
             "csv_file": str(Path(csv_file).resolve()),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "protocol": "PJLink Class 1 + Class 2",
             "mode": "diagnostic" if args.diagnostic else "all" if args.all else "firmware+lamp",
+            "workers": workers,
             "total": total,
             "success": sum(1 for r in results if r["status"] == "success"),
             "errors": sum(1 for r in results if r["status"] != "success"),
-            "elapsed_seconds": round(time.time() - start, 1),
+            "elapsed_seconds": round(elapsed, 1),
         },
         "projectors": results,
     }
 
     save_to_json(output_data, output_file)
 
-    # -- Print results table --
+    # -- Print table --
     if not args.diagnostic:
         print_results_table(results)
     else:
-        print(f"\n{CYAN}Diagnostic data written to: {output_file}{RESET}")
+        print(f"\n  {WHITE}Diagnostic data written to: {output_file}{RESET}")
 
-    print(f"  {BOLD}Results saved:{RESET} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET} {elapsed:.1f}s")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print()
 
     if args.diagnostic:
