@@ -7,6 +7,7 @@ Uses the Sony BRAVIA REST API (JSON-RPC) documented in:
   - Endpoint: /sony/system
   - Method: getSystemInformation (v1.7 with fallback to v1.0)
   - Method: getInterfaceInformation (v1.0)
+  - Method: getDeviceStatus (v1.0) — used for temperature query
 
 Supports two authentication modes:
   - None: No authentication (X-Auth-PSK header omitted)
@@ -59,6 +60,42 @@ RESET = "\033[0m"
 
 # Ordered list of API versions to try for getSystemInformation
 SYSTEM_INFO_VERSIONS = ["1.7", "1.4", "1.0"]
+
+# Temperature target names to try, in order of preference.
+# The BZ40H/BZ40L typically reports cabinet temperature via getDeviceStatus.
+# Some firmware versions also expose boardTemp/cabinetTemp in getSystemInformation.
+TEMPERATURE_TARGETS = ["cabinetTemp", "boardTemp", "temperature"]
+
+# Firmware major versions known NOT to support temperature via the REST API.
+# Generation 5.x (e.g. 5.5.0) does not implement getDeviceStatus at all —
+# confirmed by getMethodTypes returning no such method and error code 12.
+TEMP_UNSUPPORTED_GENERATIONS = {5}
+
+
+def firmware_supports_temperature(generation: str) -> tuple:
+    """
+    Check whether this firmware generation is known to support temperature queries.
+
+    Returns:
+        tuple of (supported: bool, reason: str)
+    """
+    if not generation or generation == "N/A":
+        return True, ""  # Unknown — let it try; fail gracefully
+
+    try:
+        major = int(generation.split(".")[0])
+    except (ValueError, IndexError):
+        return True, ""  # Unparseable — let it try
+
+    if major in TEMP_UNSUPPORTED_GENERATIONS:
+        return False, f"not supported on generation {generation} firmware (getDeviceStatus unavailable)"
+
+    return True, ""
+
+
+def celsius_to_fahrenheit(celsius: float) -> float:
+    """Convert Celsius to Fahrenheit."""
+    return round((celsius * 9 / 5) + 32, 1)
 
 
 def get_terminal_width() -> int:
@@ -226,10 +263,110 @@ def get_network_settings(host: str, port: int, psk: str = None,
         return []
 
 
-def query_display(host: str, port: int, psk: str = None,
-                  timeout: int = DEFAULT_TIMEOUT) -> dict:
+def get_temperature(host: str, port: int, psk: str = None,
+                    timeout: int = DEFAULT_TIMEOUT) -> tuple:
     """
-    Query a single Sony Bravia display for firmware/system information.
+    Query the display's internal temperature via getDeviceStatus.
+
+    The BZ40H/BZ40L exposes temperature through getDeviceStatus with a
+    target parameter. The API returns temperature in Celsius as an integer
+    or float string. We try multiple target names in order of preference.
+
+    Falls back to reading boardTemp/cabinetTemp directly from
+    getSystemInformation if getDeviceStatus is unsupported.
+
+    Returns:
+        tuple of (temp_celsius: float | None, temp_fahrenheit: float | None, source: str)
+        source describes where the value came from (for transparency in JSON output).
+    """
+    # Strategy 1: getDeviceStatus with explicit temperature targets
+    for target in TEMPERATURE_TARGETS:
+        try:
+            result = call_sony_api(
+                host=host,
+                port=port,
+                method="getDeviceStatus",
+                params=[{"target": target}],
+                version="1.0",
+                request_id=10,
+                psk=psk,
+                timeout=timeout
+            )
+
+            if "error" in result:
+                continue
+
+            items = result.get("result", [[]])[0]
+            if not isinstance(items, list):
+                items = [items]
+
+            for item in items:
+                value = item.get("value") if isinstance(item, dict) else None
+                if value is not None:
+                    try:
+                        temp_c = float(value)
+                        return temp_c, celsius_to_fahrenheit(temp_c), f"getDeviceStatus/{target}"
+                    except (ValueError, TypeError):
+                        continue
+
+        except Exception:
+            continue
+
+    # Strategy 2: getDeviceStatus with no target (returns all status items)
+    try:
+        result = call_sony_api(
+            host=host,
+            port=port,
+            method="getDeviceStatus",
+            params=[{"target": ""}],
+            version="1.0",
+            request_id=11,
+            psk=psk,
+            timeout=timeout
+        )
+
+        if "error" not in result:
+            items = result.get("result", [[]])[0]
+            if isinstance(items, list):
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    item_target = item.get("target", "").lower()
+                    if any(t in item_target for t in ["temp", "temperature"]):
+                        value = item.get("value")
+                        if value is not None:
+                            try:
+                                temp_c = float(value)
+                                return temp_c, celsius_to_fahrenheit(temp_c), f"getDeviceStatus/{item.get('target', 'unknown')}"
+                            except (ValueError, TypeError):
+                                pass
+    except Exception:
+        pass
+
+    # Strategy 3: boardTemp / cabinetTemp fields from getSystemInformation result
+    # (some firmware versions embed these directly in the sysinfo response)
+    try:
+        sys_info, _ = get_system_information(host, port, psk, timeout)
+        for field in ["cabinetTemp", "boardTemp"]:
+            raw = sys_info.get(field)
+            if raw is not None:
+                try:
+                    temp_c = float(raw)
+                    return temp_c, celsius_to_fahrenheit(temp_c), f"getSystemInformation/{field}"
+                except (ValueError, TypeError):
+                    continue
+    except Exception:
+        pass
+
+    return None, None, "N/A"
+
+
+def query_display(host: str, port: int, psk: str = None,
+                  timeout: int = DEFAULT_TIMEOUT,
+                  query_temp: bool = True) -> dict:
+    """
+    Query a single Sony Bravia display for firmware/system information
+    and optionally its internal temperature.
     """
     result = {
         "host": host,
@@ -244,6 +381,9 @@ def query_display(host: str, port: int, psk: str = None,
         "product_name": "N/A",
         "generation": "N/A",
         "api_version_used": "N/A",
+        "temperature_c": None,
+        "temperature_f": None,
+        "temperature_source": "N/A",
         "error": None,
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
@@ -290,6 +430,20 @@ def query_display(host: str, port: int, psk: str = None,
                         break
             except Exception:
                 pass
+
+        # Temperature query (best-effort; does not affect status).
+        # Skip early if this firmware generation is known not to support it.
+        if query_temp:
+            supported, skip_reason = firmware_supports_temperature(result["generation"])
+            if supported:
+                temp_c, temp_f, temp_source = get_temperature(host, port, psk, timeout)
+                result["temperature_c"] = temp_c
+                result["temperature_f"] = temp_f
+                result["temperature_source"] = temp_source
+            else:
+                result["temperature_c"] = None
+                result["temperature_f"] = None
+                result["temperature_source"] = f"skipped — {skip_reason}"
 
     except Timeout:
         result["error"] = "Connection timed out"
@@ -384,14 +538,25 @@ def truncate(text: str, length: int = None) -> str:
     return text[:length - 3] + "..."
 
 
-def print_results_table(results: list):
+def format_temperature(temp_f) -> str:
+    """Format a temperature value for display. Returns 'N/A' if unavailable."""
+    if temp_f is None:
+        return "N/A"
+    return f"{temp_f}°F"
+
+
+def print_results_table(results: list, show_temp: bool = True):
     """Print results as a formatted table scaled to terminal width."""
     term_width = get_terminal_width()
     error_max = get_error_truncate_length()
 
-    # Determine which columns to show based on terminal width
-    # Minimum columns: Status, Host, Model, Firmware Version
-    # Added progressively: Serial, MAC Address, API Ver, Error
+    # Determine which columns to show based on terminal width.
+    # Temperature is included whenever show_temp is True and terminal allows it.
+    # Column ladder (narrowest to widest):
+    #   always:  Status, Host, Model, Firmware Version
+    #   narrow+: Serial
+    #   medium+: MAC Address, API Ver
+    #   wide+:   Temp (°F), Error
     wide = term_width >= 160
     medium = term_width >= 120
     narrow = term_width >= 80
@@ -413,6 +578,8 @@ def print_results_table(results: list):
         if medium:
             row.append(r["mac_address"])
             row.append(r["api_version_used"])
+        if wide and show_temp:
+            row.append(format_temperature(r.get("temperature_f")))
         if wide:
             row.append(error_info)
 
@@ -426,6 +593,8 @@ def print_results_table(results: list):
         headers.append("Serial")
     if medium:
         headers.extend(["MAC Address", "API Ver"])
+    if wide and show_temp:
+        headers.append("Temp (°F)")
     if wide:
         headers.append("Error")
 
@@ -436,7 +605,6 @@ def print_results_table(results: list):
     print(title.center(term_width))
     print(separator)
 
-    # Use maxcolwidths to prevent table from exceeding terminal
     try:
         print(tabulate(
             table_data,
@@ -452,6 +620,19 @@ def print_results_table(results: list):
                f"Success: {sum(1 for r in results if r['status'] == 'OK')} | "
                f"Failed: {sum(1 for r in results if r['status'] == 'ERROR')}")
 
+    # Temperature summary line (only when temp was queried)
+    if show_temp:
+        temps_available = [r for r in results if r.get("temperature_f") is not None]
+        if temps_available:
+            avg_f = sum(r["temperature_f"] for r in temps_available) / len(temps_available)
+            max_f = max(r["temperature_f"] for r in temps_available)
+            min_f = min(r["temperature_f"] for r in temps_available)
+            temp_summary = (f"Temperature — Avg: {avg_f:.1f}°F  "
+                            f"Min: {min_f}°F  Max: {max_f}°F  "
+                            f"({len(temps_available)}/{len(results)} reported)")
+        else:
+            temp_summary = "Temperature — not available on any queried display"
+
     # Show hidden columns hint if terminal is too narrow
     hidden = []
     if not narrow:
@@ -459,9 +640,14 @@ def print_results_table(results: list):
     if not medium:
         hidden.extend(["MAC Address", "API Ver"])
     if not wide:
+        if show_temp:
+            hidden.extend(["Temp (°F)"])
         hidden.extend(["Error"])
 
     print(f"\n{summary}")
+
+    if show_temp:
+        print(temp_summary)
 
     if hidden:
         print(f"(Columns hidden due to terminal width: {', '.join(hidden)} — "
@@ -472,13 +658,14 @@ def print_results_table(results: list):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Query Sony Bravia BZ40H/BZ40L displays for firmware version via Sony REST API.",
+        description="Query Sony Bravia BZ40H/BZ40L displays for firmware version and temperature via Sony REST API.",
         epilog="""
 Examples:
   python sony_fw_query.py
   python sony_fw_query.py -i my_displays.csv
   python sony_fw_query.py -k MyPreSharedKey
   python sony_fw_query.py -i displays.csv -k 0000 -t 15 -o output.json
+  python sony_fw_query.py --no-temp
 
 Authentication:
   By default NO authentication is used (X-Auth-PSK header is omitted).
@@ -493,6 +680,30 @@ Authentication:
   Display setting for PSK auth:
     Settings > Network > Home Network > IP Control > Authentication > Normal and Pre-Shared Key
     Settings > Network > Home Network > IP Control > Pre-Shared Key > <your key>
+
+Temperature:
+  Temperature is queried by default via getDeviceStatus (v1.0) on /sony/system.
+  The script tries the following target names in order:
+    cabinetTemp, boardTemp, temperature
+  It also falls back to reading boardTemp/cabinetTemp fields from
+  getSystemInformation if getDeviceStatus does not respond.
+
+  Results are reported in Fahrenheit (°F) in the table and in both
+  Celsius and Fahrenheit in the JSON output file.
+
+  Firmware skip logic:
+    Generation 5.x (e.g. FW-55BZ40L on 5.5.0) does not implement
+    getDeviceStatus at all. The script detects this from the generation
+    field and skips the temperature query immediately rather than making
+    several failing API calls. The JSON output will show:
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware"
+    To add or remove generations from the skip list, edit
+    TEMP_UNSUPPORTED_GENERATIONS in the script.
+
+  Temperature is a best-effort query — if unsupported by a display's
+  firmware, "N/A" is shown and the overall query status is not affected.
+
+  Use --no-temp to skip temperature queries entirely (faster).
 
 API Version:
   The script automatically tries getSystemInformation v1.7 first (which
@@ -529,8 +740,15 @@ CSV Format (default: displays.csv):
         default=DEFAULT_TIMEOUT,
         help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})"
     )
+    parser.add_argument(
+        "--no-temp",
+        action="store_true",
+        default=False,
+        help="Skip temperature queries (faster; use if your firmware does not support it)"
+    )
 
     args = parser.parse_args()
+    query_temp = not args.no_temp
 
     term_width = get_terminal_width()
 
@@ -541,17 +759,15 @@ CSV Format (default: displays.csv):
         print(f"Authentication: None (no X-Auth-PSK header)")
 
     print(f"API versions:   Will try {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)")
+    print(f"Temperature:    {'Enabled (°F, best-effort)' if query_temp else 'Disabled (--no-temp)'}")
     print(f"Reading:        {args.input}")
 
     displays = read_csv_input(args.input)
     print(f"Displays:       {len(displays)} found")
     print(f"Terminal:       {term_width} cols\n")
 
-    # Scale progress bar to terminal width with padding for text
-    # tqdm uses ~30 chars for labels/stats, rest is the bar
     bar_width = max(40, term_width - 2)
 
-    # Query displays with cyan progress bar, white text
     results = []
     with tqdm(
         total=len(displays),
@@ -566,12 +782,13 @@ CSV Format (default: displays.csv):
 
             pbar.set_postfix_str(host, refresh=True)
 
-            result = query_display(host, port, psk=args.psk, timeout=args.timeout)
+            result = query_display(host, port, psk=args.psk, timeout=args.timeout,
+                                   query_temp=query_temp)
             results.append(result)
 
             pbar.update(1)
 
-    print_results_table(results)
+    print_results_table(results, show_temp=query_temp)
     save_results_json(results, args.output)
 
 

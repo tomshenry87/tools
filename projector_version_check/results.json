@@ -1,20 +1,20 @@
 {
     "query_info": {
         "csv_file": "/home/tom/tools/projector_version_check/projectors.csv",
-        "timestamp": "2026-03-25T13:59:57.316600+00:00",
+        "timestamp": "2026-03-25T15:00:58.964744+00:00",
         "protocol": "PJLink Class 1 + Class 2",
         "mode": "firmware+lamp",
         "workers": 5,
         "total": 74,
         "success": 73,
         "errors": 1,
-        "elapsed_seconds": 33.9
+        "elapsed_seconds": 33.4
     },
     "projectors": [
         {
             "host": "4-currier-232-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:23.410663+00:00",
+            "query_timestamp": "2026-03-25T15:00:25.577185+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -23,25 +23,25 @@
             "projector_name": "VPL-FHZ66",
             "other_info": "",
             "firmware_version": "Not available",
-            "lamp_info_raw": "4138 1",
+            "lamp_info_raw": "4139 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "4138h",
-                    "hours_int": 4138,
+                    "hours": "4139h",
+                    "hours_int": 4139,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 4138,
-            "lamp_hours_total_display": "4138h",
-            "lamp_hours_summary": "Lamp 1: 4138h (On)",
+            "lamp_hours_total": 4139,
+            "lamp_hours_total_display": "4139h",
+            "lamp_hours_summary": "Lamp 1: 4139h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "baker-213-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:23.411237+00:00",
+            "query_timestamp": "2026-03-25T15:00:25.577433+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -70,7 +70,7 @@
         {
             "host": "baker-219-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:23.411444+00:00",
+            "query_timestamp": "2026-03-25T15:00:25.577635+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -99,7 +99,7 @@
         {
             "host": "baker-227-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:23.411770+00:00",
+            "query_timestamp": "2026-03-25T15:00:25.577815+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -128,7 +128,7 @@
         {
             "host": "baker-234-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:23.412302+00:00",
+            "query_timestamp": "2026-03-25T15:00:25.577983+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -157,7 +157,7 @@
         {
             "host": "bartlett-105-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:24.984886+00:00",
+            "query_timestamp": "2026-03-25T15:00:27.099625+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -186,7 +186,7 @@
         {
             "host": "berry-180-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:25.293402+00:00",
+            "query_timestamp": "2026-03-25T15:00:27.398483+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -197,25 +197,25 @@
             "software_version": "1.07",
             "serial_number": "7003861",
             "firmware_version": "1.07",
-            "lamp_info_raw": "2127",
+            "lamp_info_raw": "2128",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2127h",
-                    "hours_int": 2127,
+                    "hours": "2128h",
+                    "hours_int": 2128,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2127,
-            "lamp_hours_total_display": "2127h",
-            "lamp_hours_summary": "Lamp 1: 2127h (Unknown)",
+            "lamp_hours_total": 2128,
+            "lamp_hours_total_display": "2128h",
+            "lamp_hours_summary": "Lamp 1: 2128h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "brace-008-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:25.304482+00:00",
+            "query_timestamp": "2026-03-25T15:00:27.402048+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -244,7 +244,7 @@
         {
             "host": "carson-060-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:25.305040+00:00",
+            "query_timestamp": "2026-03-25T15:00:27.403326+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -273,7 +273,7 @@
         {
             "host": "carson-061-1-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:25.306109+00:00",
+            "query_timestamp": "2026-03-25T15:00:27.404881+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -302,7 +302,7 @@
         {
             "host": "carson-l01-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:26.857356+00:00",
+            "query_timestamp": "2026-03-25T15:00:28.916102+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -331,7 +331,7 @@
         {
             "host": "carson-l02-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:27.157708+00:00",
+            "query_timestamp": "2026-03-25T15:00:29.228789+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -360,7 +360,7 @@
         {
             "host": "dewey-101-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:27.164428+00:00",
+            "query_timestamp": "2026-03-25T15:00:29.233056+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -389,7 +389,7 @@
         {
             "host": "fairchild-101-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:27.167065+00:00",
+            "query_timestamp": "2026-03-25T15:00:29.234777+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -418,7 +418,7 @@
         {
             "host": "haldeman-028-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:27.183153+00:00",
+            "query_timestamp": "2026-03-25T15:00:29.236389+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -447,7 +447,7 @@
         {
             "host": "haldeman-046-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:28.728090+00:00",
+            "query_timestamp": "2026-03-25T15:00:30.741150+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -476,7 +476,7 @@
         {
             "host": "hopkins-052-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:29.032164+00:00",
+            "query_timestamp": "2026-03-25T15:00:31.060002+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -505,7 +505,7 @@
         {
             "host": "hopkins-054-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:29.039753+00:00",
+            "query_timestamp": "2026-03-25T15:00:31.061797+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -532,7 +532,7 @@
         {
             "host": "hopkins-138-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:29.041026+00:00",
+            "query_timestamp": "2026-03-25T15:00:31.061986+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -561,7 +561,7 @@
         {
             "host": "kemeny-004-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:29.056963+00:00",
+            "query_timestamp": "2026-03-25T15:00:31.062956+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -590,7 +590,7 @@
         {
             "host": "kemeny-006-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:30.597168+00:00",
+            "query_timestamp": "2026-03-25T15:00:32.567545+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -619,7 +619,7 @@
         {
             "host": "kemeny-007-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:30.606550+00:00",
+            "query_timestamp": "2026-03-25T15:00:32.585960+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -648,7 +648,7 @@
         {
             "host": "kemeny-008-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:30.903103+00:00",
+            "query_timestamp": "2026-03-25T15:00:32.888926+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -675,7 +675,7 @@
         {
             "host": "kemeny-105-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:30.914047+00:00",
+            "query_timestamp": "2026-03-25T15:00:32.890233+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -704,7 +704,7 @@
         {
             "host": "kemeny-108-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:30.932634+00:00",
+            "query_timestamp": "2026-03-25T15:00:32.894071+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -731,7 +731,7 @@
         {
             "host": "lsc-100-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:32.470854+00:00",
+            "query_timestamp": "2026-03-25T15:00:34.385282+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -758,7 +758,7 @@
         {
             "host": "lsc-100-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:32.473592+00:00",
+            "query_timestamp": "2026-03-25T15:00:34.406652+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -785,7 +785,7 @@
         {
             "host": "lsc-102-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:32.483114+00:00",
+            "query_timestamp": "2026-03-25T15:00:34.414813+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -814,7 +814,7 @@
         {
             "host": "lsc-102-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:32.508998+00:00",
+            "query_timestamp": "2026-03-25T15:00:34.417458+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -843,7 +843,7 @@
         {
             "host": "lsc-104-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:32.781984+00:00",
+            "query_timestamp": "2026-03-25T15:00:34.718684+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -872,7 +872,7 @@
         {
             "host": "lsc-104-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:34.045614+00:00",
+            "query_timestamp": "2026-03-25T15:00:35.904895+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -901,7 +901,7 @@
         {
             "host": "lsc-105-1-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:34.046762+00:00",
+            "query_timestamp": "2026-03-25T15:00:35.937713+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -930,7 +930,7 @@
         {
             "host": "lsc-105-1-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:34.355768+00:00",
+            "query_timestamp": "2026-03-25T15:00:36.237740+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -957,7 +957,7 @@
         {
             "host": "lsc-106-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:34.376475+00:00",
+            "query_timestamp": "2026-03-25T15:00:36.237828+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -986,7 +986,7 @@
         {
             "host": "lsc-106-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:34.824175+00:00",
+            "query_timestamp": "2026-03-25T15:00:36.609553+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1015,7 +1015,7 @@
         {
             "host": "lsc-200-1-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:35.921634+00:00",
+            "query_timestamp": "2026-03-25T15:00:37.747868+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1044,7 +1044,7 @@
         {
             "host": "lsc-200-1-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:35.922740+00:00",
+            "query_timestamp": "2026-03-25T15:00:37.755316+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1073,7 +1073,7 @@
         {
             "host": "lsc-201-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:35.924737+00:00",
+            "query_timestamp": "2026-03-25T15:00:37.768239+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1102,7 +1102,7 @@
         {
             "host": "lsc-201-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:36.235159+00:00",
+            "query_timestamp": "2026-03-25T15:00:38.093012+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1131,7 +1131,7 @@
         {
             "host": "lsc-202-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:36.724230+00:00",
+            "query_timestamp": "2026-03-25T15:00:38.432773+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1160,7 +1160,7 @@
         {
             "host": "lsc-202-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:37.797135+00:00",
+            "query_timestamp": "2026-03-25T15:00:39.576006+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1189,7 +1189,7 @@
         {
             "host": "lsc-204-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:37.797956+00:00",
+            "query_timestamp": "2026-03-25T15:00:39.595031+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1218,7 +1218,7 @@
         {
             "host": "lsc-204-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:37.800681+00:00",
+            "query_timestamp": "2026-03-25T15:00:39.600956+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1247,7 +1247,7 @@
         {
             "host": "lsc-205-1-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:38.106504+00:00",
+            "query_timestamp": "2026-03-25T15:00:39.909590+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1276,7 +1276,7 @@
         {
             "host": "lsc-205-1-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:38.617024+00:00",
+            "query_timestamp": "2026-03-25T15:00:40.257979+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1305,7 +1305,7 @@
         {
             "host": "lsc-206-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:39.662031+00:00",
+            "query_timestamp": "2026-03-25T15:00:41.405280+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1334,7 +1334,7 @@
         {
             "host": "lsc-206-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:39.668779+00:00",
+            "query_timestamp": "2026-03-25T15:00:41.419716+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1363,7 +1363,7 @@
         {
             "host": "moore-110-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:39.676835+00:00",
+            "query_timestamp": "2026-03-25T15:00:41.434021+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1392,7 +1392,7 @@
         {
             "host": "moore-150-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:39.975038+00:00",
+            "query_timestamp": "2026-03-25T15:00:41.742013+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1421,7 +1421,7 @@
         {
             "host": "moore-202-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:40.496213+00:00",
+            "query_timestamp": "2026-03-25T15:00:42.101784+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1450,7 +1450,7 @@
         {
             "host": "preshouse-b02-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:41.541206+00:00",
+            "query_timestamp": "2026-03-25T15:00:43.247498+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1479,7 +1479,7 @@
         {
             "host": "rockefeller-001-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:41.547208+00:00",
+            "query_timestamp": "2026-03-25T15:00:43.249657+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1508,7 +1508,7 @@
         {
             "host": "rockefeller-002-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:41.587880+00:00",
+            "query_timestamp": "2026-03-25T15:00:43.259983+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1537,7 +1537,7 @@
         {
             "host": "rockefeller-003-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:41.844190+00:00",
+            "query_timestamp": "2026-03-25T15:00:43.575641+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1566,7 +1566,7 @@
         {
             "host": "rockefeller-208-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:42.376092+00:00",
+            "query_timestamp": "2026-03-25T15:00:43.937626+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -1593,7 +1593,7 @@
         {
             "host": "rockefeller-209-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:43.412617+00:00",
+            "query_timestamp": "2026-03-25T15:00:45.088888+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1622,7 +1622,7 @@
         {
             "host": "silsby-029a-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:43.415924+00:00",
+            "query_timestamp": "2026-03-25T15:00:45.092122+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1651,7 +1651,7 @@
         {
             "host": "silsby-029b-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:43.464196+00:00",
+            "query_timestamp": "2026-03-25T15:00:45.095060+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1680,7 +1680,7 @@
         {
             "host": "silsby-113-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:43.707722+00:00",
+            "query_timestamp": "2026-03-25T15:00:45.400374+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1709,7 +1709,7 @@
         {
             "host": "silsby-213-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:43.941897+00:00",
+            "query_timestamp": "2026-03-25T15:00:45.476123+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1738,7 +1738,7 @@
         {
             "host": "silsby-215-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:45.286953+00:00",
+            "query_timestamp": "2026-03-25T15:00:46.931272+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1767,7 +1767,7 @@
         {
             "host": "silsby-310-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:45.437288+00:00",
+            "query_timestamp": "2026-03-25T15:00:47.117754+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1796,7 +1796,7 @@
         {
             "host": "silsby-312-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:45.467491+00:00",
+            "query_timestamp": "2026-03-25T15:00:47.119470+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1825,7 +1825,7 @@
         {
             "host": "steele-007-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:45.577595+00:00",
+            "query_timestamp": "2026-03-25T15:00:47.247493+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1854,7 +1854,7 @@
         {
             "host": "steele-007-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:45.814510+00:00",
+            "query_timestamp": "2026-03-25T15:00:47.310658+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1883,7 +1883,7 @@
         {
             "host": "sudikoff-003-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:47.159935+00:00",
+            "query_timestamp": "2026-03-25T15:00:48.777307+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -1910,7 +1910,7 @@
         {
             "host": "sudikoff-045-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:47.303078+00:00",
+            "query_timestamp": "2026-03-25T15:00:48.950884+00:00",
             "status": "error",
             "error": "Connection timed out: sudikoff-045-projector.openav.dartmouth.edu:4352",
             "firmware_version": "ERROR",
@@ -1921,7 +1921,7 @@
         {
             "host": "sudikoff-143-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:47.341593+00:00",
+            "query_timestamp": "2026-03-25T15:00:48.968394+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -1948,7 +1948,7 @@
         {
             "host": "wilder-111-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:47.446287+00:00",
+            "query_timestamp": "2026-03-25T15:00:49.081368+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1977,7 +1977,7 @@
         {
             "host": "wilder-111-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:47.687601+00:00",
+            "query_timestamp": "2026-03-25T15:00:49.147034+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1988,25 +1988,25 @@
             "software_version": "1.07",
             "serial_number": "7007545",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1661",
+            "lamp_info_raw": "1662",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1661h",
-                    "hours_int": 1661,
+                    "hours": "1662h",
+                    "hours_int": 1662,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1661,
-            "lamp_hours_total_display": "1661h",
-            "lamp_hours_summary": "Lamp 1: 1661h (Unknown)",
+            "lamp_hours_total": 1662,
+            "lamp_hours_total_display": "1662h",
+            "lamp_hours_summary": "Lamp 1: 1662h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "wilder-111-projector-3.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:48.735308+00:00",
+            "query_timestamp": "2026-03-25T15:00:50.314427+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -2035,7 +2035,7 @@
         {
             "host": "Wilder-115-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:48.915714+00:00",
+            "query_timestamp": "2026-03-25T15:00:50.504868+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -2064,7 +2064,7 @@
         {
             "host": "wilson-205-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:49.316768+00:00",
+            "query_timestamp": "2026-03-25T15:00:50.909352+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -2093,7 +2093,7 @@
         {
             "host": "wilson-219-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-03-25T13:59:49.558432+00:00",
+            "query_timestamp": "2026-03-25T15:00:50.977349+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
