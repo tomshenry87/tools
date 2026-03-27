@@ -1,8 +1,10 @@
 {
-  "query_timestamp": "2026-03-24T11:39:46.624997Z",
+  "query_timestamp": "2026-03-26T14:18:33.686115Z",
   "total_displays": 67,
-  "successful_queries": 41,
-  "failed_queries": 26,
+  "successful_queries": 39,
+  "failed_queries": 28,
+  "updates_available": 0,
+  "update_check_not_supported": 39,
   "results": [
     {
       "host": "lsc-135-display.openav.dartmouth.edu",
@@ -17,8 +19,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:38:56.978669Z"
+      "timestamp": "2026-03-26T14:17:16.944713Z"
     },
     {
       "host": "lsc-100-display-1.openav.dartmouth.edu",
@@ -33,8 +38,11 @@
       "product_name": "TV",
       "generation": "1.0.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:38:57.700129Z"
+      "timestamp": "2026-03-26T14:17:17.855124Z"
     },
     {
       "host": "lsc-100-display-2.openav.dartmouth.edu",
@@ -49,8 +57,11 @@
       "product_name": "TV",
       "generation": "1.0.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:38:58.187091Z"
+      "timestamp": "2026-03-26T14:17:18.504667Z"
     },
     {
       "host": "lsc-105-1-display-1.openav.dartmouth.edu",
@@ -65,8 +76,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:38:58.696768Z"
+      "timestamp": "2026-03-26T14:17:19.114787Z"
     },
     {
       "host": "lsc-105-1-display-2.openav.dartmouth.edu",
@@ -81,8 +95,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:38:59.391014Z"
+      "timestamp": "2026-03-26T14:17:19.985039Z"
     },
     {
       "host": "lsc-105-2-display-1.openav.dartmouth.edu",
@@ -97,8 +114,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:00.132118Z"
+      "timestamp": "2026-03-26T14:17:20.892148Z"
     },
     {
       "host": "lsc-105-2-display-2.openav.dartmouth.edu",
@@ -113,8 +133,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:00.835955Z"
+      "timestamp": "2026-03-26T14:17:21.795764Z"
     },
     {
       "host": "lsc-105-2-display-3.openav.dartmouth.edu",
@@ -129,8 +152,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:01.566176Z"
+      "timestamp": "2026-03-26T14:17:22.686377Z"
     },
     {
       "host": "lsc-205-1-display-1.openav.dartmouth.edu",
@@ -145,8 +171,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:02.282695Z"
+      "timestamp": "2026-03-26T14:17:23.580767Z"
     },
     {
       "host": "lsc-205-1-display-2.openav.dartmouth.edu",
@@ -161,8 +190,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:02.979157Z"
+      "timestamp": "2026-03-26T14:17:24.479899Z"
     },
     {
       "host": "lsc-205-2-display-1.openav.dartmouth.edu",
@@ -177,8 +209,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:03.657626Z"
+      "timestamp": "2026-03-26T14:17:25.353447Z"
     },
     {
       "host": "lsc-205-2-display-2.openav.dartmouth.edu",
@@ -193,8 +228,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:04.354124Z"
+      "timestamp": "2026-03-26T14:17:26.287137Z"
     },
     {
       "host": "lsc-205-2-display-3.openav.dartmouth.edu",
@@ -209,8 +247,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:05.058395Z"
+      "timestamp": "2026-03-26T14:17:27.194015Z"
     },
     {
       "host": "4-currier-101b-display.openav.dartmouth.edu",
@@ -225,8 +266,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:05.755864Z"
+      "timestamp": "2026-03-26T14:17:28.082063Z"
     },
     {
       "host": "4-currier-101e-display.openav.dartmouth.edu",
@@ -241,8 +285,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:06.094605Z"
+      "timestamp": "2026-03-26T14:17:28.430916Z"
     },
     {
       "host": "4-currier-213-display.openav.dartmouth.edu",
@@ -257,8 +304,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:06.433943Z"
+      "timestamp": "2026-03-26T14:17:28.767535Z"
     },
     {
       "host": "4-currier-214-display.openav.dartmouth.edu",
@@ -273,8 +323,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:06.775344Z"
+      "timestamp": "2026-03-26T14:17:29.116889Z"
     },
     {
       "host": "4-currier-215-display.openav.dartmouth.edu",
@@ -289,8 +342,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:07.102818Z"
+      "timestamp": "2026-03-26T14:17:29.525362Z"
     },
     {
       "host": "4-currier-223-display.openav.dartmouth.edu",
@@ -305,8 +361,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:07.448831Z"
+      "timestamp": "2026-03-26T14:17:29.871432Z"
     },
     {
       "host": "4-currier-227-display.openav.dartmouth.edu",
@@ -321,8 +380,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:07.783939Z"
+      "timestamp": "2026-03-26T14:17:30.198187Z"
     },
     {
       "host": "4-currier-232-vr-display.openav.dartmouth.edu",
@@ -337,8 +399,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:08.117236Z"
+      "timestamp": "2026-03-26T14:17:30.556079Z"
     },
     {
       "host": "4-currier-collaboration-display.openav.dartmouth.edu",
@@ -353,8 +418,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:08.436647Z"
+      "timestamp": "2026-03-26T14:17:31.912278Z"
     },
     {
       "host": "4-currier-lounge-display.openav.dartmouth.edu",
@@ -369,8 +437,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:08.778875Z"
+      "timestamp": "2026-03-26T14:17:32.260779Z"
     },
     {
       "host": "baker-102-display.openav.dartmouth.edu",
@@ -385,8 +456,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:09.129452Z"
+      "timestamp": "2026-03-26T14:17:32.603957Z"
     },
     {
       "host": "bartlett-105a-display.openav.dartmouth.edu",
@@ -401,8 +475,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:09.836135Z"
+      "timestamp": "2026-03-26T14:17:33.494802Z"
     },
     {
       "host": "berry-180-display.openav.dartmouth.edu",
@@ -417,8 +494,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:10.195478Z"
+      "timestamp": "2026-03-26T14:17:33.840904Z"
     },
     {
       "host": "berrysport-045-display.openav.dartmouth.edu",
@@ -433,8 +513,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:10.880582Z"
+      "timestamp": "2026-03-26T14:17:34.744785Z"
     },
     {
       "host": "berrysport-010-display.openav.dartmouth.edu",
@@ -449,8 +532,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:11.604937Z"
+      "timestamp": "2026-03-26T14:17:35.676268Z"
     },
     {
       "host": "berrysport-206-display.openav.dartmouth.edu",
@@ -465,8 +551,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:13.339660Z"
+      "timestamp": "2026-03-26T14:17:36.553280Z"
     },
     {
       "host": "carson-061-2-display-1.openav.dartmouth.edu",
@@ -481,8 +570,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:14.043856Z"
+      "timestamp": "2026-03-26T14:17:37.456519Z"
     },
     {
       "host": "carson-061-2-display-2.openav.dartmouth.edu",
@@ -497,8 +589,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:14.788151Z"
+      "timestamp": "2026-03-26T14:17:38.353463Z"
     },
     {
       "host": "carson-061-2-display-3.openav.dartmouth.edu",
@@ -513,8 +608,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:15.498959Z"
+      "timestamp": "2026-03-26T14:17:39.228230Z"
     },
     {
       "host": "carson-061-2-display-4.openav.dartmouth.edu",
@@ -529,8 +627,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:16.206292Z"
+      "timestamp": "2026-03-26T14:17:40.110946Z"
     },
     {
       "host": "carson-061-2-display-5.openav.dartmouth.edu",
@@ -545,8 +646,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:16.908106Z"
+      "timestamp": "2026-03-26T14:17:40.990896Z"
     },
     {
       "host": "carson-061-2-display-6.openav.dartmouth.edu",
@@ -561,8 +665,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:17.621667Z"
+      "timestamp": "2026-03-26T14:17:41.889676Z"
     },
     {
       "host": "court01-211-display.openav.dartmouth.edu",
@@ -577,8 +684,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:18.325368Z"
+      "timestamp": "2026-03-26T14:17:42.835152Z"
     },
     {
       "host": "court01-215-display.openav.dartmouth.edu",
@@ -593,8 +703,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:18.685668Z"
+      "timestamp": "2026-03-26T14:17:43.201492Z"
     },
     {
       "host": "cts-4-currier-104-display.dartmouth.edu",
@@ -609,8 +722,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "Connection timed out",
-      "timestamp": "2026-03-24T11:39:19.063447Z"
+      "timestamp": "2026-03-26T14:17:43.537366Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -625,8 +741,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:29.156372Z"
+      "timestamp": "2026-03-26T14:17:53.612710Z"
     },
     {
       "host": "fairchild-217a-display.openav.dartmouth.edu",
@@ -641,8 +760,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:29.496174Z"
+      "timestamp": "2026-03-26T14:17:53.958799Z"
     },
     {
       "host": "floren-332-display-1.openav.dartmouth.edu",
@@ -657,8 +779,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:29.864991Z"
+      "timestamp": "2026-03-26T14:17:54.302815Z"
     },
     {
       "host": "floren-332-display-2.openav.dartmouth.edu",
@@ -673,8 +798,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:30.567928Z"
+      "timestamp": "2026-03-26T14:17:55.190656Z"
     },
     {
       "host": "hopkins-051-display.openav.dartmouth.edu",
@@ -689,8 +817,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:31.261043Z"
+      "timestamp": "2026-03-26T14:17:57.118097Z"
     },
     {
       "host": "lewinstein-111-display.openav.dartmouth.edu",
@@ -705,40 +836,49 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:31.975612Z"
+      "timestamp": "2026-03-26T14:17:58.041947Z"
     },
     {
       "host": "lsc-200-1-display-1.openav.dartmouth.edu",
       "port": 80,
-      "status": "OK",
-      "model": "FW-55BZ40L",
-      "serial": "3002759",
-      "firmware_version": "5.5.0",
-      "mac_address": "AC:80:0A:DD:43:8A",
-      "device_name": "BRAVIA",
-      "interface_version": "5.5.0",
-      "product_name": "TV",
-      "generation": "5.5.0",
-      "api_version_used": "1.0",
-      "error": null,
-      "timestamp": "2026-03-24T11:39:32.699340Z"
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
+      "error": "Connection timed out",
+      "timestamp": "2026-03-26T14:17:58.969879Z"
     },
     {
       "host": "lsc-200-1-display-2.openav.dartmouth.edu",
       "port": 80,
-      "status": "OK",
-      "model": "FW-55BZ40L",
-      "serial": "3002745",
-      "firmware_version": "5.5.0",
-      "mac_address": "AC:80:0A:DD:41:CA",
-      "device_name": "BRAVIA",
-      "interface_version": "5.5.0",
-      "product_name": "TV",
-      "generation": "5.5.0",
-      "api_version_used": "1.0",
-      "error": null,
-      "timestamp": "2026-03-24T11:39:33.398544Z"
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
+      "error": "Connection timed out",
+      "timestamp": "2026-03-26T14:18:09.058733Z"
     },
     {
       "host": "lsc-200-2-display-1.openav.dartmouth.edu",
@@ -753,8 +893,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:34.091935Z"
+      "timestamp": "2026-03-26T14:18:19.136922Z"
     },
     {
       "host": "lsc-200-2-display-2.openav.dartmouth.edu",
@@ -769,8 +912,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:34.794037Z"
+      "timestamp": "2026-03-26T14:18:20.028490Z"
     },
     {
       "host": "lsc-200-2-display-3.openav.dartmouth.edu",
@@ -785,8 +931,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:35.490836Z"
+      "timestamp": "2026-03-26T14:18:20.929246Z"
     },
     {
       "host": "lsc-200-2-display-4.openav.dartmouth.edu",
@@ -801,8 +950,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:36.204386Z"
+      "timestamp": "2026-03-26T14:18:21.800748Z"
     },
     {
       "host": "lsc-200-2-display-5.openav.dartmouth.edu",
@@ -817,8 +969,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:36.908632Z"
+      "timestamp": "2026-03-26T14:18:22.703307Z"
     },
     {
       "host": "lsc-200-2-display-6.openav.dartmouth.edu",
@@ -833,8 +988,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:37.596377Z"
+      "timestamp": "2026-03-26T14:18:23.623452Z"
     },
     {
       "host": "lsc-200-2-display-7.openav.dartmouth.edu",
@@ -849,8 +1007,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:38.297624Z"
+      "timestamp": "2026-03-26T14:18:24.502259Z"
     },
     {
       "host": "lsc-200-2-display-8.openav.dartmouth.edu",
@@ -865,8 +1026,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:38.993574Z"
+      "timestamp": "2026-03-26T14:18:25.407339Z"
     },
     {
       "host": "parkhurst-06a-display.openav.dartmouth.edu",
@@ -881,8 +1045,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:39.725882Z"
+      "timestamp": "2026-03-26T14:18:26.322918Z"
     },
     {
       "host": "preshouse-b02-display.openav.dartmouth.edu",
@@ -897,8 +1064,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:40.089623Z"
+      "timestamp": "2026-03-26T14:18:26.671996Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -913,8 +1083,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:41.510075Z"
+      "timestamp": "2026-03-26T14:18:27.016138Z"
     },
     {
       "host": "dewey-010-display.openav.dartmouth.edu",
@@ -929,8 +1102,11 @@
       "product_name": "TV",
       "generation": "5.7.0",
       "api_version_used": "1.7",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:41.877726Z"
+      "timestamp": "2026-03-26T14:18:27.370595Z"
     },
     {
       "host": "kemeny-307-display.openav.dartmouth.edu",
@@ -945,8 +1121,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:42.614891Z"
+      "timestamp": "2026-03-26T14:18:28.342887Z"
     },
     {
       "host": "robinson-322-display.openav.dartmouth.edu",
@@ -961,8 +1140,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:42.995391Z"
+      "timestamp": "2026-03-26T14:18:28.685930Z"
     },
     {
       "host": "mcnutt-001-display.openav.dartmouth.edu",
@@ -977,8 +1159,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:43.364159Z"
+      "timestamp": "2026-03-26T14:18:29.033140Z"
     },
     {
       "host": "parkhurst-009b-display.openav.dartmouth.edu",
@@ -993,8 +1178,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:44.073395Z"
+      "timestamp": "2026-03-26T14:18:29.944846Z"
     },
     {
       "host": "wentworth-205-display.openav.dartmouth.edu",
@@ -1009,8 +1197,11 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+      "update_available": "Not Supported",
+      "target_version": "",
+      "update_check_method": "None",
       "error": null,
-      "timestamp": "2026-03-24T11:39:44.434483Z"
+      "timestamp": "2026-03-26T14:18:30.302340Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -1025,8 +1216,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:45.179476Z"
+      "timestamp": "2026-03-26T14:18:31.207263Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -1041,8 +1235,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:45.534917Z"
+      "timestamp": "2026-03-26T14:18:31.565976Z"
     },
     {
       "host": "osher-3a-display.openav.dartmouth.edu",
@@ -1057,8 +1254,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:45.851264Z"
+      "timestamp": "2026-03-26T14:18:32.990715Z"
     },
     {
       "host": "osher-3a-confidence-display.openav.dartmouth.edu",
@@ -1073,8 +1273,11 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+      "update_available": "N/A",
+      "target_version": "",
+      "update_check_method": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-24T11:39:46.244332Z"
+      "timestamp": "2026-03-26T14:18:33.345783Z"
     }
   ]
 }

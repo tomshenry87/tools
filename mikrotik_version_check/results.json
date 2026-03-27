@@ -451,26 +451,25 @@
     "host": "rockefeller-100-router.openav.dartmouth.edu",
     "username": "admin",
     "port": 22,
-    "success": true,
-    "routeros_version": "7.2.3",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.2.3"
-      }
-    ],
-    "error": null
+    "success": false,
+    "routeros_version": null,
+    "packages": [],
+    "error": "SSH/network error: timed out"
   },
   {
     "host": "darthall-310-router.openav.dartmouth.edu",
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.12",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.12"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
