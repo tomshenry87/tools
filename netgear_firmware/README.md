@@ -165,14 +165,15 @@ After scanning, a formatted table is printed to `stdout`:
   +----------+---------------+----------+----------+----------+
   | Status   | Host          | Firmware | CPU Temp | Error    |
   +----------+---------------+----------+----------+----------+
-  | ✓ OK     | 192.168.1.10  | 12.0.20.7| 109 °F   |          |
-  | ✓ OK     | 192.168.1.11  | 12.0.20.7| 113 °F   |          |
-  | ✗ ERROR  | 192.168.1.12  | N/A      | N/A      | Timed out|
-  | ✗ AUTH ERR| 192.168.1.13 | N/A      | N/A      | Auth failed|
+  | ✓ OK     | 192.168.1.10  | 12.0.20.7| 109 °F   | 38.5 W        |          |
+  | ✓ OK     | 192.168.1.11  | 12.0.20.7| 113 °F   | 42.0 W        |          |
+  | ✗ ERROR  | 192.168.1.12  | N/A      | N/A      | N/A           | Timed out|
+  | ✗ AUTH ERR| 192.168.1.13 | N/A      | N/A      | N/A           | Auth failed|
   +----------+---------------+----------+----------+----------+
 
   Total: 4  |  ✓ Success: 2  |  ✗ Auth Errors: 1  |  ✗ Failed: 1
   CPU Temp (°F) — Avg: 111  |  Min: 109  |  Max: 113  |  Reported: 2/4
+  Total PoE (W) — Avg: 40.3  |  Min: 38.5  |  Max: 42.0  |  Reported: 2/4
 
   Results saved: results.json
   Elapsed: 18.3s (5 workers)
@@ -217,6 +218,8 @@ Results are written to the output file with a `query_info` metadata block and a 
       "firmware_version": "12.0.20.7",
       "cpu_temp": "109 °F",
       "cpu_temp_value": 109.4,
+      "poe_consumed": "38.5 W",
+      "poe_consumed_value": 38.5,
       "error": null
     },
     {
@@ -329,6 +332,20 @@ Patterns tried in order:
 2. `Firmware Version: X.Y.Z`
 3. `Build Number: N`
 4. Generic `Version X.Y.Z` anywhere in the output
+
+---
+
+### `parse_poe_power(raw)`
+
+Extracts the total PoE power consumed from the raw output of `show poe`. Returns a tuple of `(display_string, numeric_value)` where the value is in watts.
+
+```python
+raw = "Total Power Consumed:  38.5"
+display, value = parse_poe_power(raw)
+# Returns: ("38.5 W", 38.5)
+```
+
+The display string is always formatted to one decimal place (e.g. `"38.5 W"`, `"120.0 W"`).
 
 ---
 
