@@ -1,4 +1,4 @@
-# query_kramer.py
+# kramer_firmware.py
 
 A CLI tool for bulk-querying Kramer VP-440H2 matrix switchers over TCP using the Kramer Protocol 3000. Connects to up to 5 devices concurrently, retrieves device identity fields, and outputs a formatted terminal table plus a structured JSON report.
 
@@ -39,7 +39,7 @@ python-dateutil   # optional but recommended for robust date parsing
 ## Installation
 
 ```bash
-# Clone or copy query_kramer.py into your working directory, then:
+# Clone or copy kramer_firmware.py into your working directory, then:
 pip install tabulate tqdm python-dateutil
 ```
 
@@ -91,27 +91,27 @@ switcher-rack-b.av.local,5000
 ### Normal run — query all hosts in switchers.csv
 
 ```bash
-python3 query_kramer.py
+python3 kramer_firmware.py
 ```
 
 ### Debug run — query all hosts with full hex/ASCII socket dumps
 
 ```bash
-python3 query_kramer.py --debug
+python3 kramer_firmware.py --debug
 ```
 
 ### Debug run — single host, all commands
 
 ```bash
-python3 query_kramer.py --debug --host 192.168.1.10
+python3 kramer_firmware.py --debug --host 192.168.1.10
 ```
 
 ### Debug run — single host, single command
 
 ```bash
-python3 query_kramer.py --debug --host 192.168.1.10 --cmd firmware
-python3 query_kramer.py --debug --host 192.168.1.10 --cmd model
-python3 query_kramer.py --debug --host 192.168.1.10 --cmd serial
+python3 kramer_firmware.py --debug --host 192.168.1.10 --cmd firmware
+python3 kramer_firmware.py --debug --host 192.168.1.10 --cmd model
+python3 kramer_firmware.py --debug --host 192.168.1.10 --cmd serial
 ```
 
 ---
