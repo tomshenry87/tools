@@ -509,12 +509,21 @@ class PJLinkClient:
             info["lamp_hours_summary"] = "N/A"
 
     def _derive_fw(self, info) -> str:
-        sv = info.get("software_version", "")
-        if sv and isinstance(sv, str) and not sv.startswith("ERROR"):
-            return sv
+        # Class 2: prefer SVER (dedicated software version command)
+        if info.get("pjlink_class") == "2":
+            sv = info.get("software_version", "")
+            if sv and isinstance(sv, str) and not sv.startswith("ERROR"):
+                return sv
+
+        # Class 1 & fallback: use INFO (free-form field, manufacturer-dependent)
         oi = info.get("other_info", "")
         if oi and isinstance(oi, str) and not oi.startswith("ERROR"):
             return oi
+
+        # Class 1 has no standardised firmware command — report honestly
+        if info.get("pjlink_class") == "1":
+            return "N/A (Class 1)"
+
         return "Not available"
 
     def run_diagnostic(self) -> dict:
@@ -691,7 +700,6 @@ def print_results_table(results):
         rows.append([
             status_icon(r),
             r.get("host", "N/A"),
-            r.get("port", ""),
             clean(r.get("manufacturer")),
             clean(r.get("product_name")),
             clean(r.get("firmware_version")),
@@ -703,7 +711,7 @@ def print_results_table(results):
         ])
 
     headers = [
-        "Status", "Host", "Port", "Manufacturer", "Model",
+        "Status", "Host", "Manufacturer", "Model",
         "Firmware", "Lamp Hours", "Class", "Power", "Name", "Error",
     ]
 
@@ -827,44 +835,25 @@ Examples:
 
     total = len(projectors)
 
-    # -- Thread-safe host tracking --
+    # -- Track only the most recently started host --
     active_lock = threading.Lock()
-    active_hosts = set()
-
-    def get_host_display():
-        """Return only the active host IPs for progress bar display."""
-        with active_lock:
-            hosts = sorted(active_hosts)
-        if not hosts:
-            return ""
-        return ", ".join(hosts)
+    latest_host = {"value": ""}
 
     def worker_task(proj):
         host = proj["host"]
         with active_lock:
-            active_hosts.add(host)
-        try:
-            return proj, query_projector(
-                host=host, port=proj["port"], password=proj["password"],
-                timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
-            )
-        finally:
-            with active_lock:
-                active_hosts.discard(host)
+            latest_host["value"] = host
+        return proj, query_projector(
+            host=host, port=proj["port"], password=proj["password"],
+            timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
+        )
 
     # -- Run with thread pool + tqdm --
     results_map = {}
     start = time.time()
 
-    # Get terminal width for dynamic bar sizing
     term_width = shutil.get_terminal_size((120, 24)).columns
 
-    # Bar format:
-    #   white text, cyan bar, white stats, host display right-aligned
-    #   {l_bar} = "  Scanning |"
-    #   {bar}   = the actual bar characters (cyan)
-    #   {r_bar} = "| 3/50 [00:12<00:48, 4.0s/dev]"
-    #   {postfix} = active hosts
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
         f"{CYAN}{{bar}}{RESET}"
@@ -907,8 +896,10 @@ Examples:
                         "lamp_hours_summary": "N/A",
                     }
 
-                # Update bar with currently active hosts only
-                pbar.set_postfix_str(get_host_display(), refresh=False)
+                # Show only the most recently started host
+                with active_lock:
+                    host_display = latest_host["value"]
+                pbar.set_postfix_str(host_display, refresh=False)
                 pbar.update(1)
 
         elapsed = time.time() - start

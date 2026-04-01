@@ -5,7 +5,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "38 °C",
+    "cpu_temp": "37 °C",
     "error": null
   },
   {
@@ -14,7 +14,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "43 °C",
+    "cpu_temp": "40 °C",
     "error": null
   },
   {
@@ -23,7 +23,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.14",
-    "cpu_temp": "44 °C",
+    "cpu_temp": "43 °C",
     "error": null
   },
   {
@@ -41,7 +41,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "41 °C",
+    "cpu_temp": "42 °C",
     "error": null
   },
   {
@@ -68,17 +68,17 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "36 °C",
+    "cpu_temp": "38 °C",
     "error": null
   },
   {
     "host": "berrysport-045-router.openav.dartmouth.edu",
     "username": "admin",
     "port": 22,
-    "success": true,
-    "firmware_version": "13.0.4.9",
-    "cpu_temp": "42 °C",
-    "error": null
+    "success": false,
+    "firmware_version": null,
+    "cpu_temp": null,
+    "error": "SSH/network error: timed out"
   },
   {
     "host": "berrysport-206-router.openav.dartmouth.edu",
@@ -86,7 +86,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "42 °C",
+    "cpu_temp": "43 °C",
     "error": null
   },
   {
@@ -113,7 +113,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "48 °C",
+    "cpu_temp": "47 °C",
     "error": null
   },
   {
@@ -122,7 +122,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "41 °C",
+    "cpu_temp": "42 °C",
     "error": null
   },
   {
@@ -140,7 +140,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "39 °C",
+    "cpu_temp": "40 °C",
     "error": null
   },
   {
@@ -149,7 +149,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "41 °C",
+    "cpu_temp": "42 °C",
     "error": null
   },
   {
@@ -167,7 +167,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "37 °C",
+    "cpu_temp": "38 °C",
     "error": null
   },
   {
@@ -203,7 +203,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "37 °C",
+    "cpu_temp": "38 °C",
     "error": null
   },
   {
@@ -230,7 +230,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "41 °C",
+    "cpu_temp": "42 °C",
     "error": null
   },
   {
@@ -239,7 +239,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "42 °C",
+    "cpu_temp": "41 °C",
     "error": null
   },
   {
@@ -284,7 +284,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.5.14",
-    "cpu_temp": "45 °C",
+    "cpu_temp": "46 °C",
     "error": null
   },
   {
@@ -374,7 +374,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.13",
-    "cpu_temp": "42 °C",
+    "cpu_temp": "43 °C",
     "error": null
   },
   {
@@ -383,7 +383,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "43 °C",
+    "cpu_temp": "41 °C",
     "error": null
   },
   {
@@ -392,7 +392,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "38 °C",
+    "cpu_temp": "39 °C",
     "error": null
   },
   {
@@ -401,7 +401,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "42 °C",
+    "cpu_temp": "43 °C",
     "error": null
   },
   {
@@ -410,7 +410,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "39 °C",
+    "cpu_temp": "40 °C",
     "error": null
   },
   {
@@ -428,7 +428,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "43 °C",
+    "cpu_temp": "42 °C",
     "error": null
   },
   {
@@ -437,7 +437,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.13",
-    "cpu_temp": "41 °C",
+    "cpu_temp": "42 °C",
     "error": null
   },
   {
@@ -482,7 +482,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "33 °C",
+    "cpu_temp": "32 °C",
     "error": null
   },
   {
@@ -500,7 +500,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "41 °C",
+    "cpu_temp": "34 °C",
     "error": null
   },
   {
@@ -518,7 +518,7 @@
     "port": 22,
     "success": true,
     "firmware_version": "13.0.4.9",
-    "cpu_temp": "40 °C",
+    "cpu_temp": "41 °C",
     "error": null
   }
 ]
