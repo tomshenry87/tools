@@ -53,7 +53,7 @@ tqdm
 ```bash
 git clone https://github.com/your-org/axis-vapix-query.git
 cd axis-vapix-query
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 `requirements.txt`:
@@ -73,7 +73,7 @@ tqdm>=4.66.0
 2. Run the script:
 
 ```bash
-python axis_query.py
+python3 axis_firmware.py
 ```
 
 Output is printed to the terminal and saved to `results.json`.
