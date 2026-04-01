@@ -257,8 +257,9 @@ def parse_cpu_temp(raw: str) -> tuple[str | None, float | None]:
         re.IGNORECASE | re.MULTILINE,
     )
     if m:
-        val = float(m.group(1).strip())
-        return f"{val:.0f} \u00b0C", val
+        val_c = float(m.group(1).strip())
+        val_f = val_c * 9 / 5 + 32
+        return f"{val_f:.0f} \u00b0F", val_f
     return None, None
 
 
@@ -405,14 +406,14 @@ def print_results_table(results: list[dict], elapsed: float) -> None:
     if temp_vals:
         avg = sum(temp_vals) / len(temp_vals)
         print(
-            f"  {BOLD}CPU Temp (\u00b0C){RESET}{WHITE} \u2014 "
+            f"  {BOLD}CPU Temp (\u00b0F){RESET}{WHITE} \u2014 "
             f"Avg: {avg:.0f}  |  "
             f"Min: {min(temp_vals):.0f}  |  "
             f"Max: {max(temp_vals):.0f}  |  "
             f"Reported: {len(temp_vals)}/{total}"
         )
     else:
-        print(f"  {BOLD}CPU Temp (\u00b0C){RESET}{WHITE} \u2014 No data available")
+        print(f"  {BOLD}CPU Temp (\u00b0F){RESET}{WHITE} \u2014 No data available")
 
     print(f"{RESET}")
 

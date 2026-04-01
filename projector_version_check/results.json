@@ -1,20 +1,20 @@
 {
     "query_info": {
         "csv_file": "/home/tom/tools/projector_version_check/projectors.csv",
-        "timestamp": "2026-04-01T12:59:37.432932+00:00",
+        "timestamp": "2026-04-01T19:15:28.423390+00:00",
         "protocol": "PJLink Class 1 + Class 2",
         "mode": "firmware+lamp",
         "workers": 5,
         "total": 74,
         "success": 73,
         "errors": 1,
-        "elapsed_seconds": 34.0
+        "elapsed_seconds": 33.9
     },
     "projectors": [
         {
             "host": "4-currier-232-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:03.456320+00:00",
+            "query_timestamp": "2026-04-01T19:14:54.501939+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -23,25 +23,25 @@
             "projector_name": "VPL-FHZ66",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "4280 1",
+            "lamp_info_raw": "4286 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "4280h",
-                    "hours_int": 4280,
+                    "hours": "4286h",
+                    "hours_int": 4286,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 4280,
-            "lamp_hours_total_display": "4280h",
-            "lamp_hours_summary": "Lamp 1: 4280h (On)",
+            "lamp_hours_total": 4286,
+            "lamp_hours_total_display": "4286h",
+            "lamp_hours_summary": "Lamp 1: 4286h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "baker-213-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:03.456847+00:00",
+            "query_timestamp": "2026-04-01T19:14:54.502126+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -52,25 +52,25 @@
             "software_version": "1.08",
             "serial_number": "7101926",
             "firmware_version": "1.08",
-            "lamp_info_raw": "353",
+            "lamp_info_raw": "359",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "353h",
-                    "hours_int": 353,
+                    "hours": "359h",
+                    "hours_int": 359,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 353,
-            "lamp_hours_total_display": "353h",
-            "lamp_hours_summary": "Lamp 1: 353h (Unknown)",
+            "lamp_hours_total": 359,
+            "lamp_hours_total_display": "359h",
+            "lamp_hours_summary": "Lamp 1: 359h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "baker-219-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:03.457251+00:00",
+            "query_timestamp": "2026-04-01T19:14:54.502451+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -81,25 +81,25 @@
             "software_version": "1.06",
             "serial_number": "7004155",
             "firmware_version": "1.06",
-            "lamp_info_raw": "549",
+            "lamp_info_raw": "550",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "549h",
-                    "hours_int": 549,
+                    "hours": "550h",
+                    "hours_int": 550,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 549,
-            "lamp_hours_total_display": "549h",
-            "lamp_hours_summary": "Lamp 1: 549h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 550,
+            "lamp_hours_total_display": "550h",
+            "lamp_hours_summary": "Lamp 1: 550h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "baker-227-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:03.457543+00:00",
+            "query_timestamp": "2026-04-01T19:14:54.503689+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -128,7 +128,7 @@
         {
             "host": "baker-234-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:03.457778+00:00",
+            "query_timestamp": "2026-04-01T19:14:54.504047+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -139,25 +139,25 @@
             "software_version": "1.07",
             "serial_number": "7101582",
             "firmware_version": "1.07",
-            "lamp_info_raw": "454",
+            "lamp_info_raw": "459",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "454h",
-                    "hours_int": 454,
+                    "hours": "459h",
+                    "hours_int": 459,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 454,
-            "lamp_hours_total_display": "454h",
-            "lamp_hours_summary": "Lamp 1: 454h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 459,
+            "lamp_hours_total_display": "459h",
+            "lamp_hours_summary": "Lamp 1: 459h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "bartlett-105-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:05.017164+00:00",
+            "query_timestamp": "2026-04-01T19:14:56.063334+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -168,25 +168,25 @@
             "software_version": "1.07",
             "serial_number": "7100100",
             "firmware_version": "1.07",
-            "lamp_info_raw": "309",
+            "lamp_info_raw": "315",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "309h",
-                    "hours_int": 309,
+                    "hours": "315h",
+                    "hours_int": 315,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 309,
-            "lamp_hours_total_display": "309h",
-            "lamp_hours_summary": "Lamp 1: 309h (Unknown)",
+            "lamp_hours_total": 315,
+            "lamp_hours_total_display": "315h",
+            "lamp_hours_summary": "Lamp 1: 315h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "berry-180-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:05.321935+00:00",
+            "query_timestamp": "2026-04-01T19:14:56.367545+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -197,25 +197,25 @@
             "software_version": "1.07",
             "serial_number": "7003861",
             "firmware_version": "1.07",
-            "lamp_info_raw": "2149",
+            "lamp_info_raw": "2155",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2149h",
-                    "hours_int": 2149,
+                    "hours": "2155h",
+                    "hours_int": 2155,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2149,
-            "lamp_hours_total_display": "2149h",
-            "lamp_hours_summary": "Lamp 1: 2149h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 2155,
+            "lamp_hours_total_display": "2155h",
+            "lamp_hours_summary": "Lamp 1: 2155h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "brace-008-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:05.323054+00:00",
+            "query_timestamp": "2026-04-01T19:14:56.377808+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -244,7 +244,7 @@
         {
             "host": "carson-060-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:05.324066+00:00",
+            "query_timestamp": "2026-04-01T19:14:56.379821+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -255,25 +255,25 @@
             "software_version": "1.07",
             "serial_number": "7008353",
             "firmware_version": "1.07",
-            "lamp_info_raw": "2049",
+            "lamp_info_raw": "2050",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2049h",
-                    "hours_int": 2049,
+                    "hours": "2050h",
+                    "hours_int": 2050,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2049,
-            "lamp_hours_total_display": "2049h",
-            "lamp_hours_summary": "Lamp 1: 2049h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 2050,
+            "lamp_hours_total_display": "2050h",
+            "lamp_hours_summary": "Lamp 1: 2050h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "carson-061-1-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:05.327945+00:00",
+            "query_timestamp": "2026-04-01T19:14:56.380762+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -284,25 +284,25 @@
             "software_version": "1.07",
             "serial_number": "7008352",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1844",
+            "lamp_info_raw": "1846",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1844h",
-                    "hours_int": 1844,
+                    "hours": "1846h",
+                    "hours_int": 1846,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1844,
-            "lamp_hours_total_display": "1844h",
-            "lamp_hours_summary": "Lamp 1: 1844h (Unknown)",
+            "lamp_hours_total": 1846,
+            "lamp_hours_total_display": "1846h",
+            "lamp_hours_summary": "Lamp 1: 1846h (Unknown)",
             "power_status": "Standby"
         },
         {
             "host": "carson-l01-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:06.884859+00:00",
+            "query_timestamp": "2026-04-01T19:14:57.946709+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -313,25 +313,25 @@
             "software_version": "1.07",
             "serial_number": "7008358",
             "firmware_version": "1.07",
-            "lamp_info_raw": "2038",
+            "lamp_info_raw": "2044",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2038h",
-                    "hours_int": 2038,
+                    "hours": "2044h",
+                    "hours_int": 2044,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2038,
-            "lamp_hours_total_display": "2038h",
-            "lamp_hours_summary": "Lamp 1: 2038h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 2044,
+            "lamp_hours_total_display": "2044h",
+            "lamp_hours_summary": "Lamp 1: 2044h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "carson-l02-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:07.187419+00:00",
+            "query_timestamp": "2026-04-01T19:14:58.240174+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -342,25 +342,25 @@
             "software_version": "1.07",
             "serial_number": "7008282",
             "firmware_version": "1.07",
-            "lamp_info_raw": "2418",
+            "lamp_info_raw": "2424",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2418h",
-                    "hours_int": 2418,
+                    "hours": "2424h",
+                    "hours_int": 2424,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2418,
-            "lamp_hours_total_display": "2418h",
-            "lamp_hours_summary": "Lamp 1: 2418h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 2424,
+            "lamp_hours_total_display": "2424h",
+            "lamp_hours_summary": "Lamp 1: 2424h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "dewey-101-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:07.195310+00:00",
+            "query_timestamp": "2026-04-01T19:14:58.253540+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -371,25 +371,25 @@
             "software_version": "1.07",
             "serial_number": "7101581",
             "firmware_version": "1.07",
-            "lamp_info_raw": "32",
+            "lamp_info_raw": "37",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "32h",
-                    "hours_int": 32,
+                    "hours": "37h",
+                    "hours_int": 37,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 32,
-            "lamp_hours_total_display": "32h",
-            "lamp_hours_summary": "Lamp 1: 32h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 37,
+            "lamp_hours_total_display": "37h",
+            "lamp_hours_summary": "Lamp 1: 37h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "fairchild-101-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:07.198907+00:00",
+            "query_timestamp": "2026-04-01T19:14:58.254540+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -400,25 +400,25 @@
             "software_version": "1.08",
             "serial_number": "7101654",
             "firmware_version": "1.08",
-            "lamp_info_raw": "1026",
+            "lamp_info_raw": "1032",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1026h",
-                    "hours_int": 1026,
+                    "hours": "1032h",
+                    "hours_int": 1032,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1026,
-            "lamp_hours_total_display": "1026h",
-            "lamp_hours_summary": "Lamp 1: 1026h (Unknown)",
+            "lamp_hours_total": 1032,
+            "lamp_hours_total_display": "1032h",
+            "lamp_hours_summary": "Lamp 1: 1032h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "haldeman-028-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:07.200342+00:00",
+            "query_timestamp": "2026-04-01T19:14:58.255065+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -429,25 +429,25 @@
             "software_version": "1.07",
             "serial_number": "7007690",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1346",
+            "lamp_info_raw": "1351",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1346h",
-                    "hours_int": 1346,
+                    "hours": "1351h",
+                    "hours_int": 1351,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1346,
-            "lamp_hours_total_display": "1346h",
-            "lamp_hours_summary": "Lamp 1: 1346h (Unknown)",
+            "lamp_hours_total": 1351,
+            "lamp_hours_total_display": "1351h",
+            "lamp_hours_summary": "Lamp 1: 1351h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "haldeman-046-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:08.752434+00:00",
+            "query_timestamp": "2026-04-01T19:14:59.829371+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -458,25 +458,25 @@
             "software_version": "1.07",
             "serial_number": "7100105",
             "firmware_version": "1.07",
-            "lamp_info_raw": "483",
+            "lamp_info_raw": "489",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "483h",
-                    "hours_int": 483,
+                    "hours": "489h",
+                    "hours_int": 489,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 483,
-            "lamp_hours_total_display": "483h",
-            "lamp_hours_summary": "Lamp 1: 483h (Unknown)",
+            "lamp_hours_total": 489,
+            "lamp_hours_total_display": "489h",
+            "lamp_hours_summary": "Lamp 1: 489h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "hopkins-052-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:09.068805+00:00",
+            "query_timestamp": "2026-04-01T19:15:00.112765+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -500,12 +500,12 @@
             "lamp_hours_total": 528,
             "lamp_hours_total_display": "528h",
             "lamp_hours_summary": "Lamp 1: 528h (Unknown)",
-            "power_status": "Standby"
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "hopkins-054-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:09.072903+00:00",
+            "query_timestamp": "2026-04-01T19:15:00.121397+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -514,25 +514,25 @@
             "projector_name": "VPL-FHZ91L",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "864 1",
+            "lamp_info_raw": "871 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "864h",
-                    "hours_int": 864,
+                    "hours": "871h",
+                    "hours_int": 871,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 864,
-            "lamp_hours_total_display": "864h",
-            "lamp_hours_summary": "Lamp 1: 864h (On)",
+            "lamp_hours_total": 871,
+            "lamp_hours_total_display": "871h",
+            "lamp_hours_summary": "Lamp 1: 871h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "hopkins-138-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:09.082370+00:00",
+            "query_timestamp": "2026-04-01T19:15:00.125029+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -543,25 +543,25 @@
             "software_version": "1.07",
             "serial_number": "7100244",
             "firmware_version": "1.07",
-            "lamp_info_raw": "71",
+            "lamp_info_raw": "74",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "71h",
-                    "hours_int": 71,
+                    "hours": "74h",
+                    "hours_int": 74,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 71,
-            "lamp_hours_total_display": "71h",
-            "lamp_hours_summary": "Lamp 1: 71h (Unknown)",
+            "lamp_hours_total": 74,
+            "lamp_hours_total_display": "74h",
+            "lamp_hours_summary": "Lamp 1: 74h (Unknown)",
             "power_status": "Standby"
         },
         {
             "host": "kemeny-004-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:09.082705+00:00",
+            "query_timestamp": "2026-04-01T19:15:00.127292+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -590,7 +590,7 @@
         {
             "host": "kemeny-006-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:10.636151+00:00",
+            "query_timestamp": "2026-04-01T19:15:01.684991+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -601,25 +601,25 @@
             "software_version": "1.05",
             "serial_number": "7003863",
             "firmware_version": "1.05",
-            "lamp_info_raw": "1685",
+            "lamp_info_raw": "1691",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1685h",
-                    "hours_int": 1685,
+                    "hours": "1691h",
+                    "hours_int": 1691,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1685,
-            "lamp_hours_total_display": "1685h",
-            "lamp_hours_summary": "Lamp 1: 1685h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 1691,
+            "lamp_hours_total_display": "1691h",
+            "lamp_hours_summary": "Lamp 1: 1691h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "kemeny-007-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:10.643392+00:00",
+            "query_timestamp": "2026-04-01T19:15:01.734046+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -630,25 +630,25 @@
             "software_version": "1.06",
             "serial_number": "7004227",
             "firmware_version": "1.06",
-            "lamp_info_raw": "1725",
+            "lamp_info_raw": "1729",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1725h",
-                    "hours_int": 1725,
+                    "hours": "1729h",
+                    "hours_int": 1729,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1725,
-            "lamp_hours_total_display": "1725h",
-            "lamp_hours_summary": "Lamp 1: 1725h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 1729,
+            "lamp_hours_total_display": "1729h",
+            "lamp_hours_summary": "Lamp 1: 1729h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "kemeny-008-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:10.936621+00:00",
+            "query_timestamp": "2026-04-01T19:15:01.981500+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -657,25 +657,25 @@
             "projector_name": "VPL-FHZ91L",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "2174 1",
+            "lamp_info_raw": "2180 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2174h",
-                    "hours_int": 2174,
+                    "hours": "2180h",
+                    "hours_int": 2180,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 2174,
-            "lamp_hours_total_display": "2174h",
-            "lamp_hours_summary": "Lamp 1: 2174h (On)",
+            "lamp_hours_total": 2180,
+            "lamp_hours_total_display": "2180h",
+            "lamp_hours_summary": "Lamp 1: 2180h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "kemeny-105-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:10.948451+00:00",
+            "query_timestamp": "2026-04-01T19:15:01.999159+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -686,25 +686,25 @@
             "software_version": "1.06",
             "serial_number": "7004036",
             "firmware_version": "1.06",
-            "lamp_info_raw": "1986",
+            "lamp_info_raw": "1991",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1986h",
-                    "hours_int": 1986,
+                    "hours": "1991h",
+                    "hours_int": 1991,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1986,
-            "lamp_hours_total_display": "1986h",
-            "lamp_hours_summary": "Lamp 1: 1986h (Unknown)",
+            "lamp_hours_total": 1991,
+            "lamp_hours_total_display": "1991h",
+            "lamp_hours_summary": "Lamp 1: 1991h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "kemeny-108-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:10.949868+00:00",
+            "query_timestamp": "2026-04-01T19:15:02.001024+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -713,25 +713,25 @@
             "projector_name": "VPL-FHZ65",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "11095 0",
+            "lamp_info_raw": "11098 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "11095h",
-                    "hours_int": 11095,
-                    "on": false,
-                    "status": "Off"
+                    "hours": "11098h",
+                    "hours_int": 11098,
+                    "on": true,
+                    "status": "On"
                 }
             ],
-            "lamp_hours_total": 11095,
-            "lamp_hours_total_display": "11095h",
-            "lamp_hours_summary": "Lamp 1: 11095h (Off)",
-            "power_status": "Standby"
+            "lamp_hours_total": 11098,
+            "lamp_hours_total_display": "11098h",
+            "lamp_hours_summary": "Lamp 1: 11098h (On)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-100-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:12.497507+00:00",
+            "query_timestamp": "2026-04-01T19:15:03.546799+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -740,25 +740,25 @@
             "projector_name": "VPL-FHZ131L",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "1633 1",
+            "lamp_info_raw": "1639 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1633h",
-                    "hours_int": 1633,
+                    "hours": "1639h",
+                    "hours_int": 1639,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 1633,
-            "lamp_hours_total_display": "1633h",
-            "lamp_hours_summary": "Lamp 1: 1633h (On)",
+            "lamp_hours_total": 1639,
+            "lamp_hours_total_display": "1639h",
+            "lamp_hours_summary": "Lamp 1: 1639h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-100-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:12.503432+00:00",
+            "query_timestamp": "2026-04-01T19:15:03.554079+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -785,7 +785,7 @@
         {
             "host": "lsc-102-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:12.507195+00:00",
+            "query_timestamp": "2026-04-01T19:15:03.576358+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -814,7 +814,7 @@
         {
             "host": "lsc-102-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:12.517219+00:00",
+            "query_timestamp": "2026-04-01T19:15:03.603492+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -843,7 +843,7 @@
         {
             "host": "lsc-104-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:12.813058+00:00",
+            "query_timestamp": "2026-04-01T19:15:03.873076+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -872,7 +872,7 @@
         {
             "host": "lsc-104-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:14.069330+00:00",
+            "query_timestamp": "2026-04-01T19:15:05.117245+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -901,7 +901,7 @@
         {
             "host": "lsc-105-1-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:14.077054+00:00",
+            "query_timestamp": "2026-04-01T19:15:05.131627+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -912,25 +912,25 @@
             "software_version": "1.07",
             "serial_number": "7007621",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1977",
+            "lamp_info_raw": "1981",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1977h",
-                    "hours_int": 1977,
+                    "hours": "1981h",
+                    "hours_int": 1981,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1977,
-            "lamp_hours_total_display": "1977h",
-            "lamp_hours_summary": "Lamp 1: 1977h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 1981,
+            "lamp_hours_total_display": "1981h",
+            "lamp_hours_summary": "Lamp 1: 1981h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-105-1-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:14.380263+00:00",
+            "query_timestamp": "2026-04-01T19:15:05.470254+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -939,25 +939,25 @@
             "projector_name": "VPL-FHZ75",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "2480 1",
+            "lamp_info_raw": "2483 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2480h",
-                    "hours_int": 2480,
+                    "hours": "2483h",
+                    "hours_int": 2483,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 2480,
-            "lamp_hours_total_display": "2480h",
-            "lamp_hours_summary": "Lamp 1: 2480h (On)",
+            "lamp_hours_total": 2483,
+            "lamp_hours_total_display": "2483h",
+            "lamp_hours_summary": "Lamp 1: 2483h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-106-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:14.406726+00:00",
+            "query_timestamp": "2026-04-01T19:15:05.471592+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -986,7 +986,7 @@
         {
             "host": "lsc-106-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:14.679123+00:00",
+            "query_timestamp": "2026-04-01T19:15:05.742250+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1015,7 +1015,7 @@
         {
             "host": "lsc-200-1-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:15.944498+00:00",
+            "query_timestamp": "2026-04-01T19:15:06.988386+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1026,25 +1026,25 @@
             "software_version": "1.07",
             "serial_number": "7008107",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1970",
+            "lamp_info_raw": "1976",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1970h",
-                    "hours_int": 1970,
+                    "hours": "1976h",
+                    "hours_int": 1976,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1970,
-            "lamp_hours_total_display": "1970h",
-            "lamp_hours_summary": "Lamp 1: 1970h (Unknown)",
+            "lamp_hours_total": 1976,
+            "lamp_hours_total_display": "1976h",
+            "lamp_hours_summary": "Lamp 1: 1976h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-200-1-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:15.946337+00:00",
+            "query_timestamp": "2026-04-01T19:15:07.034731+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1055,25 +1055,25 @@
             "software_version": "1.07",
             "serial_number": "7008116",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1566",
+            "lamp_info_raw": "1572",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1566h",
-                    "hours_int": 1566,
+                    "hours": "1572h",
+                    "hours_int": 1572,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1566,
-            "lamp_hours_total_display": "1566h",
-            "lamp_hours_summary": "Lamp 1: 1566h (Unknown)",
+            "lamp_hours_total": 1572,
+            "lamp_hours_total_display": "1572h",
+            "lamp_hours_summary": "Lamp 1: 1572h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-201-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:15.946956+00:00",
+            "query_timestamp": "2026-04-01T19:15:07.035388+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1084,25 +1084,25 @@
             "software_version": "1.07",
             "serial_number": "7008113",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1803",
+            "lamp_info_raw": "1804",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1803h",
-                    "hours_int": 1803,
+                    "hours": "1804h",
+                    "hours_int": 1804,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1803,
-            "lamp_hours_total_display": "1803h",
-            "lamp_hours_summary": "Lamp 1: 1803h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 1804,
+            "lamp_hours_total_display": "1804h",
+            "lamp_hours_summary": "Lamp 1: 1804h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "lsc-201-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:16.275852+00:00",
+            "query_timestamp": "2026-04-01T19:15:07.334298+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1113,25 +1113,25 @@
             "software_version": "1.07",
             "serial_number": "7008111",
             "firmware_version": "1.07",
-            "lamp_info_raw": "2182",
+            "lamp_info_raw": "2187",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2182h",
-                    "hours_int": 2182,
+                    "hours": "2187h",
+                    "hours_int": 2187,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2182,
-            "lamp_hours_total_display": "2182h",
-            "lamp_hours_summary": "Lamp 1: 2182h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 2187,
+            "lamp_hours_total_display": "2187h",
+            "lamp_hours_summary": "Lamp 1: 2187h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "lsc-202-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:16.550427+00:00",
+            "query_timestamp": "2026-04-01T19:15:07.771360+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1160,7 +1160,7 @@
         {
             "host": "lsc-202-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:17.816189+00:00",
+            "query_timestamp": "2026-04-01T19:15:08.880788+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1189,7 +1189,7 @@
         {
             "host": "lsc-204-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:17.817654+00:00",
+            "query_timestamp": "2026-04-01T19:15:08.898026+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1218,7 +1218,7 @@
         {
             "host": "lsc-204-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:17.819658+00:00",
+            "query_timestamp": "2026-04-01T19:15:08.904343+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1247,7 +1247,7 @@
         {
             "host": "lsc-205-1-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:18.147284+00:00",
+            "query_timestamp": "2026-04-01T19:15:09.217370+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1258,25 +1258,25 @@
             "software_version": "1.07",
             "serial_number": "7007620",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1675",
+            "lamp_info_raw": "1679",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1675h",
-                    "hours_int": 1675,
+                    "hours": "1679h",
+                    "hours_int": 1679,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1675,
-            "lamp_hours_total_display": "1675h",
-            "lamp_hours_summary": "Lamp 1: 1675h (Unknown)",
+            "lamp_hours_total": 1679,
+            "lamp_hours_total_display": "1679h",
+            "lamp_hours_summary": "Lamp 1: 1679h (Unknown)",
             "power_status": "Standby"
         },
         {
             "host": "lsc-205-1-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:18.423559+00:00",
+            "query_timestamp": "2026-04-01T19:15:09.650003+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1287,25 +1287,25 @@
             "software_version": "1.07",
             "serial_number": "7007619",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1472",
+            "lamp_info_raw": "1474",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1472h",
-                    "hours_int": 1472,
+                    "hours": "1474h",
+                    "hours_int": 1474,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1472,
-            "lamp_hours_total_display": "1472h",
-            "lamp_hours_summary": "Lamp 1: 1472h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 1474,
+            "lamp_hours_total_display": "1474h",
+            "lamp_hours_summary": "Lamp 1: 1474h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "lsc-206-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:19.682875+00:00",
+            "query_timestamp": "2026-04-01T19:15:10.752508+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1334,7 +1334,7 @@
         {
             "host": "lsc-206-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:19.685004+00:00",
+            "query_timestamp": "2026-04-01T19:15:10.770271+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1363,7 +1363,7 @@
         {
             "host": "moore-110-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:19.685559+00:00",
+            "query_timestamp": "2026-04-01T19:15:10.772591+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1374,25 +1374,25 @@
             "software_version": "1.04",
             "serial_number": "7002276",
             "firmware_version": "1.04",
-            "lamp_info_raw": "2906",
+            "lamp_info_raw": "2911",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2906h",
-                    "hours_int": 2906,
+                    "hours": "2911h",
+                    "hours_int": 2911,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2906,
-            "lamp_hours_total_display": "2906h",
-            "lamp_hours_summary": "Lamp 1: 2906h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 2911,
+            "lamp_hours_total_display": "2911h",
+            "lamp_hours_summary": "Lamp 1: 2911h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "moore-150-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:20.012176+00:00",
+            "query_timestamp": "2026-04-01T19:15:11.091770+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1403,25 +1403,25 @@
             "software_version": "1.06",
             "serial_number": "7004890",
             "firmware_version": "1.06",
-            "lamp_info_raw": "1971",
+            "lamp_info_raw": "1977",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1971h",
-                    "hours_int": 1971,
+                    "hours": "1977h",
+                    "hours_int": 1977,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1971,
-            "lamp_hours_total_display": "1971h",
-            "lamp_hours_summary": "Lamp 1: 1971h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 1977,
+            "lamp_hours_total_display": "1977h",
+            "lamp_hours_summary": "Lamp 1: 1977h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "moore-202-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:20.284523+00:00",
+            "query_timestamp": "2026-04-01T19:15:11.524320+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1432,25 +1432,25 @@
             "software_version": "1.06",
             "serial_number": "7004892",
             "firmware_version": "1.06",
-            "lamp_info_raw": "2583",
+            "lamp_info_raw": "2588",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2583h",
-                    "hours_int": 2583,
+                    "hours": "2588h",
+                    "hours_int": 2588,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2583,
-            "lamp_hours_total_display": "2583h",
-            "lamp_hours_summary": "Lamp 1: 2583h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 2588,
+            "lamp_hours_total_display": "2588h",
+            "lamp_hours_summary": "Lamp 1: 2588h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "preshouse-b02-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:21.552466+00:00",
+            "query_timestamp": "2026-04-01T19:15:12.640852+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1479,7 +1479,7 @@
         {
             "host": "rockefeller-001-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:21.555668+00:00",
+            "query_timestamp": "2026-04-01T19:15:12.643051+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1490,25 +1490,25 @@
             "software_version": "1.07",
             "serial_number": "7008357",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1869",
+            "lamp_info_raw": "1875",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1869h",
-                    "hours_int": 1869,
+                    "hours": "1875h",
+                    "hours_int": 1875,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1869,
-            "lamp_hours_total_display": "1869h",
-            "lamp_hours_summary": "Lamp 1: 1869h (Unknown)",
+            "lamp_hours_total": 1875,
+            "lamp_hours_total_display": "1875h",
+            "lamp_hours_summary": "Lamp 1: 1875h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "rockefeller-002-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:21.556436+00:00",
+            "query_timestamp": "2026-04-01T19:15:12.689758+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1519,25 +1519,25 @@
             "software_version": "1.07",
             "serial_number": "7008278",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1885",
+            "lamp_info_raw": "1891",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1885h",
-                    "hours_int": 1885,
+                    "hours": "1891h",
+                    "hours_int": 1891,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1885,
-            "lamp_hours_total_display": "1885h",
-            "lamp_hours_summary": "Lamp 1: 1885h (Unknown)",
+            "lamp_hours_total": 1891,
+            "lamp_hours_total_display": "1891h",
+            "lamp_hours_summary": "Lamp 1: 1891h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "rockefeller-003-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:21.884404+00:00",
+            "query_timestamp": "2026-04-01T19:15:12.958035+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1548,25 +1548,25 @@
             "software_version": "1.07",
             "serial_number": "7007582",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1541",
+            "lamp_info_raw": "1547",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1541h",
-                    "hours_int": 1541,
+                    "hours": "1547h",
+                    "hours_int": 1547,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1541,
-            "lamp_hours_total_display": "1541h",
-            "lamp_hours_summary": "Lamp 1: 1541h (Unknown)",
+            "lamp_hours_total": 1547,
+            "lamp_hours_total_display": "1547h",
+            "lamp_hours_summary": "Lamp 1: 1547h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "rockefeller-208-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:22.158746+00:00",
+            "query_timestamp": "2026-04-01T19:15:13.390087+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -1575,25 +1575,25 @@
             "projector_name": "VPL-PHZ60",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "642",
+            "lamp_info_raw": "645",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "642h",
-                    "hours_int": 642,
+                    "hours": "645h",
+                    "hours_int": 645,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 642,
-            "lamp_hours_total_display": "642h",
-            "lamp_hours_summary": "Lamp 1: 642h (Unknown)",
+            "lamp_hours_total": 645,
+            "lamp_hours_total_display": "645h",
+            "lamp_hours_summary": "Lamp 1: 645h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "rockefeller-209-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:23.421803+00:00",
+            "query_timestamp": "2026-04-01T19:15:14.534713+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1604,25 +1604,25 @@
             "software_version": "1.09",
             "serial_number": "7100075",
             "firmware_version": "1.09",
-            "lamp_info_raw": "15",
+            "lamp_info_raw": "18",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "15h",
-                    "hours_int": 15,
+                    "hours": "18h",
+                    "hours_int": 18,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 15,
-            "lamp_hours_total_display": "15h",
-            "lamp_hours_summary": "Lamp 1: 15h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 18,
+            "lamp_hours_total_display": "18h",
+            "lamp_hours_summary": "Lamp 1: 18h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "silsby-029a-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:23.422805+00:00",
+            "query_timestamp": "2026-04-01T19:15:14.581569+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1633,25 +1633,25 @@
             "software_version": "MAIN:1.09/SUB:1.00",
             "serial_number": "GA2550853",
             "firmware_version": "MAIN:1.09/SUB:1.00",
-            "lamp_info_raw": "4461 1",
+            "lamp_info_raw": "4466 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "4461h",
-                    "hours_int": 4461,
+                    "hours": "4466h",
+                    "hours_int": 4466,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 4461,
-            "lamp_hours_total_display": "4461h",
-            "lamp_hours_summary": "Lamp 1: 4461h (On)",
+            "lamp_hours_total": 4466,
+            "lamp_hours_total_display": "4466h",
+            "lamp_hours_summary": "Lamp 1: 4466h (On)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "silsby-029b-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:23.423418+00:00",
+            "query_timestamp": "2026-04-01T19:15:14.819383+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1662,25 +1662,25 @@
             "software_version": "MAIN:1.09/SUB:1.00",
             "serial_number": "GA2550855",
             "firmware_version": "MAIN:1.09/SUB:1.00",
-            "lamp_info_raw": "3452 0",
+            "lamp_info_raw": "3455 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "3452h",
-                    "hours_int": 3452,
-                    "on": false,
-                    "status": "Off"
+                    "hours": "3455h",
+                    "hours_int": 3455,
+                    "on": true,
+                    "status": "On"
                 }
             ],
-            "lamp_hours_total": 3452,
-            "lamp_hours_total_display": "3452h",
-            "lamp_hours_summary": "Lamp 1: 3452h (Off)",
-            "power_status": "Standby"
+            "lamp_hours_total": 3455,
+            "lamp_hours_total_display": "3455h",
+            "lamp_hours_summary": "Lamp 1: 3455h (On)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "silsby-113-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:23.744251+00:00",
+            "query_timestamp": "2026-04-01T19:15:14.960401+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1691,25 +1691,25 @@
             "software_version": "1.05",
             "serial_number": "7003585",
             "firmware_version": "1.05",
-            "lamp_info_raw": "3588",
+            "lamp_info_raw": "3594",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "3588h",
-                    "hours_int": 3588,
+                    "hours": "3594h",
+                    "hours_int": 3594,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 3588,
-            "lamp_hours_total_display": "3588h",
-            "lamp_hours_summary": "Lamp 1: 3588h (Unknown)",
+            "lamp_hours_total": 3594,
+            "lamp_hours_total_display": "3594h",
+            "lamp_hours_summary": "Lamp 1: 3594h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "silsby-213-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:23.761382+00:00",
+            "query_timestamp": "2026-04-01T19:15:15.522601+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1720,25 +1720,25 @@
             "software_version": "1.04",
             "serial_number": "7001612",
             "firmware_version": "1.04",
-            "lamp_info_raw": "3315",
+            "lamp_info_raw": "3321",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "3315h",
-                    "hours_int": 3315,
+                    "hours": "3321h",
+                    "hours_int": 3321,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 3315,
-            "lamp_hours_total_display": "3315h",
-            "lamp_hours_summary": "Lamp 1: 3315h (Unknown)",
+            "lamp_hours_total": 3321,
+            "lamp_hours_total_display": "3321h",
+            "lamp_hours_summary": "Lamp 1: 3321h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "silsby-215-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:25.315819+00:00",
+            "query_timestamp": "2026-04-01T19:15:16.401841+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1767,7 +1767,7 @@
         {
             "host": "silsby-310-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:25.549662+00:00",
+            "query_timestamp": "2026-04-01T19:15:16.543563+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1778,25 +1778,25 @@
             "software_version": "1.05",
             "serial_number": "7003849",
             "firmware_version": "1.05",
-            "lamp_info_raw": "2881",
+            "lamp_info_raw": "2883",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2881h",
-                    "hours_int": 2881,
+                    "hours": "2883h",
+                    "hours_int": 2883,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2881,
-            "lamp_hours_total_display": "2881h",
-            "lamp_hours_summary": "Lamp 1: 2881h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 2883,
+            "lamp_hours_total_display": "2883h",
+            "lamp_hours_summary": "Lamp 1: 2883h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "silsby-312-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:25.630638+00:00",
+            "query_timestamp": "2026-04-01T19:15:16.825317+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1807,25 +1807,25 @@
             "software_version": "1.04",
             "serial_number": "7002125",
             "firmware_version": "1.04",
-            "lamp_info_raw": "2634",
+            "lamp_info_raw": "2639",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "2634h",
-                    "hours_int": 2634,
+                    "hours": "2639h",
+                    "hours_int": 2639,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 2634,
-            "lamp_hours_total_display": "2634h",
-            "lamp_hours_summary": "Lamp 1: 2634h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 2639,
+            "lamp_hours_total_display": "2639h",
+            "lamp_hours_summary": "Lamp 1: 2639h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "steele-007-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:25.631372+00:00",
+            "query_timestamp": "2026-04-01T19:15:16.855290+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1836,25 +1836,25 @@
             "software_version": "1.07",
             "serial_number": "7100106",
             "firmware_version": "1.07",
-            "lamp_info_raw": "710",
+            "lamp_info_raw": "712",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "710h",
-                    "hours_int": 710,
+                    "hours": "712h",
+                    "hours_int": 712,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 710,
-            "lamp_hours_total_display": "710h",
-            "lamp_hours_summary": "Lamp 1: 710h (Unknown)",
+            "lamp_hours_total": 712,
+            "lamp_hours_total_display": "712h",
+            "lamp_hours_summary": "Lamp 1: 712h (Unknown)",
             "power_status": "Standby"
         },
         {
             "host": "steele-007-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:25.651164+00:00",
+            "query_timestamp": "2026-04-01T19:15:17.388586+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1865,25 +1865,25 @@
             "software_version": "1.07",
             "serial_number": "7101559",
             "firmware_version": "1.07",
-            "lamp_info_raw": "717",
+            "lamp_info_raw": "719",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "717h",
-                    "hours_int": 717,
+                    "hours": "719h",
+                    "hours_int": 719,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 717,
-            "lamp_hours_total_display": "717h",
-            "lamp_hours_summary": "Lamp 1: 717h (Unknown)",
+            "lamp_hours_total": 719,
+            "lamp_hours_total_display": "719h",
+            "lamp_hours_summary": "Lamp 1: 719h (Unknown)",
             "power_status": "Standby"
         },
         {
             "host": "sudikoff-003-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:27.183913+00:00",
+            "query_timestamp": "2026-04-01T19:15:18.275250+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -1910,7 +1910,7 @@
         {
             "host": "sudikoff-045-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:27.417891+00:00",
+            "query_timestamp": "2026-04-01T19:15:18.409248+00:00",
             "status": "error",
             "error": "Connection timed out: sudikoff-045-projector.openav.dartmouth.edu:4352",
             "firmware_version": "ERROR",
@@ -1921,7 +1921,7 @@
         {
             "host": "sudikoff-143-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:27.502663+00:00",
+            "query_timestamp": "2026-04-01T19:15:18.699330+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -1930,25 +1930,25 @@
             "projector_name": "VPL-PHZ60",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "6961",
+            "lamp_info_raw": "6962",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "6961h",
-                    "hours_int": 6961,
+                    "hours": "6962h",
+                    "hours_int": 6962,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 6961,
-            "lamp_hours_total_display": "6961h",
-            "lamp_hours_summary": "Lamp 1: 6961h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 6962,
+            "lamp_hours_total_display": "6962h",
+            "lamp_hours_summary": "Lamp 1: 6962h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "wilder-111-projector-1.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:27.508834+00:00",
+            "query_timestamp": "2026-04-01T19:15:18.728534+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1959,25 +1959,25 @@
             "software_version": "1.07",
             "serial_number": "7008154",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1680",
+            "lamp_info_raw": "1684",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1680h",
-                    "hours_int": 1680,
+                    "hours": "1684h",
+                    "hours_int": 1684,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1680,
-            "lamp_hours_total_display": "1680h",
-            "lamp_hours_summary": "Lamp 1: 1680h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 1684,
+            "lamp_hours_total_display": "1684h",
+            "lamp_hours_summary": "Lamp 1: 1684h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "wilder-111-projector-2.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:27.516817+00:00",
+            "query_timestamp": "2026-04-01T19:15:19.261000+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -1988,25 +1988,25 @@
             "software_version": "1.07",
             "serial_number": "7007545",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1680",
+            "lamp_info_raw": "1686",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1680h",
-                    "hours_int": 1680,
+                    "hours": "1686h",
+                    "hours_int": 1686,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1680,
-            "lamp_hours_total_display": "1680h",
-            "lamp_hours_summary": "Lamp 1: 1680h (Unknown)",
+            "lamp_hours_total": 1686,
+            "lamp_hours_total_display": "1686h",
+            "lamp_hours_summary": "Lamp 1: 1686h (Unknown)",
             "power_status": "Lamp On / Power On"
         },
         {
             "host": "wilder-111-projector-3.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:28.749692+00:00",
+            "query_timestamp": "2026-04-01T19:15:19.838002+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -2017,25 +2017,25 @@
             "software_version": "1.07",
             "serial_number": "7008145",
             "firmware_version": "1.07",
-            "lamp_info_raw": "1671",
+            "lamp_info_raw": "1676",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "1671h",
-                    "hours_int": 1671,
+                    "hours": "1676h",
+                    "hours_int": 1676,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 1671,
-            "lamp_hours_total_display": "1671h",
-            "lamp_hours_summary": "Lamp 1: 1671h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 1676,
+            "lamp_hours_total_display": "1676h",
+            "lamp_hours_summary": "Lamp 1: 1676h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "Wilder-115-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:29.070815+00:00",
+            "query_timestamp": "2026-04-01T19:15:20.272266+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -2046,25 +2046,25 @@
             "software_version": "1.06",
             "serial_number": "7003667",
             "firmware_version": "1.06",
-            "lamp_info_raw": "3518",
+            "lamp_info_raw": "3522",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "3518h",
-                    "hours_int": 3518,
+                    "hours": "3522h",
+                    "hours_int": 3522,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 3518,
-            "lamp_hours_total_display": "3518h",
-            "lamp_hours_summary": "Lamp 1: 3518h (Unknown)",
-            "power_status": "Standby"
+            "lamp_hours_total": 3522,
+            "lamp_hours_total_display": "3522h",
+            "lamp_hours_summary": "Lamp 1: 3522h (Unknown)",
+            "power_status": "Lamp On / Power On"
         },
         {
             "host": "wilson-205-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:29.378451+00:00",
+            "query_timestamp": "2026-04-01T19:15:20.591124+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "2",
@@ -2075,25 +2075,25 @@
             "software_version": "1.07",
             "serial_number": "7007578",
             "firmware_version": "1.07",
-            "lamp_info_raw": "573",
+            "lamp_info_raw": "574",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "573h",
-                    "hours_int": 573,
+                    "hours": "574h",
+                    "hours_int": 574,
                     "on": null,
                     "status": "Unknown"
                 }
             ],
-            "lamp_hours_total": 573,
-            "lamp_hours_total_display": "573h",
-            "lamp_hours_summary": "Lamp 1: 573h (Unknown)",
-            "power_status": "Lamp On / Power On"
+            "lamp_hours_total": 574,
+            "lamp_hours_total_display": "574h",
+            "lamp_hours_summary": "Lamp 1: 574h (Unknown)",
+            "power_status": "Standby"
         },
         {
             "host": "wilson-219-projector.openav.dartmouth.edu",
             "port": 4352,
-            "query_timestamp": "2026-04-01T12:59:29.388793+00:00",
+            "query_timestamp": "2026-04-01T19:15:21.168084+00:00",
             "status": "success",
             "error": null,
             "pjlink_class": "1",
@@ -2102,19 +2102,19 @@
             "projector_name": "VPL-FHZ91L",
             "other_info": "",
             "firmware_version": "N/A (Class 1)",
-            "lamp_info_raw": "870 1",
+            "lamp_info_raw": "876 1",
             "lamp_info": [
                 {
                     "lamp": 1,
-                    "hours": "870h",
-                    "hours_int": 870,
+                    "hours": "876h",
+                    "hours_int": 876,
                     "on": true,
                     "status": "On"
                 }
             ],
-            "lamp_hours_total": 870,
-            "lamp_hours_total_display": "870h",
-            "lamp_hours_summary": "Lamp 1: 870h (On)",
+            "lamp_hours_total": 876,
+            "lamp_hours_total_display": "876h",
+            "lamp_hours_summary": "Lamp 1: 876h (On)",
             "power_status": "Lamp On / Power On"
         }
     ]
