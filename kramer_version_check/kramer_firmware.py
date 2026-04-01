@@ -18,7 +18,7 @@ Usage:
   Single host  : python3 query_kramer.py --debug --host 192.168.1.100
   Single cmd   : python3 query_kramer.py --debug --host 192.168.1.100 --cmd firmware
 
-Dependencies: pip install tabulate tqdm
+Dependencies: pip install tabulate tqdm python-dateutil
 """
 
 import argparse
@@ -28,7 +28,10 @@ import re
 import shutil
 import socket
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -49,15 +52,40 @@ try:
 except ImportError:
     _DATEUTIL = False
 
-# constants
+# ---------------------------------------------------------------------------
+# ANSI colour palette  (style guide §1)
+# ---------------------------------------------------------------------------
+CYAN   = "\033[96m"   # Progress bar fill
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Warning / auth error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
+
+# Debug-only private colours (never used in normal output)
+_DBG_YLW = "\033[33m"
+_DBG_GRN = "\033[32m"
+_DBG_DIM = "\033[2m"
+_DBG_RED = "\033[31m"
+_DBG_MGT = "\033[35m"
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
 DEFAULT_TCP_PORT = 5000
 CONNECT_TIMEOUT  = 8.0
 RECV_TIMEOUT     = 8.0
 BUFFER_SIZE      = 4096
 CSV_FILE         = "switchers.csv"
 JSON_FILE        = "results.json"
+WORKERS          = 5
+SEND_PAUSE       = 0.02       # 20 ms post-send pause
+DRAIN_WINDOW     = 0.05       # 50 ms non-blocking drain window
 
-# Scalar queries: key -> (command, response regex)
+# ---------------------------------------------------------------------------
+# Protocol queries
+# ---------------------------------------------------------------------------
 SCALAR_QUERIES = {
     "model":      ("#MODEL?\r",      re.compile(r"~\d+@MODEL\s+(.+)",      re.IGNORECASE)),
     "build_date": ("#BUILD-DATE?\r", re.compile(r"~\d+@BUILD-DATE\s+(.+)", re.IGNORECASE)),
@@ -69,55 +97,56 @@ SCALAR_QUERIES = {
 
 ALL_CMD_KEYS = list(SCALAR_QUERIES.keys())
 
-# Style guide: single accent colour (bright cyan) used only for the progress
-# bar fill. All other output is default terminal white. Debug hex dump retains
-# its own colours as it is a diagnostic tool, not normal output.
-CYAN  = "\033[96m"   # bright cyan - progress bar fill only
-RST   = "\033[0m"
-
-# Debug-only ANSI colours (not used in normal output)
-_YLW = "\033[33m"
-_GRN = "\033[32m"
-_DIM = "\033[2m"
-_RED = "\033[31m"
-_MGT = "\033[35m"
-
 DEBUG = False
 
 
+# ---------------------------------------------------------------------------
+# Debug helpers
+# ---------------------------------------------------------------------------
 def debug_print(host, label, data):
     if not DEBUG:
         return
-    dir_col   = _MGT if "SEND" in label.upper() else _GRN
+    dir_col   = _DBG_MGT if "SEND" in label.upper() else _DBG_GRN
     hex_width = 16
     header    = f"DEBUG [{host}] {label} ({len(data)} bytes)"
     box_w     = max(len(header) + 4, 62)
-    print(f"\n{_YLW}  +-- {dir_col}{header}{_YLW} {'-' * max(0, box_w - len(header) - 4)}+{RST}")
+    print(f"\n{_DBG_YLW}  +-- {dir_col}{header}{_DBG_YLW} {'-' * max(0, box_w - len(header) - 4)}+{RESET}")
     if not data:
-        print(f"{_YLW}  |{RST}  (empty)")
+        print(f"{_DBG_YLW}  |{RESET}  (empty)")
     else:
         for offset in range(0, len(data), hex_width):
             chunk     = data[offset: offset + hex_width]
             hex_cols  = " ".join(f"{b:02X}" for b in chunk)
             hex_cols += "   " * (hex_width - len(chunk))
             ascii_col = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
-            print(f"{_YLW}  |{RST} {_DIM}{offset:04X}{RST}  {CYAN}{hex_cols}{RST}  {_GRN}|{ascii_col.ljust(hex_width)}|{RST}")
+            print(f"{_DBG_YLW}  |{RESET} {_DBG_DIM}{offset:04X}{RESET}  {CYAN}{hex_cols}{RESET}  {_DBG_GRN}|{ascii_col.ljust(hex_width)}|{RESET}")
         decoded = data.decode("ascii", errors="replace")
         visible = (decoded
-                   .replace("\r", f"{_RED}{{CR}}{RST}")
-                   .replace("\n", f"{_RED}{{LF}}{RST}")
-                   .replace("\x00", f"{_RED}{{NUL}}{RST}"))
-        print(f"{_YLW}  |{RST}  decoded : {visible}")
-    print(f"{_YLW}  +{'-' * box_w}+{RST}\n")
+                   .replace("\r", f"{_DBG_RED}{{CR}}{RESET}")
+                   .replace("\n", f"{_DBG_RED}{{LF}}{RESET}")
+                   .replace("\x00", f"{_DBG_RED}{{NUL}}{RESET}"))
+        print(f"{_DBG_YLW}  |{RESET}  decoded : {visible}")
+    print(f"{_DBG_YLW}  +{'-' * box_w}+{RESET}\n")
 
 
+# ---------------------------------------------------------------------------
+# Socket I/O
+# ---------------------------------------------------------------------------
 def send_query(sock, command, host=""):
+    """Send one Protocol 3000 command and return the stripped response string.
+
+    Two-phase receive:
+      1. Short pause then blocking read until a newline arrives or timeout.
+      2. Brief non-blocking drain to catch any additional buffered lines.
+    """
     payload = command.encode("ascii")
     debug_print(host, f"SEND  {command.strip()!r}", payload)
     sock.sendall(payload)
-    time.sleep(0.1)
+    time.sleep(SEND_PAUSE)
+
     response = b""
     deadline = time.time() + RECV_TIMEOUT
+
     while time.time() < deadline:
         try:
             chunk = sock.recv(BUFFER_SIZE)
@@ -127,70 +156,135 @@ def send_query(sock, command, host=""):
                     break
         except socket.timeout:
             break
+
+    sock.setblocking(False)
+    drain_deadline = time.time() + DRAIN_WINDOW
+    while time.time() < drain_deadline:
+        try:
+            chunk = sock.recv(BUFFER_SIZE)
+            if chunk:
+                response += chunk
+        except (BlockingIOError, socket.error):
+            break
+    sock.setblocking(True)
+    sock.settimeout(RECV_TIMEOUT)
+
     debug_print(host, f"RECV  {command.strip()!r}", response)
     return response.decode("ascii", errors="replace").strip()
 
 
+# ---------------------------------------------------------------------------
+# Date normalisation
+# ---------------------------------------------------------------------------
+_DATE_PATTERNS = [
+    (
+        re.compile(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})"),
+        lambda m: datetime(int(m[1]), int(m[2]), int(m[3])).strftime("%Y/%m/%d"),
+    ),
+    (
+        re.compile(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})"),
+        lambda m: datetime(int(m[3]), int(m[2]), int(m[1])).strftime("%Y/%m/%d"),
+    ),
+    (
+        re.compile(r"^(\d{4})(\d{2})(\d{2})$"),
+        lambda m: datetime(int(m[1]), int(m[2]), int(m[3])).strftime("%Y/%m/%d"),
+    ),
+]
+
+
 def normalise_date(raw):
-    """
-    Normalise any date string returned by the device to yyyy/mm/dd.
-    Handles formats such as:
-      2024-07-12, 12/07/2024, Jul 12 2024, 20240712, 12-Jul-24, etc.
-    Uses python-dateutil if available, otherwise falls back to regex patterns.
-    Returns the original string unchanged if parsing fails.
-    """
+    """Return *raw* normalised to ``yyyy/mm/dd``, or unchanged if unparseable."""
     if not raw or raw == "N/A":
         return raw
-
-    # Strip any trailing time component (e.g. "2024-07-12 14:32:00")
-    date_part = raw.split()[0] if raw.split() else raw
-
     if _DATEUTIL:
         try:
-            dt = dateutil_parser.parse(raw, dayfirst=False)
-            return dt.strftime("%Y/%m/%d")
+            return dateutil_parser.parse(raw, dayfirst=False).strftime("%Y/%m/%d")
         except (ValueError, OverflowError):
-            pass
-
-    # Fallback regex patterns (no dateutil)
-    import re as _re
-    patterns = [
-        # yyyy-mm-dd or yyyy/mm/dd
-        (_re.compile(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$"), "%Y/%m/%d", lambda m: f"{m[1]}/{int(m[2]):02d}/{int(m[3]):02d}"),
-        # dd-mm-yyyy or dd/mm/yyyy
-        (_re.compile(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$"), "%Y/%m/%d", lambda m: f"{m[3]}/{int(m[2]):02d}/{int(m[1]):02d}"),
-        # yyyymmdd
-        (_re.compile(r"^(\d{4})(\d{2})(\d{2})$"), "%Y/%m/%d", lambda m: f"{m[1]}/{m[2]}/{m[3]}"),
-    ]
-    for pat, _, formatter in patterns:
-        match = pat.match(date_part)
-        if match:
+            return raw
+    for pattern, converter in _DATE_PATTERNS:
+        m = pattern.match(raw.split()[0])
+        if m:
             try:
-                return formatter(match.groups())
-            except (ValueError, IndexError):
+                return converter(m)
+            except ValueError:
                 pass
+    return raw
 
-    return raw  # return original if all parsing fails
+
+# ---------------------------------------------------------------------------
+# Table helpers  (style guide §3)
+# ---------------------------------------------------------------------------
+def status_icon(r):
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
 
 
+def clean(val):
+    s = str(val) if val is not None else "N/A"
+    if s in ("None", "-1", ""):
+        return "N/A"
+    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
+        return "N/A"
+    return s
+
+
+def truncate_error(err, max_len=30):
+    if not err:
+        return ""
+    s = str(err)
+    for pat, label in [
+        # Protocol 3000 – specific
+        (r"Protocol 3000",               "Proto3000 error"),
+        # Generic network
+        (r"[Cc]onnection timed out",     "Timed out"),
+        (r"[Cc]onnection refused",       "Conn refused"),
+        (r"[Nn]o response .* timeout",   "No response"),
+        (r"[Nn]o route to host",         "No route"),
+        (r"[Nn]etwork is unreachable",   "Net unreachable"),
+        (r"[Nn]ame or service not known","DNS failed"),
+        (r"[Nn]etwork error",            "Network error"),
+        (r"[Aa]uthentication required",  "Auth required"),
+        (r"[Nn]ot a .* device",          "Not supported"),
+        (r"[Mm]alformed",                "Bad response"),
+    ]:
+        if re.search(pat, s):
+            return label
+    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
+    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
+    s = re.sub(r'\s+', ' ', s).strip(': ')
+    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
+
+
+# ---------------------------------------------------------------------------
+# Device querying
+# ---------------------------------------------------------------------------
 def query_device(host, port):
+    ts    = datetime.now(timezone.utc).isoformat()
     result = {
-        "host":       host,
-        "build_date": "N/A",
-        "model":      "N/A",
-        "prot_ver":   "N/A",
-        "serial":     "N/A",
-        "firmware":   "N/A",
-        "mac":        "N/A",
-        "status":     "OK",
+        "host":            host,
+        "port":            port,
+        "query_timestamp": ts,
+        "status":          "error",
+        "error":           None,
+        "build_date":      "N/A",
+        "model":           "N/A",
+        "prot_ver":        "N/A",
+        "serial":          "N/A",
+        "firmware":        "N/A",
+        "mac":             "N/A",
     }
     try:
         with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
             sock.settimeout(RECV_TIMEOUT)
+
             hs = b"#\r"
             debug_print(host, "SEND  handshake", hs)
             sock.sendall(hs)
-            time.sleep(0.15)
+            time.sleep(SEND_PAUSE)
             try:
                 hs_resp = sock.recv(BUFFER_SIZE)
                 debug_print(host, "RECV  handshake", hs_resp)
@@ -206,14 +300,23 @@ def query_device(host, port):
                         break
 
             result["build_date"] = normalise_date(result["build_date"])
+            result["status"]     = "success"
 
-    except ConnectionRefusedError:
-        result["status"] = "ERROR: Connection refused"
-    except socket.timeout:
-        result["status"] = "ERROR: Timeout"
+    except ConnectionRefusedError as exc:
+        result["error"] = str(exc)
+    except socket.timeout as exc:
+        result["error"] = str(exc)
     except OSError as exc:
-        result["status"] = f"ERROR: {exc}"
+        result["error"] = str(exc)
+
     return result
+
+
+# ---------------------------------------------------------------------------
+# Debug probe
+# ---------------------------------------------------------------------------
+class DebugProbeError(Exception):
+    """Raised when debug_probe encounters a fatal connection problem."""
 
 
 def debug_probe(host, port, cmd_key):
@@ -221,10 +324,11 @@ def debug_probe(host, port, cmd_key):
     try:
         with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
             sock.settimeout(RECV_TIMEOUT)
+
             hs = b"#\r"
             debug_print(host, "SEND  handshake", hs)
             sock.sendall(hs)
-            time.sleep(0.15)
+            time.sleep(SEND_PAUSE)
             try:
                 hs_resp = sock.recv(BUFFER_SIZE)
                 debug_print(host, "RECV  handshake", hs_resp)
@@ -247,40 +351,52 @@ def debug_probe(host, port, cmd_key):
                 print(f"  parsed [{key}] => {parsed!r}\n")
 
     except (ConnectionRefusedError, socket.timeout, OSError) as exc:
-        print(f"\n  Connection failed: {exc}\n")
-    sys.exit(0)
+        raise DebugProbeError(f"Connection failed: {exc}") from exc
 
 
-def load_hosts(csv_path):
-    hosts = []
-    path  = Path(csv_path)
-    if not path.exists():
-        print(f"[ERROR] CSV file not found: {csv_path}")
+# ---------------------------------------------------------------------------
+# CSV loader  (style guide §6)
+# ---------------------------------------------------------------------------
+def load_csv(csv_path):
+    devices = []
+    p = Path(csv_path)
+    if not p.exists():
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
         sys.exit(1)
-    with open(path, newline="", encoding="utf-8") as fh:
-        reader = csv.reader(fh)
-        for i, row in enumerate(reader):
-            if not row or not row[0].strip():
-                continue
-            raw_host = row[0].strip()
-            if i == 0 and not _looks_like_host(raw_host):
+    with open(p, "r", encoding="utf-8-sig") as f:
+        sample = f.read(4096)
+        f.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        except csv.Error:
+            dialect = csv.excel
+        reader = csv.DictReader(f, dialect=dialect)
+        if not reader.fieldnames:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
+            sys.exit(1)
+        col_map = {n.strip().lower(): n for n in reader.fieldnames}
+        if "host" not in col_map:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
+            sys.exit(1)
+        for row in reader:
+            host = row.get(col_map["host"], "").strip()
+            if not host or host.startswith("#"):
                 continue
             port = DEFAULT_TCP_PORT
-            if len(row) >= 2 and row[1].strip().isdigit():
-                port = int(row[1].strip())
-            hosts.append((raw_host, port))
-    if not hosts:
-        print("[ERROR] No hosts found in switchers.csv.")
+            if "port" in col_map:
+                raw_port = row.get(col_map["port"], "").strip()
+                if raw_port.isdigit():
+                    port = int(raw_port)
+            devices.append({"host": host, "port": port})
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No hosts found in {csv_path}{RESET}")
         sys.exit(1)
-    return hosts
+    return devices
 
 
-def _looks_like_host(value):
-    ip = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
-    hn = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9\-\.]*[A-Za-z0-9])?$")
-    return bool(ip.match(value) or hn.match(value))
-
-
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 def main():
     global DEBUG
 
@@ -300,48 +416,155 @@ def main():
     DEBUG = args.debug
 
     if args.debug and args.host:
-        debug_probe(args.host, args.port, args.cmd)
-        return
+        try:
+            debug_probe(args.host, args.port, args.cmd)
+        except DebugProbeError as exc:
+            print(f"\n  {exc}\n")
+            sys.exit(1)
+        sys.exit(0)
+
     if args.cmd:
         parser.error("--cmd requires --debug and --host")
 
-    hosts   = load_hosts(CSV_FILE)
-    results = []
+    devices    = load_csv(CSV_FILE)
+    total      = len(devices)
+    start_time = time.time()
 
-    debug_label = "  [DEBUG ON]" if DEBUG else ""
-    print(f"\nQuerying {len(hosts)} device(s) via Kramer Protocol 3000 (TCP){debug_label}...\n")
+    # -- Header block (style guide §2) --------------------------------------
+    print(f"{WHITE}")
+    print(f"  {BOLD}Kramer VP-440H2 Query Tool{RESET}{WHITE}")
+    print(f"  Protocol 3000 TCP device interrogation")
+    print(f"  Input:   {CSV_FILE}")
+    print(f"  Output:  {JSON_FILE}")
+    print(f"  Workers: {WORKERS}")
+    print(f"  Timeout: {CONNECT_TIMEOUT:.0f}s")
+    print(f"{RESET}")
 
-    term_width = shutil.get_terminal_size().columns
-    bar_width  = term_width - 2
+    # -- Progress bar (style guide §3) -------------------------------------
+    term_width = shutil.get_terminal_size((120, 24)).columns
+    bar_fmt = (
+        f"  {WHITE}Scanning{RESET} "
+        f"{CYAN}{{bar}}{RESET}"
+        f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
+        f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
+        f"  {WHITE}{{postfix}}{RESET}"
+    )
+
+    results     = []
+    active_lock = threading.Lock()
+    latest_host = {"value": ""}
+
+    def worker_task(device):
+        with active_lock:
+            latest_host["value"] = device["host"]
+        return query_device(device["host"], device["port"])
 
     with tqdm(
-        hosts,
-        total=len(hosts),
-        unit="device",
-        bar_format="{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}",
-        colour="cyan",
-        ncols=bar_width,
-    ) as progress:
-        for host, port in progress:
-            progress.set_postfix_str(host)
-            result = query_device(host, port)
-            results.append(result)
+        total=total,
+        bar_format=bar_fmt,
+        ncols=term_width,
+        dynamic_ncols=True,
+        file=sys.stderr,
+        leave=True,
+    ) as pbar:
+        with ThreadPoolExecutor(max_workers=WORKERS) as executor:
+            futures = {executor.submit(worker_task, d): d for d in devices}
+            for future in as_completed(futures):
+                result = future.result()
+                results.append(result)
+                with active_lock:
+                    host_display = latest_host["value"]
+                pbar.set_postfix_str(host_display, refresh=False)
+                pbar.update(1)
 
+        elapsed = time.time() - start_time
+        pbar.set_postfix_str(
+            f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
+            refresh=True,
+        )
 
-    table_rows = [
-        [r["host"], r["build_date"], r["model"], r["prot_ver"],
-         r["serial"], r["firmware"], r["mac"], r["status"]]
-        for r in results
-    ]
-    headers = ["Host", "Build Date", "Model", "Protocol Ver", "Serial", "Firmware Ver", "Mac", "Status"]
+    # -- Tally results ------------------------------------------------------
+    ok   = sum(1 for r in results if r["status"] == "success")
+    auth = sum(1 for r in results if r["status"] == "auth_error")
+    err  = sum(1 for r in results if r["status"] == "error")
 
+    # -- Build table (style guide §3) --------------------------------------
+    # Column order: Status | Host | Model | Firmware | Build Date | Protocol Ver | Serial | MAC | Error
+    table_rows = []
+    for r in results:
+        error_raw = r.get("error") or ""
+        table_rows.append([
+            status_icon(r),
+            clean(r["host"]),
+            clean(r["model"]),
+            clean(r["firmware"]),
+            clean(r["build_date"]),
+            clean(r["prot_ver"]),
+            clean(r["serial"]),
+            clean(r["mac"]),
+            truncate_error(error_raw),
+        ])
+
+    headers = ["Status", "Host", "Model", "Firmware", "Build Date",
+               "Protocol Ver", "Serial", "MAC", "Error"]
+
+    table = tabulate(
+        table_rows,
+        headers=headers,
+        tablefmt="pretty",
+        stralign="left",
+        numalign="right",
+    )
+
+    # -- Title banner -------------------------------------------------------
+    first_line = table.split("\n")[0]
+    raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
+    bw         = max(raw_width, 60)
+    title      = "Kramer VP-440H2 Query Results — Protocol 3000"
+    pad        = (bw - len(title)) // 2
+
+    print(f"{WHITE}")
+    print(f"  {'=' * bw}")
+    print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
+    print(f"  {'=' * bw}")
+    for line in table.split("\n"):
+        print(f"  {line}")
+
+    # -- Summary footer -----------------------------------------------------
     print()
-    print(tabulate(table_rows, headers=headers, tablefmt="outline"))
+    print(
+        f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
+        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+    )
+    print(f"  {BOLD}MAC Addresses{RESET}{WHITE} \u2014 Reported: {sum(1 for r in results if r.get('mac') not in ('N/A', None))}/{total}")
+    print(f"{RESET}")
+
+    # -- Closing footer lines -----------------------------------------------
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {JSON_FILE}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({WORKERS} workers){RESET}")
     print()
+
+    # -- JSON output (style guide §5) --------------------------------------
+    ts_now = datetime.now(timezone.utc).isoformat()
+    output = {
+        "query_info": {
+            "csv_file":        str(Path(CSV_FILE).resolve()),
+            "timestamp":       ts_now,
+            "protocol":        "Kramer Protocol 3000",
+            "mode":            "sequential",
+            "workers":         WORKERS,
+            "total":           total,
+            "success":         ok,
+            "errors":          err,
+            "elapsed_seconds": round(elapsed, 2),
+        },
+        "switches": results,
+    }
 
     with open(JSON_FILE, "w", encoding="utf-8") as fh:
-        json.dump(results, fh, indent=2)
-    print(f"Results saved to: {JSON_FILE}\n")
+        json.dump(output, fh, indent=2)
 
 
 if __name__ == "__main__":
