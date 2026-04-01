@@ -243,6 +243,27 @@ def parse_firmware_version(raw: str) -> str | None:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse total PoE power from `show poe`
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_poe_power(raw: str) -> tuple[str | None, float | None]:
+    """
+    Parses the output of `show poe` for a line like:
+        Total Power Consumed:  38.5
+    Returns (display_string, numeric_value) or (None, None) if not found.
+    """
+    clean_text = strip_ansi(raw)
+    m = re.search(
+        r"Total\s+Power\s+Consumed\s*:\s*(\d+(?:\.\d+)?)",
+        clean_text,
+        re.IGNORECASE,
+    )
+    if m:
+        val = float(m.group(1))
+        return f"{val:.1f} W", val
+    return None, None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Parse CPU temperature from `show environment`
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def parse_cpu_temp(raw: str) -> tuple[str | None, float | None]:
@@ -281,10 +302,12 @@ def check_switch(
         "port":             port,
         "query_timestamp":  queried_at,
         "status":           "error",
-        "firmware_version": None,
-        "cpu_temp":         None,
-        "cpu_temp_value":   None,
-        "error":            None,
+        "firmware_version":    None,
+        "cpu_temp":            None,
+        "cpu_temp_value":      None,
+        "poe_consumed":        None,
+        "poe_consumed_value":  None,
+        "error":               None,
     }
 
     client = paramiko.SSHClient()
@@ -316,9 +339,16 @@ def check_switch(
         firmware = parse_firmware_version(raw_ver)
         temp_str, temp_val = parse_cpu_temp(raw_env)
 
+        raw_poe = run_command(channel, "show poe", timeout=20)
+        if include_raw:
+            result["raw_poe"] = raw_poe
+        poe_str, poe_val = parse_poe_power(raw_poe)
+
         result["firmware_version"] = firmware
         result["cpu_temp"]         = temp_str
         result["cpu_temp_value"]   = temp_val
+        result["poe_consumed"]     = poe_str
+        result["poe_consumed_value"] = poe_val
 
         if firmware is not None:
             result["status"] = "success"
@@ -350,10 +380,11 @@ def check_switch(
 #  Print results table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def print_results_table(results: list[dict], elapsed: float) -> None:
-    headers = ["Status", "Host", "Firmware", "CPU Temp", "Error"]
+    headers = ["Status", "Host", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
     rows: list[list[str]] = []
 
     temp_vals: list[float] = []
+    poe_vals:  list[float] = []
 
     for r in results:
         rows.append([
@@ -361,11 +392,15 @@ def print_results_table(results: list[dict], elapsed: float) -> None:
             clean(r.get("host")),
             clean(r.get("firmware_version")),
             clean(r.get("cpu_temp")),
+            clean(r.get("poe_consumed")),
             truncate_error(r.get("error")),
         ])
         tv = r.get("cpu_temp_value")
         if tv is not None:
             temp_vals.append(tv)
+        pv = r.get("poe_consumed_value")
+        if pv is not None:
+            poe_vals.append(pv)
 
     table = tabulate(
         rows,
@@ -414,6 +449,18 @@ def print_results_table(results: list[dict], elapsed: float) -> None:
         )
     else:
         print(f"  {BOLD}CPU Temp (\u00b0F){RESET}{WHITE} \u2014 No data available")
+
+    if poe_vals:
+        avg_p = sum(poe_vals) / len(poe_vals)
+        print(
+            f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 "
+            f"Avg: {avg_p:.1f}  |  "
+            f"Min: {min(poe_vals):.1f}  |  "
+            f"Max: {max(poe_vals):.1f}  |  "
+            f"Reported: {len(poe_vals)}/{total}"
+        )
+    else:
+        print(f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 No data available")
 
     print(f"{RESET}")
 
