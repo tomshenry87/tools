@@ -1,8 +1,15 @@
 {
+<<<<<<< HEAD
   "query_timestamp": "2026-04-01T00:16:11.248191Z",
   "total_displays": 67,
   "successful_queries": 65,
   "failed_queries": 2,
+=======
+  "query_timestamp": "2026-03-31T20:02:14.632757Z",
+  "total_displays": 65,
+  "successful_queries": 45,
+  "failed_queries": 20,
+>>>>>>> refs/remotes/origin/main
   "results": [
     {
       "host": "lsc-135-display.openav.dartmouth.edu",
@@ -18,10 +25,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:48.519897Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:10.709583Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-100-display-1.openav.dartmouth.edu",
@@ -37,10 +52,18 @@
       "product_name": "TV",
       "generation": "1.0.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:49.338893Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:11.437820Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-100-display-2.openav.dartmouth.edu",
@@ -56,10 +79,18 @@
       "product_name": "TV",
       "generation": "1.0.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:49.987769Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:12.814380Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-105-1-display-1.openav.dartmouth.edu",
@@ -75,10 +106,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:50.646840Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:14.158849Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-105-1-display-2.openav.dartmouth.edu",
@@ -94,10 +133,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:51.471926Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:14.862446Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-105-2-display-1.openav.dartmouth.edu",
@@ -113,10 +160,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:52.282586Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:15.587545Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-105-2-display-2.openav.dartmouth.edu",
@@ -132,10 +187,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:53.079526Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:16.310489Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-105-2-display-3.openav.dartmouth.edu",
@@ -151,10 +214,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:53.882342Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:17.040113Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-205-1-display-1.openav.dartmouth.edu",
@@ -170,10 +241,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:54.705258Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:17.773996Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-205-1-display-2.openav.dartmouth.edu",
@@ -189,10 +268,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:55.498133Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:18.524843Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-205-2-display-1.openav.dartmouth.edu",
@@ -208,10 +295,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:56.316730Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:19.254065Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-205-2-display-2.openav.dartmouth.edu",
@@ -227,10 +322,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:57.132585Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:19.969182Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-205-2-display-3.openav.dartmouth.edu",
@@ -246,14 +349,23 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:14:57.948657Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:20.692337Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-101b-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4505301",
@@ -269,10 +381,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:14:58.771158Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:21.444380Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-101e-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "XBR-55X81CH",
       "serial": "4450111",
@@ -288,10 +418,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:14:59.932025Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:21.833318Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-213-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-65BZ40H",
       "serial": "4503006",
@@ -307,10 +455,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:01.098619Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:22.196327Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-214-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4506047",
@@ -326,10 +492,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:02.224063Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:22.571354Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-215-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4508885",
@@ -345,10 +529,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:03.365598Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:22.947295Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-223-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4508629",
@@ -364,10 +566,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:05.537618Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:23.330472Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-227-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4508745",
@@ -383,10 +603,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:06.717885Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:23.709986Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-232-vr-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-65BZ40H",
       "serial": "4506090",
@@ -402,10 +640,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:07.848251Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:24.065140Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-collaboration-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4508632",
@@ -421,10 +677,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:08.930377Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:24.419159Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "4-currier-lounge-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-75BZ40H",
       "serial": "4502014",
@@ -440,6 +714,23 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:10.056581Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:24.777633Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "baker-102-display.openav.dartmouth.edu",
@@ -455,14 +746,23 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:11.220989Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:25.152371Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "bartlett-105a-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-85BZ35F",
       "serial": "4002609",
@@ -478,6 +778,23 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:12.027602Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:26.886190Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "berry-180-display.openav.dartmouth.edu",
@@ -493,10 +810,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:13.128980Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:27.264319Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "berrysport-045-display.openav.dartmouth.edu",
@@ -505,17 +830,28 @@
       "model": "N/A",
       "serial": "N/A",
       "firmware_version": "N/A",
+<<<<<<< HEAD
       "firmware_version_raw": "N/A",
+=======
+>>>>>>> refs/remotes/origin/main
       "mac_address": "N/A",
       "device_name": "N/A",
       "interface_version": "N/A",
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+<<<<<<< HEAD
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": "Connection timed out",
       "timestamp": "2026-04-01T00:15:13.925668Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "Connection timed out",
+      "timestamp": "2026-03-31T20:01:28.005957Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "berrysport-010-display.openav.dartmouth.edu",
@@ -531,10 +867,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:24.015959Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:38.053300Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "berrysport-206-display.openav.dartmouth.edu",
@@ -550,10 +894,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:24.820987Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:38.819838Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "carson-061-2-display-1.openav.dartmouth.edu",
@@ -569,10 +921,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:25.602746Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:39.589590Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "carson-061-2-display-2.openav.dartmouth.edu",
@@ -588,10 +948,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:26.410823Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:40.382541Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "carson-061-2-display-3.openav.dartmouth.edu",
@@ -607,10 +975,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:27.218310Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:41.137818Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "carson-061-2-display-4.openav.dartmouth.edu",
@@ -626,10 +1002,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:28.056766Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:41.869490Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "carson-061-2-display-5.openav.dartmouth.edu",
@@ -645,10 +1029,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:28.863845Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:42.636119Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "carson-061-2-display-6.openav.dartmouth.edu",
@@ -664,10 +1056,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:29.635448Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:43.372148Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "court01-211-display.openav.dartmouth.edu",
@@ -675,18 +1075,30 @@
       "status": "OK",
       "model": "FW-85BZ40H",
       "serial": "4502203",
+<<<<<<< HEAD
       "firmware_version": "6.0.81.60",
       "firmware_version_raw": "PKG1.6.0.81.60.1.00.0960BBA",
+=======
+      "firmware_version": "5.7.0",
+>>>>>>> refs/remotes/origin/main
       "mac_address": "F8:4E:17:46:6D:55",
       "device_name": "BRAVIA",
       "interface_version": "5.7.0",
       "product_name": "TV",
       "generation": "5.7.0",
       "api_version_used": "1.7",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:31.427217Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:44.109521Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "court01-215-display.openav.dartmouth.edu",
@@ -695,17 +1107,28 @@
       "model": "FW-75BZ40H",
       "serial": "4501953",
       "firmware_version": "5.5.0",
+<<<<<<< HEAD
       "firmware_version_raw": "N/A",
+=======
+>>>>>>> refs/remotes/origin/main
       "mac_address": "F8:4E:17:40:FE:F5",
       "device_name": "BRAVIA",
       "interface_version": "5.5.0",
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:32.142324Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:44.965299Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "cts-4-currier-104-display.dartmouth.edu",
@@ -721,14 +1144,23 @@
       "product_name": "N/A",
       "generation": "N/A",
       "api_version_used": "N/A",
+<<<<<<< HEAD
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": "Connection timed out",
       "timestamp": "2026-04-01T00:15:32.974073Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "Connection timed out",
+      "timestamp": "2026-03-31T20:01:45.738545Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-85BZ40H",
       "serial": "4503404",
@@ -744,10 +1176,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:43.058007Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:55.800449Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "fairchild-217a-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4503801",
@@ -763,6 +1213,23 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:44.205631Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:01:56.225448Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "floren-332-display-1.openav.dartmouth.edu",
@@ -778,10 +1245,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:45.356150Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:56.620289Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "floren-332-display-2.openav.dartmouth.edu",
@@ -797,10 +1272,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:46.171088Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:57.369473Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "hopkins-051-display.openav.dartmouth.edu",
@@ -816,10 +1299,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:46.966527Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:58.118545Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lewinstein-111-display.openav.dartmouth.edu",
@@ -835,10 +1326,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:47.770825Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:58.862018Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-1-display-1.openav.dartmouth.edu",
@@ -854,10 +1353,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:48.573505Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:59.626004Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-1-display-2.openav.dartmouth.edu",
@@ -873,10 +1380,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:49.379639Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:00.397183Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-1.openav.dartmouth.edu",
@@ -892,10 +1407,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:50.163713Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:01.135764Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-2.openav.dartmouth.edu",
@@ -911,10 +1434,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:51.003495Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:01.886762Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-3.openav.dartmouth.edu",
@@ -930,10 +1461,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:51.823840Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:02.666820Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-4.openav.dartmouth.edu",
@@ -949,10 +1488,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:52.634294Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:03.469024Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-5.openav.dartmouth.edu",
@@ -968,10 +1515,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:53.441910Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:04.227343Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-6.openav.dartmouth.edu",
@@ -987,10 +1542,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:54.266477Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:05.973847Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-7.openav.dartmouth.edu",
@@ -1006,10 +1569,18 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:55.067959Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:06.724512Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "lsc-200-2-display-8.openav.dartmouth.edu",
@@ -1025,14 +1596,23 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:55.844589Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:07.476432Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "parkhurst-06a-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-55BZ40H",
       "serial": "4508192",
@@ -1048,10 +1628,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:15:56.673286Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:02:08.223963Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "preshouse-b02-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-85BZ40H",
       "serial": "4506916",
@@ -1086,6 +1684,23 @@
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:15:59.964175Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:02:08.614007Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "dewey-010-display.openav.dartmouth.edu",
@@ -1101,14 +1716,23 @@
       "product_name": "TV",
       "generation": "5.7.0",
       "api_version_used": "1.7",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:16:00.884788Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:08.995352Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "kemeny-307-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-85BZ40H",
       "serial": "4502208",
@@ -1124,10 +1748,28 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:16:01.800341Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:02:09.788402Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "robinson-322-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-65BZ40H",
       "serial": "4503796",
@@ -1143,6 +1785,23 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:16:02.968302Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:02:10.179018Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "mcnutt-001-display.openav.dartmouth.edu",
@@ -1158,14 +1817,23 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:16:04.059182Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:10.574315Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "parkhurst-009b-display.openav.dartmouth.edu",
       "port": 80,
+<<<<<<< HEAD
       "status": "OK",
       "model": "FW-85BZ40H",
       "serial": "4506480",
@@ -1181,6 +1849,23 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:16:04.893608Z"
+=======
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "N/A",
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:02:11.384044Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "wentworth-205-display.openav.dartmouth.edu",
@@ -1196,6 +1881,7 @@
       "product_name": "TV",
       "generation": "5.5.0",
       "api_version_used": "1.0",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
@@ -1219,6 +1905,13 @@
       "auth_note": "fallback PSK '1234' used",
       "error": null,
       "timestamp": "2026-04-01T00:16:06.826296Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:11.853615Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -1226,18 +1919,30 @@
       "status": "OK",
       "model": "FW-75BZ40H",
       "serial": "4501474",
+<<<<<<< HEAD
       "firmware_version": "6.0.81.60",
       "firmware_version_raw": "PKG1.6.0.81.60.1.00.0960BBA",
+=======
+      "firmware_version": "5.7.0",
+>>>>>>> refs/remotes/origin/main
       "mac_address": "14:3F:A6:D0:B4:35",
       "device_name": "BRAVIA",
       "interface_version": "5.7.0",
       "product_name": "TV",
       "generation": "5.7.0",
       "api_version_used": "1.7",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:16:07.970570Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:12.648559Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "osher-3a-display.openav.dartmouth.edu",
@@ -1245,18 +1950,30 @@
       "status": "OK",
       "model": "FW-85BZ40H",
       "serial": "4503622",
+<<<<<<< HEAD
       "firmware_version": "6.0.81.60",
       "firmware_version_raw": "PKG1.6.0.81.60.1.00.0960BBA",
+=======
+      "firmware_version": "5.7.0",
+>>>>>>> refs/remotes/origin/main
       "mac_address": "F8:4E:17:97:DB:1E",
       "device_name": "BRAVIA",
       "interface_version": "5.7.0",
       "product_name": "TV",
       "generation": "5.7.0",
       "api_version_used": "1.7",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:16:08.695114Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:13.332660Z"
+>>>>>>> refs/remotes/origin/main
     },
     {
       "host": "osher-3a-confidence-display.openav.dartmouth.edu",
@@ -1264,18 +1981,30 @@
       "status": "OK",
       "model": "FW-65BZ40H",
       "serial": "4503008",
+<<<<<<< HEAD
       "firmware_version": "6.0.81.60",
       "firmware_version_raw": "PKG1.6.0.81.60.1.00.0960BBA",
+=======
+      "firmware_version": "5.7.0",
+>>>>>>> refs/remotes/origin/main
       "mac_address": "F8:4E:17:66:2E:0B",
       "device_name": "BRAVIA",
       "interface_version": "5.7.0",
       "product_name": "TV",
       "generation": "5.7.0",
       "api_version_used": "1.7",
+<<<<<<< HEAD
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
       "timestamp": "2026-04-01T00:16:10.532603Z"
+=======
+      "temperature_c": null,
+      "temperature_f": null,
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:13.984296Z"
+>>>>>>> refs/remotes/origin/main
     }
   ]
 }

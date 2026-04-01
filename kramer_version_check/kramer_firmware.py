@@ -43,6 +43,12 @@ except ImportError:
     print("[ERROR] tqdm not installed.  Run: pip install tabulate tqdm")
     sys.exit(1)
 
+try:
+    from dateutil import parser as dateutil_parser
+    _DATEUTIL = True
+except ImportError:
+    _DATEUTIL = False
+
 # constants
 DEFAULT_TCP_PORT = 5000
 CONNECT_TIMEOUT  = 8.0
@@ -125,6 +131,48 @@ def send_query(sock, command, host=""):
     return response.decode("ascii", errors="replace").strip()
 
 
+def normalise_date(raw):
+    """
+    Normalise any date string returned by the device to yyyy/mm/dd.
+    Handles formats such as:
+      2024-07-12, 12/07/2024, Jul 12 2024, 20240712, 12-Jul-24, etc.
+    Uses python-dateutil if available, otherwise falls back to regex patterns.
+    Returns the original string unchanged if parsing fails.
+    """
+    if not raw or raw == "N/A":
+        return raw
+
+    # Strip any trailing time component (e.g. "2024-07-12 14:32:00")
+    date_part = raw.split()[0] if raw.split() else raw
+
+    if _DATEUTIL:
+        try:
+            dt = dateutil_parser.parse(raw, dayfirst=False)
+            return dt.strftime("%Y/%m/%d")
+        except (ValueError, OverflowError):
+            pass
+
+    # Fallback regex patterns (no dateutil)
+    import re as _re
+    patterns = [
+        # yyyy-mm-dd or yyyy/mm/dd
+        (_re.compile(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$"), "%Y/%m/%d", lambda m: f"{m[1]}/{int(m[2]):02d}/{int(m[3]):02d}"),
+        # dd-mm-yyyy or dd/mm/yyyy
+        (_re.compile(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$"), "%Y/%m/%d", lambda m: f"{m[3]}/{int(m[2]):02d}/{int(m[1]):02d}"),
+        # yyyymmdd
+        (_re.compile(r"^(\d{4})(\d{2})(\d{2})$"), "%Y/%m/%d", lambda m: f"{m[1]}/{m[2]}/{m[3]}"),
+    ]
+    for pat, _, formatter in patterns:
+        match = pat.match(date_part)
+        if match:
+            try:
+                return formatter(match.groups())
+            except (ValueError, IndexError):
+                pass
+
+    return raw  # return original if all parsing fails
+
+
 def query_device(host, port):
     result = {
         "host":       host,
@@ -156,6 +204,8 @@ def query_device(host, port):
                     if m:
                         result[key] = m.group(1).strip()
                         break
+
+            result["build_date"] = normalise_date(result["build_date"])
 
     except ConnectionRefusedError:
         result["status"] = "ERROR: Connection refused"

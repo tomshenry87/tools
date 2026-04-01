@@ -11,7 +11,7 @@
   },
   {
     "host": "baker-102-hdmi-switcher.openav.dartmouth.edu",
-    "build_date": "2022/08/07 23:33:57",
+    "build_date": "2022/08/07",
     "model": "VS-84UT",
     "prot_ver": "3000:03.01",
     "serial": "06230081800033",
@@ -81,7 +81,7 @@
   },
   {
     "host": "berry-180-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "11210020100048",
@@ -111,7 +111,7 @@
   },
   {
     "host": "carson-061-1-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "12220145100048",
@@ -161,7 +161,7 @@
   },
   {
     "host": "floren-332-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "04220007700045",
@@ -291,7 +291,7 @@
   },
   {
     "host": "lsc-100-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "12220145100043",
@@ -321,7 +321,7 @@
   },
   {
     "host": "lsc-105-1-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "04220007700010",
@@ -351,7 +351,7 @@
   },
   {
     "host": "lsc-200-1-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "12220145100009",
@@ -361,7 +361,7 @@
   },
   {
     "host": "lsc-201-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "04220007700005",
@@ -371,7 +371,7 @@
   },
   {
     "host": "lsc-205-1-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "04220007700007",
@@ -421,7 +421,7 @@
   },
   {
     "host": "preshouse-b02-switcher.openav.dartmouth.edu",
-    "build_date": "2019/05/20 13:55:29",
+    "build_date": "2019/05/20",
     "model": "VP-778",
     "prot_ver": "N/A",
     "serial": "10220009300029",
@@ -496,7 +496,7 @@
     "prot_ver": "3000:v2.4",
     "serial": "03220001900001",
     "firmware": "1.14",
-    "mac": "00-1D-56-09-54-37",
+    "mac": "N/A",
     "status": "OK"
   },
   {
@@ -561,7 +561,7 @@
   },
   {
     "host": "steele-007-hdmi-switcher.openav.dartmouth.edu",
-    "build_date": "2022/08/07 23:33:57",
+    "build_date": "2022/08/07",
     "model": "VS-84UT",
     "prot_ver": "3000:03.01",
     "serial": "06230081800029",
@@ -601,7 +601,7 @@
   },
   {
     "host": "wilder-111-video-switcher.openav.dartmouth.edu",
-    "build_date": "2018/11/09 14:45:49",
+    "build_date": "2018/11/09",
     "model": "VP-558",
     "prot_ver": "3000:v2.4",
     "serial": "12220145100047",
