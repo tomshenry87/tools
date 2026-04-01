@@ -57,7 +57,7 @@ paramiko   # optional — imported but not required for core functionality
 
 ```bash
 # Clone or download the script, then install dependencies
-pip install tabulate tqdm paramiko
+pip3 install tabulate tqdm paramiko
 ```
 
 ---
@@ -76,7 +76,7 @@ host,port,password
 2. Run the script:
 
 ```bash
-python pjlink_query.py
+python3 pjlink_firmware.py
 ```
 
 3. Results are printed to the terminal and saved to `results.json`.
@@ -126,8 +126,8 @@ The CSV parser auto-detects delimiters (`,` `;` `\t` `|`) and handles BOM-encode
 ## Command-Line Reference
 
 ```
-usage: pjlink_query.py [-h] [-i INPUT] [-o OUTPUT] [-t TIMEOUT] [-w WORKERS]
-                       [--all] [--diagnostic] [--debug]
+usage: pjlink_firmware.py [-h] [-i INPUT] [-o OUTPUT] [-t TIMEOUT] [-w WORKERS]
+                          [--all] [--diagnostic] [--debug]
 ```
 
 | Flag                   | Default           | Description                                        |
@@ -144,22 +144,22 @@ usage: pjlink_query.py [-h] [-i INPUT] [-o OUTPUT] [-t TIMEOUT] [-w WORKERS]
 
 ```bash
 # Use defaults (projectors.csv → results.json, 5 workers)
-python pjlink_query.py
+python3 pjlink_firmware.py
 
 # Custom input/output files
-python pjlink_query.py -i my_projectors.csv -o my_results.json
+python3 pjlink_firmware.py -i my_projectors.csv -o my_results.json
 
 # Faster scan with 20 concurrent workers and a 5s timeout
-python pjlink_query.py -w 20 -t 5
+python3 pjlink_firmware.py -w 20 -t 5
 
 # Query every available PJLink command
-python pjlink_query.py --all
+python3 pjlink_firmware.py --all
 
 # Run raw diagnostic output and save to file
-python pjlink_query.py --diagnostic -o diag.json
+python3 pjlink_firmware.py --diagnostic -o diag.json
 
 # Enable debug logging to see raw protocol traffic
-python pjlink_query.py --debug
+python3 pjlink_firmware.py --debug
 ```
 
 ---
@@ -452,7 +452,7 @@ for cmd_entry in diag["commands"]:
 To see every byte sent and received:
 
 ```bash
-python pjlink_query.py --debug 2>debug.log
+python3 pjlink_firmware.py --debug 2>debug.log
 ```
 
 Debug output goes to stderr so it does not interfere with the progress bar or table output. Redirect to a file as shown above for easier inspection.
