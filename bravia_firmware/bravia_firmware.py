@@ -263,6 +263,54 @@ def get_network_settings(host: str, port: int, psk: str = None,
         return []
 
 
+def set_auth_none(host: str, port: int, psk: str,
+                  timeout: int = DEFAULT_TIMEOUT) -> tuple:
+    """
+    Use the PSK to set the display's IP control authentication to None.
+
+    This calls setRemoteDeviceSettings with target=accessPermission, value=off,
+    which is equivalent to setting:
+      Settings > Network & Internet > Local network setup > IP Control >
+      Authentication > None
+
+    Requires a valid PSK to authenticate the request. Once set, subsequent
+    requests can omit the X-Auth-PSK header entirely.
+
+    Returns:
+        tuple of (success: bool, message: str)
+    """
+    try:
+        result = call_sony_api(
+            host=host,
+            port=port,
+            method="setRemoteDeviceSettings",
+            params=[{"target": "accessPermission", "value": "off"}],
+            version="1.0",
+            request_id=20,
+            psk=psk,
+            timeout=timeout
+        )
+
+        if "error" in result:
+            error_code = result["error"][0] if isinstance(result["error"], list) else result["error"]
+            error_msg  = result["error"][1] if isinstance(result["error"], list) and len(result["error"]) > 1 else "Unknown"
+            return False, f"API error {error_code}: {error_msg}"
+
+        return True, "Authentication set to None"
+
+    except requests.exceptions.HTTPError as e:
+        code = e.response.status_code if e.response else "?"
+        if code == 403:
+            return False, "HTTP 403 — PSK incorrect or auth already set to None"
+        return False, f"HTTP {code}"
+    except Timeout:
+        return False, "Connection timed out"
+    except RequestsConnectionError:
+        return False, f"Cannot connect to {host}:{port}"
+    except Exception as e:
+        return False, str(e)
+
+
 def get_temperature(host: str, port: int, psk: str = None,
                     timeout: int = DEFAULT_TIMEOUT) -> tuple:
     """
@@ -667,6 +715,12 @@ Examples:
   python sony_fw_query.py -i displays.csv -k 0000 -t 15 -o output.json
   python sony_fw_query.py --no-temp
 
+  # Set auth to None on all displays in CSV using default PSK:
+  python sony_fw_query.py --set-auth-none -k 0000
+
+  # Set auth to None on a single display:
+  python sony_fw_query.py --set-auth-none -k 0000 --host 192.168.1.100
+
 Authentication:
   By default NO authentication is used (X-Auth-PSK header is omitted).
   This requires displays to be set to Authentication = None.
@@ -725,6 +779,11 @@ CSV Format (default: displays.csv):
         help=f"Path to CSV file with 'host' and 'port' columns (default: {DEFAULT_CSV})"
     )
     parser.add_argument(
+        "--host",
+        default=None,
+        help="Query a single display by hostname/IP instead of reading a CSV (e.g. --host 192.168.1.100)"
+    )
+    parser.add_argument(
         "-o", "--output",
         default=DEFAULT_OUTPUT,
         help=f"Output JSON file path (default: {DEFAULT_OUTPUT})"
@@ -741,16 +800,102 @@ CSV Format (default: displays.csv):
         help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})"
     )
     parser.add_argument(
+        "-p", "--port",
+        type=int,
+        default=DEFAULT_PORT,
+        help=f"Port to use when querying a single host via --host (default: {DEFAULT_PORT})"
+    )
+    parser.add_argument(
         "--no-temp",
         action="store_true",
         default=False,
         help="Skip temperature queries (faster; use if your firmware does not support it)"
     )
+    parser.add_argument(
+        "--set-auth-none",
+        action="store_true",
+        default=False,
+        help=(
+            "Use the PSK (-k) to set each display's IP control authentication to None. "
+            "Requires -k to be set (default PSK is 0000). "
+            "Does not query firmware or temperature — auth change only."
+        )
+    )
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        default=False,
+        help="When used with --host, dump the raw getSystemInformation response for all API versions"
+    )
 
     args = parser.parse_args()
     query_temp = not args.no_temp
 
+    # --set-auth-none requires a PSK to authenticate the change
+    if args.set_auth_none and not args.psk:
+        print("ERROR: --set-auth-none requires a PSK via -k (default Sony PSK is 0000)")
+        print("  Example: python sony_fw_query.py --set-auth-none -k 0000")
+        sys.exit(1)
+
     term_width = get_terminal_width()
+
+    # -------------------------------------------------------------------------
+    # --set-auth-none mode: iterate displays and remove PSK requirement
+    # -------------------------------------------------------------------------
+    if args.set_auth_none:
+        if args.host:
+            displays = [{"host": args.host, "port": args.port}]
+        else:
+            displays = read_csv_input(args.input)
+
+        print(f"Mode:           Set authentication to None")
+        print(f"PSK:            {args.psk}")
+        print(f"Displays:       {len(displays)}\n")
+
+        bar_width = max(40, get_terminal_width() - 2)
+        auth_results = []
+
+        with tqdm(
+            total=len(displays),
+            desc="Setting auth to None",
+            bar_format=f"{{l_bar}}{CYAN}{{bar}}{RESET}{{r_bar}}",
+            ncols=bar_width,
+            unit="display"
+        ) as pbar:
+            for display in displays:
+                host = display["host"]
+                port = display["port"]
+                pbar.set_postfix_str(host, refresh=True)
+                success, message = set_auth_none(host, port, psk=args.psk, timeout=args.timeout)
+                auth_results.append({
+                    "host": host,
+                    "port": port,
+                    "success": success,
+                    "message": message
+                })
+                pbar.update(1)
+
+        # Print results table
+        term_width = get_terminal_width()
+        separator = "=" * term_width
+        print(f"\n{separator}")
+        print("Set Authentication to None — Results".center(term_width))
+        print(separator)
+
+        table_data = [
+            [
+                "✓ OK" if r["success"] else "✗ FAIL",
+                r["host"],
+                r["message"]
+            ]
+            for r in auth_results
+        ]
+        print(tabulate(table_data, headers=["Status", "Host", "Message"], tablefmt="pipe"))
+
+        ok    = sum(1 for r in auth_results if r["success"])
+        failed = sum(1 for r in auth_results if not r["success"])
+        print(f"\nTotal: {len(auth_results)} | Success: {ok} | Failed: {failed}")
+        return
 
     # Print configuration
     if args.psk:
@@ -758,6 +903,49 @@ CSV Format (default: displays.csv):
     else:
         print(f"Authentication: None (no X-Auth-PSK header)")
 
+    # -------------------------------------------------------------------------
+    # Single-host mode: --host
+    # -------------------------------------------------------------------------
+    if args.host:
+        host = args.host
+        port = args.port
+        print(f"Mode:           Single host ({host}:{port})")
+        print(f"API versions:   Will try {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)\n")
+
+        if args.raw:
+            # Dump raw getSystemInformation for every version so we can
+            # inspect exactly which fields the device returns
+            print("Raw getSystemInformation responses:\n")
+            for v in SYSTEM_INFO_VERSIONS:
+                try:
+                    result = call_sony_api(host, port, "getSystemInformation", [], v,
+                                           psk=args.psk, timeout=args.timeout)
+                    print(f"--- v{v} ---")
+                    print(json.dumps(result, indent=2))
+                except Exception as e:
+                    print(f"--- v{v} --- ERROR: {e}")
+                print()
+
+            # Also dump getInterfaceInformation raw
+            try:
+                result = call_sony_api(host, port, "getInterfaceInformation", [], "1.0",
+                                       request_id=2, psk=args.psk, timeout=args.timeout)
+                print("--- getInterfaceInformation v1.0 ---")
+                print(json.dumps(result, indent=2))
+            except Exception as e:
+                print(f"--- getInterfaceInformation v1.0 --- ERROR: {e}")
+            return
+
+        result = query_display(host, port, psk=args.psk, timeout=args.timeout,
+                               query_temp=query_temp)
+
+        print_results_table([result], show_temp=query_temp)
+        save_results_json([result], args.output)
+        return
+
+    # -------------------------------------------------------------------------
+    # Normal CSV batch mode
+    # -------------------------------------------------------------------------
     print(f"API versions:   Will try {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)")
     print(f"Temperature:    {'Enabled (°F, best-effort)' if query_temp else 'Disabled (--no-temp)'}")
     print(f"Reading:        {args.input}")

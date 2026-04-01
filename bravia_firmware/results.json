@@ -1,8 +1,8 @@
 {
-  "query_timestamp": "2026-03-25T19:12:48.316805Z",
-  "total_displays": 66,
-  "successful_queries": 41,
-  "failed_queries": 25,
+  "query_timestamp": "2026-03-31T20:02:14.632757Z",
+  "total_displays": 65,
+  "successful_queries": 45,
+  "failed_queries": 20,
   "results": [
     {
       "host": "lsc-135-display.openav.dartmouth.edu",
@@ -21,7 +21,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:09.041078Z"
+      "timestamp": "2026-03-31T20:01:10.709583Z"
     },
     {
       "host": "lsc-100-display-1.openav.dartmouth.edu",
@@ -40,7 +40,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": null,
-      "timestamp": "2026-03-25T19:12:09.413970Z"
+      "timestamp": "2026-03-31T20:01:11.437820Z"
     },
     {
       "host": "lsc-100-display-2.openav.dartmouth.edu",
@@ -59,7 +59,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": null,
-      "timestamp": "2026-03-25T19:12:09.663465Z"
+      "timestamp": "2026-03-31T20:01:12.814380Z"
     },
     {
       "host": "lsc-105-1-display-1.openav.dartmouth.edu",
@@ -78,7 +78,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:09.929742Z"
+      "timestamp": "2026-03-31T20:01:14.158849Z"
     },
     {
       "host": "lsc-105-1-display-2.openav.dartmouth.edu",
@@ -97,7 +97,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:10.273926Z"
+      "timestamp": "2026-03-31T20:01:14.862446Z"
     },
     {
       "host": "lsc-105-2-display-1.openav.dartmouth.edu",
@@ -116,7 +116,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:10.617327Z"
+      "timestamp": "2026-03-31T20:01:15.587545Z"
     },
     {
       "host": "lsc-105-2-display-2.openav.dartmouth.edu",
@@ -135,7 +135,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:10.970207Z"
+      "timestamp": "2026-03-31T20:01:16.310489Z"
     },
     {
       "host": "lsc-105-2-display-3.openav.dartmouth.edu",
@@ -154,7 +154,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:11.327706Z"
+      "timestamp": "2026-03-31T20:01:17.040113Z"
     },
     {
       "host": "lsc-205-1-display-1.openav.dartmouth.edu",
@@ -173,7 +173,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:11.707040Z"
+      "timestamp": "2026-03-31T20:01:17.773996Z"
     },
     {
       "host": "lsc-205-1-display-2.openav.dartmouth.edu",
@@ -192,7 +192,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:12.079123Z"
+      "timestamp": "2026-03-31T20:01:18.524843Z"
     },
     {
       "host": "lsc-205-2-display-1.openav.dartmouth.edu",
@@ -211,7 +211,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:12.467941Z"
+      "timestamp": "2026-03-31T20:01:19.254065Z"
     },
     {
       "host": "lsc-205-2-display-2.openav.dartmouth.edu",
@@ -230,7 +230,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:12.811651Z"
+      "timestamp": "2026-03-31T20:01:19.969182Z"
     },
     {
       "host": "lsc-205-2-display-3.openav.dartmouth.edu",
@@ -249,7 +249,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:13.183970Z"
+      "timestamp": "2026-03-31T20:01:20.692337Z"
     },
     {
       "host": "4-currier-101b-display.openav.dartmouth.edu",
@@ -268,7 +268,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:13.557975Z"
+      "timestamp": "2026-03-31T20:01:21.444380Z"
     },
     {
       "host": "4-currier-101e-display.openav.dartmouth.edu",
@@ -287,7 +287,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:13.652723Z"
+      "timestamp": "2026-03-31T20:01:21.833318Z"
     },
     {
       "host": "4-currier-213-display.openav.dartmouth.edu",
@@ -306,7 +306,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:13.749433Z"
+      "timestamp": "2026-03-31T20:01:22.196327Z"
     },
     {
       "host": "4-currier-214-display.openav.dartmouth.edu",
@@ -325,7 +325,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:13.844270Z"
+      "timestamp": "2026-03-31T20:01:22.571354Z"
     },
     {
       "host": "4-currier-215-display.openav.dartmouth.edu",
@@ -344,7 +344,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:13.934198Z"
+      "timestamp": "2026-03-31T20:01:22.947295Z"
     },
     {
       "host": "4-currier-223-display.openav.dartmouth.edu",
@@ -363,7 +363,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:14.025908Z"
+      "timestamp": "2026-03-31T20:01:23.330472Z"
     },
     {
       "host": "4-currier-227-display.openav.dartmouth.edu",
@@ -382,7 +382,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:14.119744Z"
+      "timestamp": "2026-03-31T20:01:23.709986Z"
     },
     {
       "host": "4-currier-232-vr-display.openav.dartmouth.edu",
@@ -401,7 +401,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:14.211817Z"
+      "timestamp": "2026-03-31T20:01:24.065140Z"
     },
     {
       "host": "4-currier-collaboration-display.openav.dartmouth.edu",
@@ -420,7 +420,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:14.305206Z"
+      "timestamp": "2026-03-31T20:01:24.419159Z"
     },
     {
       "host": "4-currier-lounge-display.openav.dartmouth.edu",
@@ -439,7 +439,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:14.399927Z"
+      "timestamp": "2026-03-31T20:01:24.777633Z"
     },
     {
       "host": "baker-102-display.openav.dartmouth.edu",
@@ -458,7 +458,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:14.492838Z"
+      "timestamp": "2026-03-31T20:01:25.152371Z"
     },
     {
       "host": "bartlett-105a-display.openav.dartmouth.edu",
@@ -477,7 +477,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:14.846570Z"
+      "timestamp": "2026-03-31T20:01:26.886190Z"
     },
     {
       "host": "berry-180-display.openav.dartmouth.edu",
@@ -496,26 +496,26 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:15.959473Z"
+      "timestamp": "2026-03-31T20:01:27.264319Z"
     },
     {
       "host": "berrysport-045-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "OK",
-      "model": "FW-75BZ40L",
-      "serial": "3003827",
-      "firmware_version": "5.5.0",
-      "mac_address": "80:99:E7:BA:B2:2E",
-      "device_name": "BRAVIA",
-      "interface_version": "5.5.0",
-      "product_name": "TV",
-      "generation": "5.5.0",
-      "api_version_used": "1.0",
+      "status": "ERROR",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
       "temperature_c": null,
       "temperature_f": null,
-      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
-      "error": null,
-      "timestamp": "2026-03-25T19:12:16.345824Z"
+      "temperature_source": "N/A",
+      "error": "Connection timed out",
+      "timestamp": "2026-03-31T20:01:28.005957Z"
     },
     {
       "host": "berrysport-010-display.openav.dartmouth.edu",
@@ -534,7 +534,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:16.707970Z"
+      "timestamp": "2026-03-31T20:01:38.053300Z"
     },
     {
       "host": "berrysport-206-display.openav.dartmouth.edu",
@@ -553,7 +553,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:17.063426Z"
+      "timestamp": "2026-03-31T20:01:38.819838Z"
     },
     {
       "host": "carson-061-2-display-1.openav.dartmouth.edu",
@@ -572,7 +572,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:17.443994Z"
+      "timestamp": "2026-03-31T20:01:39.589590Z"
     },
     {
       "host": "carson-061-2-display-2.openav.dartmouth.edu",
@@ -591,7 +591,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:17.795254Z"
+      "timestamp": "2026-03-31T20:01:40.382541Z"
     },
     {
       "host": "carson-061-2-display-3.openav.dartmouth.edu",
@@ -610,7 +610,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:18.152188Z"
+      "timestamp": "2026-03-31T20:01:41.137818Z"
     },
     {
       "host": "carson-061-2-display-4.openav.dartmouth.edu",
@@ -629,7 +629,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:18.512142Z"
+      "timestamp": "2026-03-31T20:01:41.869490Z"
     },
     {
       "host": "carson-061-2-display-5.openav.dartmouth.edu",
@@ -648,7 +648,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:18.855804Z"
+      "timestamp": "2026-03-31T20:01:42.636119Z"
     },
     {
       "host": "carson-061-2-display-6.openav.dartmouth.edu",
@@ -667,45 +667,45 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:19.229727Z"
+      "timestamp": "2026-03-31T20:01:43.372148Z"
     },
     {
       "host": "court01-211-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "ERROR",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
+      "status": "OK",
+      "model": "FW-85BZ40H",
+      "serial": "4502203",
+      "firmware_version": "5.7.0",
+      "mac_address": "F8:4E:17:46:6D:55",
+      "device_name": "BRAVIA",
+      "interface_version": "5.7.0",
+      "product_name": "TV",
+      "generation": "5.7.0",
+      "api_version_used": "1.7",
       "temperature_c": null,
       "temperature_f": null,
-      "temperature_source": "N/A",
-      "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:19.605745Z"
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:44.109521Z"
     },
     {
       "host": "court01-215-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "ERROR",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
+      "status": "OK",
+      "model": "FW-75BZ40H",
+      "serial": "4501953",
+      "firmware_version": "5.5.0",
+      "mac_address": "F8:4E:17:40:FE:F5",
+      "device_name": "BRAVIA",
+      "interface_version": "5.5.0",
+      "product_name": "TV",
+      "generation": "5.5.0",
+      "api_version_used": "1.0",
       "temperature_c": null,
       "temperature_f": null,
-      "temperature_source": "N/A",
-      "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:19.706359Z"
+      "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:01:44.965299Z"
     },
     {
       "host": "cts-4-currier-104-display.dartmouth.edu",
@@ -724,7 +724,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "Connection timed out",
-      "timestamp": "2026-03-25T19:12:19.796799Z"
+      "timestamp": "2026-03-31T20:01:45.738545Z"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -743,7 +743,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:29.822485Z"
+      "timestamp": "2026-03-31T20:01:55.800449Z"
     },
     {
       "host": "fairchild-217a-display.openav.dartmouth.edu",
@@ -762,7 +762,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:29.936009Z"
+      "timestamp": "2026-03-31T20:01:56.225448Z"
     },
     {
       "host": "floren-332-display-1.openav.dartmouth.edu",
@@ -781,7 +781,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:30.035830Z"
+      "timestamp": "2026-03-31T20:01:56.620289Z"
     },
     {
       "host": "floren-332-display-2.openav.dartmouth.edu",
@@ -800,7 +800,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:30.400374Z"
+      "timestamp": "2026-03-31T20:01:57.369473Z"
     },
     {
       "host": "hopkins-051-display.openav.dartmouth.edu",
@@ -819,7 +819,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:30.771642Z"
+      "timestamp": "2026-03-31T20:01:58.118545Z"
     },
     {
       "host": "lewinstein-111-display.openav.dartmouth.edu",
@@ -838,7 +838,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:31.113444Z"
+      "timestamp": "2026-03-31T20:01:58.862018Z"
     },
     {
       "host": "lsc-200-1-display-1.openav.dartmouth.edu",
@@ -857,7 +857,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:31.486453Z"
+      "timestamp": "2026-03-31T20:01:59.626004Z"
     },
     {
       "host": "lsc-200-1-display-2.openav.dartmouth.edu",
@@ -876,7 +876,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:31.861165Z"
+      "timestamp": "2026-03-31T20:02:00.397183Z"
     },
     {
       "host": "lsc-200-2-display-1.openav.dartmouth.edu",
@@ -895,7 +895,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:32.235387Z"
+      "timestamp": "2026-03-31T20:02:01.135764Z"
     },
     {
       "host": "lsc-200-2-display-2.openav.dartmouth.edu",
@@ -914,7 +914,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:32.611398Z"
+      "timestamp": "2026-03-31T20:02:01.886762Z"
     },
     {
       "host": "lsc-200-2-display-3.openav.dartmouth.edu",
@@ -933,7 +933,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:32.986393Z"
+      "timestamp": "2026-03-31T20:02:02.666820Z"
     },
     {
       "host": "lsc-200-2-display-4.openav.dartmouth.edu",
@@ -952,7 +952,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:33.361682Z"
+      "timestamp": "2026-03-31T20:02:03.469024Z"
     },
     {
       "host": "lsc-200-2-display-5.openav.dartmouth.edu",
@@ -971,7 +971,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:33.730840Z"
+      "timestamp": "2026-03-31T20:02:04.227343Z"
     },
     {
       "host": "lsc-200-2-display-6.openav.dartmouth.edu",
@@ -990,7 +990,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:34.053824Z"
+      "timestamp": "2026-03-31T20:02:05.973847Z"
     },
     {
       "host": "lsc-200-2-display-7.openav.dartmouth.edu",
@@ -1009,7 +1009,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:35.439868Z"
+      "timestamp": "2026-03-31T20:02:06.724512Z"
     },
     {
       "host": "lsc-200-2-display-8.openav.dartmouth.edu",
@@ -1028,7 +1028,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:35.811164Z"
+      "timestamp": "2026-03-31T20:02:07.476432Z"
     },
     {
       "host": "parkhurst-06a-display.openav.dartmouth.edu",
@@ -1046,8 +1046,8 @@
       "temperature_c": null,
       "temperature_f": null,
       "temperature_source": "N/A",
-      "error": "Connection timed out",
-      "timestamp": "2026-03-25T19:12:36.185582Z"
+      "error": "HTTP Unknown",
+      "timestamp": "2026-03-31T20:02:08.223963Z"
     },
     {
       "host": "preshouse-b02-display.openav.dartmouth.edu",
@@ -1066,7 +1066,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:46.214097Z"
+      "timestamp": "2026-03-31T20:02:08.614007Z"
     },
     {
       "host": "dewey-010-display.openav.dartmouth.edu",
@@ -1085,7 +1085,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:46.330645Z"
+      "timestamp": "2026-03-31T20:02:08.995352Z"
     },
     {
       "host": "kemeny-307-display.openav.dartmouth.edu",
@@ -1104,7 +1104,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:46.887166Z"
+      "timestamp": "2026-03-31T20:02:09.788402Z"
     },
     {
       "host": "robinson-322-display.openav.dartmouth.edu",
@@ -1123,7 +1123,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:46.981080Z"
+      "timestamp": "2026-03-31T20:02:10.179018Z"
     },
     {
       "host": "mcnutt-001-display.openav.dartmouth.edu",
@@ -1142,7 +1142,7 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:47.081528Z"
+      "timestamp": "2026-03-31T20:02:10.574315Z"
     },
     {
       "host": "parkhurst-009b-display.openav.dartmouth.edu",
@@ -1161,7 +1161,7 @@
       "temperature_f": null,
       "temperature_source": "N/A",
       "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:47.453621Z"
+      "timestamp": "2026-03-31T20:02:11.384044Z"
     },
     {
       "host": "wentworth-205-display.openav.dartmouth.edu",
@@ -1180,83 +1180,64 @@
       "temperature_f": null,
       "temperature_source": "skipped — not supported on generation 5.5.0 firmware (getDeviceStatus unavailable)",
       "error": null,
-      "timestamp": "2026-03-25T19:12:47.547347Z"
-    },
-    {
-      "host": "doc-house-display.openav.dartmouth.edu",
-      "port": 80,
-      "status": "ERROR",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
-      "temperature_c": null,
-      "temperature_f": null,
-      "temperature_source": "N/A",
-      "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:47.936055Z"
+      "timestamp": "2026-03-31T20:02:11.853615Z"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "ERROR",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
+      "status": "OK",
+      "model": "FW-75BZ40H",
+      "serial": "4501474",
+      "firmware_version": "5.7.0",
+      "mac_address": "14:3F:A6:D0:B4:35",
+      "device_name": "BRAVIA",
+      "interface_version": "5.7.0",
+      "product_name": "TV",
+      "generation": "5.7.0",
+      "api_version_used": "1.7",
       "temperature_c": null,
       "temperature_f": null,
-      "temperature_source": "N/A",
-      "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:48.037162Z"
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:12.648559Z"
     },
     {
       "host": "osher-3a-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "ERROR",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
+      "status": "OK",
+      "model": "FW-85BZ40H",
+      "serial": "4503622",
+      "firmware_version": "5.7.0",
+      "mac_address": "F8:4E:17:97:DB:1E",
+      "device_name": "BRAVIA",
+      "interface_version": "5.7.0",
+      "product_name": "TV",
+      "generation": "5.7.0",
+      "api_version_used": "1.7",
       "temperature_c": null,
       "temperature_f": null,
-      "temperature_source": "N/A",
-      "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:48.133676Z"
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:13.332660Z"
     },
     {
       "host": "osher-3a-confidence-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "ERROR",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
+      "status": "OK",
+      "model": "FW-65BZ40H",
+      "serial": "4503008",
+      "firmware_version": "5.7.0",
+      "mac_address": "F8:4E:17:66:2E:0B",
+      "device_name": "BRAVIA",
+      "interface_version": "5.7.0",
+      "product_name": "TV",
+      "generation": "5.7.0",
+      "api_version_used": "1.7",
       "temperature_c": null,
       "temperature_f": null,
-      "temperature_source": "N/A",
-      "error": "HTTP Unknown",
-      "timestamp": "2026-03-25T19:12:48.221411Z"
+      "temperature_source": "skipped — not supported on generation 5.7.0 firmware (getDeviceStatus unavailable)",
+      "error": null,
+      "timestamp": "2026-03-31T20:02:13.984296Z"
     }
   ]
 }

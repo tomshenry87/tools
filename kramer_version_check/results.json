@@ -52,7 +52,7 @@
   {
     "host": "baker-234-hdmi-switcher.openav.dartmouth.edu",
     "build_date": "2021/03/19",
-    "model": "N/A",
+    "model": "VP-440H2",
     "prot_ver": "3000:v2.4",
     "serial": "08240015500039",
     "firmware": "1.14",
@@ -124,7 +124,7 @@
     "build_date": "2021/03/19",
     "model": "VP-440H2",
     "prot_ver": "3000:v2.4",
-    "serial": "N/A",
+    "serial": "10230061300135",
     "firmware": "1.14",
     "mac": "00-1D-56-0B-C9-82",
     "status": "OK"
@@ -496,7 +496,7 @@
     "prot_ver": "3000:v2.4",
     "serial": "03220001900001",
     "firmware": "1.14",
-    "mac": "00-1D-56-09-54-37",
+    "mac": "N/A",
     "status": "OK"
   },
   {

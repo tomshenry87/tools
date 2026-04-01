@@ -4,11 +4,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.11.2",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.11.2"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -18,11 +22,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.11.2",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.11.2"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -32,11 +40,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.11.2",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.11.2"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -46,11 +58,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.11.2",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.11.2"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -60,11 +76,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.11.2",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.11.2"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -74,11 +94,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.9.2",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.9.2"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -88,11 +112,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.8",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.8"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -298,11 +326,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.12.1",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.12.1"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -452,11 +484,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.2.3",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.2.3"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
@@ -466,11 +502,15 @@
     "username": "admin",
     "port": 22,
     "success": true,
-    "routeros_version": "7.12",
+    "routeros_version": "7.20.8",
     "packages": [
       {
         "name": "routeros",
-        "version": "7.12"
+        "version": "7.20.8"
+      },
+      {
+        "name": "wireless",
+        "version": "7.20.8"
       }
     ],
     "error": null
