@@ -1,4 +1,4 @@
-# sony_fw_query.py
+# bravia_firmware.py
 
 A concurrent command-line tool for querying Sony Bravia BZ40H/BZ40L professional displays over the network via the Sony BRAVIA REST API (JSON-RPC). Retrieves firmware version, power saving mode, MAC address, serial number, and more across an entire fleet in seconds.
 
@@ -52,7 +52,7 @@ tqdm
 ## Installation
 
 ```bash
-# Clone or copy sony_fw_query.py to your working directory, then:
+# Clone or copy bravia_firmware.py to your working directory, then:
 pip install requests tabulate tqdm
 ```
 
@@ -72,7 +72,7 @@ host,port
 **2. Run the script:**
 
 ```bash
-python sony_fw_query.py
+python3 bravia_firmware.py
 ```
 
 **3. View results in the terminal and check `results.json` for the full output.**
@@ -112,7 +112,7 @@ host,port
 **Specifying a custom CSV path:**
 
 ```bash
-python sony_fw_query.py -i /path/to/my_displays.csv
+python3 bravia_firmware.py -i /path/to/my_displays.csv
 ```
 
 ---
@@ -130,7 +130,7 @@ Settings → Network & Internet → Local network setup → IP Control → Authe
 ```
 
 ```bash
-python sony_fw_query.py
+python3 bravia_firmware.py
 ```
 
 ### Pre-Shared Key (PSK)
@@ -143,7 +143,7 @@ Settings → Network & Internet → Local network setup → IP Control → Pre-S
 ```
 
 ```bash
-python sony_fw_query.py -k MySecretKey
+python3 bravia_firmware.py -k MySecretKey
 ```
 
 ### Automatic Fallback PSK
@@ -163,9 +163,9 @@ FALLBACK_PSK = "1234"
 ## Command-Line Reference
 
 ```
-usage: sony_fw_query.py [-h] [-i INPUT] [--host HOST] [-o OUTPUT] [-k PSK]
-                        [-t TIMEOUT] [-p PORT] [-w WORKERS]
-                        [--set-auth-none] [--raw]
+usage: bravia_firmware.py [-h] [-i INPUT] [--host HOST] [-o OUTPUT] [-k PSK]
+                          [-t TIMEOUT] [-p PORT] [-w WORKERS]
+                          [--set-auth-none] [--raw]
 ```
 
 | Flag | Long form | Default | Description |
@@ -190,19 +190,19 @@ The default mode. Reads a CSV file and queries all listed displays concurrently.
 
 ```bash
 # Default CSV, default settings
-python sony_fw_query.py
+python3 bravia_firmware.py
 
 # Custom CSV and output file
-python sony_fw_query.py -i building_a.csv -o building_a_results.json
+python3 bravia_firmware.py -i building_a.csv -o building_a_results.json
 
 # With PSK authentication
-python sony_fw_query.py -i displays.csv -k 0000
+python3 bravia_firmware.py -i displays.csv -k 0000
 
 # Increase timeout and workers for a slow or large network
-python sony_fw_query.py -i displays.csv -t 20 -w 10
+python3 bravia_firmware.py -i displays.csv -t 20 -w 10
 
 # Full example
-python sony_fw_query.py -i displays.csv -k 0000 -t 15 -o output.json -w 8
+python3 bravia_firmware.py -i displays.csv -k 0000 -t 15 -o output.json -w 8
 ```
 
 ---
@@ -213,13 +213,13 @@ Query a single display directly without a CSV file. Useful for testing connectiv
 
 ```bash
 # Basic single host query
-python sony_fw_query.py --host 192.168.1.100
+python3 bravia_firmware.py --host 192.168.1.100
 
 # Single host with PSK and custom port
-python sony_fw_query.py --host 192.168.1.100 -p 80 -k 0000
+python3 bravia_firmware.py --host 192.168.1.100 -p 80 -k 0000
 
 # Single host with custom output file
-python sony_fw_query.py --host 192.168.1.100 -o display_100.json
+python3 bravia_firmware.py --host 192.168.1.100 -o display_100.json
 ```
 
 ---
@@ -229,9 +229,9 @@ python sony_fw_query.py --host 192.168.1.100 -o display_100.json
 Requires `--host`. Sends `getSystemInformation` for every supported API version (`1.7`, `1.4`, `1.0`) and prints the raw JSON responses to the terminal. Also dumps `getInterfaceInformation`. Useful for discovering what fields a specific display firmware returns.
 
 ```bash
-python sony_fw_query.py --host 192.168.1.100 --raw
+python3 bravia_firmware.py --host 192.168.1.100 --raw
 
-python sony_fw_query.py --host 192.168.1.100 --raw -k 0000
+python3 bravia_firmware.py --host 192.168.1.100 --raw -k 0000
 ```
 
 **Example output:**
@@ -269,13 +269,13 @@ Requires `-k` to be set.
 
 ```bash
 # Set auth to None across all displays in CSV
-python sony_fw_query.py --set-auth-none -k 0000
+python3 bravia_firmware.py --set-auth-none -k 0000
 
 # Set auth to None on a single display
-python sony_fw_query.py --set-auth-none -k 0000 --host 192.168.1.100
+python3 bravia_firmware.py --set-auth-none -k 0000 --host 192.168.1.100
 
 # Custom CSV with non-default PSK
-python sony_fw_query.py --set-auth-none -k MyKey -i displays.csv
+python3 bravia_firmware.py --set-auth-none -k MyKey -i displays.csv
 ```
 
 This calls `setRemoteDeviceSettings` with `target: accessPermission, value: off` on `/sony/system`, which is equivalent to navigating to:
@@ -480,10 +480,10 @@ The script uses `concurrent.futures.ThreadPoolExecutor` to query multiple displa
 
 ```bash
 # Use 10 workers for a large fleet
-python sony_fw_query.py -w 10
+python3 bravia_firmware.py -w 10
 
 # Use 1 worker for sequential (debugging)
-python sony_fw_query.py -w 1
+python3 bravia_firmware.py -w 1
 ```
 
 **How it works:**
