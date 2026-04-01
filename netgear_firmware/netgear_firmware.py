@@ -253,7 +253,7 @@ def parse_poe_power(raw: str) -> tuple[str | None, float | None]:
     """
     clean_text = strip_ansi(raw)
     m = re.search(
-        r"Total\s+Power\s+Consumed\s*:\s*(\d+(?:\.\d+)?)",
+        r"Total\s+Power\s+Consumed[.\s]+(\d+(?:\.\d+)?)",
         clean_text,
         re.IGNORECASE,
     )
