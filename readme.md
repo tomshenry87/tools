@@ -1,74 +1,40 @@
-these programs are utilities to query network routers and projectors to check firmware version for securtity patching.
+# AV/Network Device Query Toolkit
 
+A collection of Python scripts for querying firmware versions, temperatures, and other diagnostic data from AV and network infrastructure devices at scale. All scripts share a common design — CSV input, concurrent workers, a live progress bar, formatted table output, and JSON results export.
 
-Mikrotik Firmware Checker
+---
 
-# Default — reads routers.csv, writes results.json
-python3 mikrotik_checker.py
+## Scripts
 
-# Override input file only
-python3 mikrotik_checker.py --csv my_other_routers.csv
+### `axis_vapix_query.py` — AXIS IP Cameras
+Queries AXIS cameras over HTTPS using the VAPIX API. Retrieves firmware version, model, serial number, MAC address, and board/CPU temperature. Supports self-signed certificates and HTTP Digest authentication.
 
-# Override output file only
-python3 mikrotik_checker.py --output my_report.json
+### `sony_fw_query.py` — Sony Bravia Professional Displays
+Queries Sony Bravia BZ40H/BZ40L displays via the Sony REST API (JSON-RPC). Retrieves firmware version, model, serial, MAC address, and power saving mode. Handles PSK authentication with automatic fallback, and includes a utility mode to reset display authentication to None across a fleet.
 
-# Override both
-python3 mikrotik_checker.py --csv site_a.csv --output site_a_results.json
+### `query_kramer.py` — Kramer VP-440H2 HDMI Switchers
+Queries Kramer VP-440H2 matrix switchers over TCP using Kramer Protocol 3000. Retrieves firmware version, model, build date, protocol version, serial number, and MAC address. Includes a hex/ASCII debug mode for troubleshooting protocol issues.
 
-# Debug mode
-python3 mikrotik_checker.py --verbose
+### `mikrotik_checker.py` — MikroTik Routers
+Connects to MikroTik routers via SSH and queries installed RouterOS package versions. Reports the RouterOS version and full package list per device, with a version breakdown summary across the fleet.
 
-# Include raw SSH output in JSON
-python3 mikrotik_checker.py --include-raw
+### `netgear_m4250_checker.py` — Netgear M4250 Switches
+Connects to Netgear M4250 managed switches via SSH. Retrieves firmware version and CPU temperature, with aggregate temperature statistics (avg/min/max) across the fleet.
 
-# Everything at once
-python3 mikrotik_checker.py --csv site_b.csv --output site_b.json --verbose --include-raw
+### `pjlink_query.py` — PJLink Projectors
+Queries projectors using the PJLink protocol (Class 1 and Class 2). Retrieves firmware version, lamp hours, manufacturer, model, power status, and projector name. Supports password authentication and includes a raw diagnostic mode.
 
-your_folder/
-├── mikrotik_checker.py    ← the script
-├── routers.csv            ← your input (you create this)
-└── results.json           ← auto-generated when you run the script
+---
 
-host,username,password,port
-10.0.0.1,admin,MyP@ss1,22
-10.0.0.2,admin,MyP@ss2,22
-192.168.88.1,admin,,22
+## Common Features
 
-# Run with all defaults (reads projectors.csv, writes results.json)
-python pjlink_query.py
+- **Input:** CSV file with a `host` column (plus credentials where needed)
+- **Concurrency:** Configurable worker threads for fast parallel scanning
+- **Output:** Formatted CLI table + `results.json` with full detail
+- **Error handling:** Distinguishes auth failures, timeouts, and unreachable hosts
 
-# Specify different input
-python pjlink_query.py -i my_devices.csv
+## Dependencies
 
-# Specify different output
-python pjlink_query.py -o report.json
-
-# Both
-python pjlink_query.py -i my_devices.csv -o report.json
-
-# All commands + debug
-python pjlink_query.py --all --debug
-
-# Diagnostic mode
-python pjlink_query.py --diagnostic --debug
-
-{
-    "host": "192.168.1.100",
-    "port": 4352,
-    "query_timestamp": "2024-01-15T10:30:00+00:00",
-    "pjlink_class": "2",
-    "manufacturer": "Epson",
-    "product_name": "EB-L260F",
-    "software_version": "1.05",
-    "other_info": "FW:1.05 Build:2023.10.01",
-    "firmware_version": "1.05"
-}
-
-host,port,password
-192.168.1.100,4352,
-192.168.1.101,4352,mypassword
-192.168.1.102,,secretpass
-10.0.0.50,,
-projector-room1.local,4352,admin123
-
-
+```
+pip install requests tabulate tqdm paramiko urllib3
+```
