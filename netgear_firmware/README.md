@@ -340,9 +340,9 @@ Patterns tried in order:
 Extracts the total PoE power consumed from the raw output of `show poe`. Returns a tuple of `(display_string, numeric_value)` where the value is in watts.
 
 ```python
-raw = "Total Power Consumed:  38.5"
+raw = "Total Power Consumed...........................  82.4 Watts"
 display, value = parse_poe_power(raw)
-# Returns: ("38.5 W", 38.5)
+# Returns: ("82.4 W", 82.4)
 ```
 
 The display string is always formatted to one decimal place (e.g. `"38.5 W"`, `"120.0 W"`).
