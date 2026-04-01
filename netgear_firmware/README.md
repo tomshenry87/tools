@@ -2,6 +2,8 @@
 
 A command-line tool that connects to one or more Netgear M4250 managed switches over SSH, retrieves firmware version and CPU temperature, and outputs a formatted terminal table and a structured JSON report.
 
+> **Note:** All examples in this document use `python3`. On some systems Python 3 may also be invoked as `python` — verify with `python --version` before substituting.
+
 ---
 
 ## Table of Contents
@@ -46,16 +48,16 @@ Place `netgear_m4250_checker.py` and your `switches.csv` in the same directory.
 
 ```bash
 # Run with all defaults (reads switches.csv, writes results.json)
-python3 netgear_m4250_checker.py
+python3 netgear_firmware.py
 
 # Specify a different CSV and output file
-python3 netgear_m4250_checker.py --csv my_switches.csv --output my_results.json
+python3 netgear_firmware.py --csv my_switches.csv --output my_results.json
 
 # Increase concurrency and enable verbose logging
-python3 netgear_m4250_checker.py --workers 10 --verbose
+python3 netgear_firmware.py --workers 10 --verbose
 
 # Include raw SSH output in the JSON for debugging
-python3 netgear_m4250_checker.py --include-raw
+python3 netgear_firmware.py --include-raw
 ```
 
 ---
@@ -96,9 +98,9 @@ host,username,password,port
 ## Command-Line Arguments
 
 ```
-usage: netgear_m4250_checker.py [-h] [--csv CSV] [--output OUTPUT]
-                                 [--workers WORKERS] [--timeout TIMEOUT]
-                                 [--verbose] [--include-raw]
+usage: netgear_firmware.py [-h] [--csv CSV] [--output OUTPUT]
+                            [--workers WORKERS] [--timeout TIMEOUT]
+                            [--verbose] [--include-raw]
 ```
 
 | Argument        | Default          | Description                                              |
@@ -114,13 +116,13 @@ usage: netgear_m4250_checker.py [-h] [--csv CSV] [--output OUTPUT]
 
 ```bash
 # Use 10 parallel workers with a 30-second timeout
-python3 netgear_m4250_checker.py --workers 10 --timeout 30
+python3 netgear_firmware.py --workers 10 --timeout 30
 
 # Debug a single switch by including raw output and enabling verbose logging
-python3 netgear_m4250_checker.py --csv one_switch.csv --include-raw --verbose
+python3 netgear_firmware.py --csv one_switch.csv --include-raw --verbose
 
 # Write results to a timestamped file
-python3 netgear_m4250_checker.py --output results_2024-01-15.json
+python3 netgear_firmware.py --output results_2024-01-15.json
 ```
 
 ---
@@ -440,5 +442,5 @@ Some M4250 firmware versions do not support the `| include` pipe filter. Run wit
 The progress bar writes to `stderr` and the table writes to `stdout`. If both are being redirected to the same destination (e.g. a log file via `2>&1`), they will interleave. Redirect them separately:
 
 ```bash
-python3 netgear_m4250_checker.py > results.txt 2> progress.txt
+python3 netgear_firmware.py > results.txt 2> progress.txt
 ```
