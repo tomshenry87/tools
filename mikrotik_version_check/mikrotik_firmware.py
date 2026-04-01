@@ -77,7 +77,8 @@ log = logging.getLogger("mikrotik_firmware")
 #  Add new models here — no other changes needed.
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MODEL_HEALTH_MAP: dict[str, dict] = {
-    "CRS112-8P-4S": {"temp_field": "temperature",    "poe_field": "poe-out-consumption"},
+    "CRS112-8P-4S": {"temp_field": "temperature", "poe_field": "poe-out-consumption"},
+    "RB960PGS":     {"temp_field": "temperature", "poe_field": "poe-out-consumption"},
 }
 
 # Defaults used when a model is not found in MODEL_HEALTH_MAP
