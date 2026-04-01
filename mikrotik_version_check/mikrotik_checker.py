@@ -10,6 +10,7 @@ Usage:
     python3 mikrotik_checker.py
     python3 mikrotik_checker.py --verbose
     python3 mikrotik_checker.py --csv other_routers.csv --output other_results.json
+    python3 mikrotik_checker.py --workers 10 --timeout 20
     python3 mikrotik_checker.py --include-raw --verbose
 """
 
@@ -23,7 +24,11 @@ import re
 import shutil
 import socket
 import sys
+import threading
 import time
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -42,18 +47,18 @@ except ImportError:
     sys.exit("ERROR: pip install tqdm")
 
 # ──────────────────────────────────────────────
-#  Terminal width detection
+#  ANSI color palette
 # ──────────────────────────────────────────────
-TERMINAL_WIDTH = shutil.get_terminal_size().columns
+CYAN   = "\033[96m"
+GREEN  = "\033[92m"
+RED    = "\033[91m"
+YELLOW = "\033[93m"
+WHITE  = "\033[97m"
+BOLD   = "\033[1m"
+RESET  = "\033[0m"
 
 # ──────────────────────────────────────────────
-#  Colors — cyan accent ONLY for progress bar
-# ──────────────────────────────────────────────
-CYAN  = "\033[96m"
-RESET = "\033[0m"
-
-# ──────────────────────────────────────────────
-#  Logging — plain white text, no colors
+#  Logging — plain, no colors
 # ──────────────────────────────────────────────
 logging.basicConfig(
     level=logging.WARNING,
@@ -64,29 +69,48 @@ log = logging.getLogger("mikrotik_checker")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  CSV reader
+#  CSV loader
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def read_router_csv(csv_path: Path) -> list[dict]:
-    routers: list[dict] = []
-    with csv_path.open(newline="", encoding="utf-8-sig") as fh:
-        reader = csv.DictReader(fh)
-        if reader.fieldnames:
-            reader.fieldnames = [f.strip().lower() for f in reader.fieldnames]
-        for row_num, row in enumerate(reader, start=2):
-            row = {k: (v.strip() if v else "") for k, v in row.items()}
-            host = (
-                row.get("host") or row.get("hostname")
-                or row.get("ip") or row.get("address")
-            )
-            if not host:
+def load_csv(csv_path: str) -> list[dict]:
+    devices: list[dict] = []
+    p = Path(csv_path)
+    if not p.exists():
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
+        sys.exit(1)
+    with open(p, "r", encoding="utf-8-sig") as f:
+        sample = f.read(4096)
+        f.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        except csv.Error:
+            dialect = csv.excel
+        reader = csv.DictReader(f, dialect=dialect)
+        if not reader.fieldnames:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
+            sys.exit(1)
+        col_map = {n.strip().lower(): n for n in reader.fieldnames}
+        host_key = (
+            col_map.get("host") or col_map.get("hostname")
+            or col_map.get("ip") or col_map.get("address")
+        )
+        if not host_key:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
+            sys.exit(1)
+        for row in reader:
+            host = row.get(host_key, "").strip()
+            if not host or host.startswith("#"):
                 continue
-            routers.append({
+            try:
+                port = int(row.get(col_map.get("port", ""), "") or 22)
+            except ValueError:
+                port = 22
+            devices.append({
                 "host":     host,
-                "username": row.get("username") or "admin",
-                "password": row.get("password", ""),
-                "port":     int(row.get("port") or 22),
+                "username": row.get(col_map.get("username", ""), "").strip() or "admin",
+                "password": row.get(col_map.get("password", ""), "").strip(),
+                "port":     port,
             })
-    return routers
+    return devices
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -102,13 +126,61 @@ def strip_ansi(text: str) -> str:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Table value helpers
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def clean(val) -> str:
+    s = str(val) if val is not None else "N/A"
+    if s in ("None", "-1", ""):
+        return "N/A"
+    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
+        return "N/A"
+    return s
+
+
+def truncate_error(err, max_len: int = 30) -> str:
+    if not err:
+        return ""
+    s = str(err)
+    for pat, label in [
+        # MikroTik / SSH-specific patterns first
+        (r"[Aa]uthentication failed",     "Auth failed"),
+        (r"[Aa]uthentication required",   "Auth required"),
+        (r"[Nn]o matching .* found",      "SSH negotiation"),
+        (r"[Ee]mpty output",              "Empty output"),
+        (r"[Cc]ould not parse",           "Parse error"),
+        # Generic network patterns
+        (r"[Cc]onnection timed out",      "Timed out"),
+        (r"[Cc]onnection refused",        "Conn refused"),
+        (r"[Nn]o response .* timeout",    "No response"),
+        (r"[Nn]o route to host",          "No route"),
+        (r"[Nn]etwork is unreachable",    "Net unreachable"),
+        (r"[Nn]ame or service not known", "DNS failed"),
+        (r"[Nn]etwork error",             "Network error"),
+        (r"[Mm]alformed",                 "Bad response"),
+    ]:
+        if re.search(pat, s):
+            return label
+    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
+    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
+    s = re.sub(r'\s+', ' ', s).strip(': ')
+    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
+
+
+def status_icon(r: dict) -> str:
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  SSH: get command output (tries TWO methods)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def get_command_output(client: paramiko.SSHClient, command: str) -> str:
-    output = ""
-
     try:
-        stdin, stdout, stderr = client.exec_command(command, timeout=15)
+        _, stdout, _ = client.exec_command(command, timeout=15)
         output = stdout.read().decode("utf-8", errors="replace")
         if output.strip():
             return output
@@ -135,25 +207,25 @@ def get_command_output(client: paramiko.SSHClient, command: str) -> str:
                 if not channel.recv_ready():
                     break
 
-        output = raw.decode("utf-8", errors="replace")
         channel.close()
+        return raw.decode("utf-8", errors="replace")
     except Exception:
         pass
 
-    return output
+    return ""
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Parse the output — extract NAME + VERSION
+#  Parse packages — extract NAME + VERSION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def parse_packages(raw: str) -> list[dict]:
-    clean = strip_ansi(raw)
+    clean_text = strip_ansi(raw)
     packages: list[dict] = []
     seen: set[str] = set()
 
     kv_matches = re.findall(
         r'name\s*=\s*"([^"]+)".*?version\s*=\s*"([^"]+)"',
-        clean,
+        clean_text,
         re.IGNORECASE,
     )
     if kv_matches:
@@ -161,37 +233,26 @@ def parse_packages(raw: str) -> list[dict]:
             key = f"{name.strip()}|{version.strip()}"
             if key not in seen:
                 seen.add(key)
-                packages.append({
-                    "name":    name.strip(),
-                    "version": version.strip(),
-                })
+                packages.append({"name": name.strip(), "version": version.strip()})
         return packages
 
-    for line in clean.splitlines():
+    for line in clean_text.splitlines():
         stripped = line.strip()
-
         if not stripped:
             continue
-        if stripped.startswith("#") or stripped.startswith("Columns"):
-            continue
-        if stripped.startswith("Flags"):
+        if stripped.startswith(("#", "Columns", "Flags")):
             continue
         if "/system" in stripped.lower():
             continue
-        if stripped.endswith(">") or stripped.endswith("#"):
+        if stripped.endswith((">", "#")):
             continue
 
         m = re.match(
-            r"^\s*(\d+)\s+"
-            r"([X\s]{0,3})\s*"
-            r"(\S+)\s+"
-            r"(\d+\.\d+\S*)",
+            r"^\s*\d+\s+([X\s]{0,3})\s*(\S+)\s+(\d+\.\d+\S*)",
             stripped,
         )
         if m:
-            name    = m.group(3).strip()
-            version = m.group(4).strip()
-            flags   = m.group(2).strip()
+            flags, name, version = m.group(1).strip(), m.group(2).strip(), m.group(3).strip()
             key = f"{name}|{version}"
             if key not in seen:
                 seen.add(key)
@@ -201,14 +262,9 @@ def parse_packages(raw: str) -> list[dict]:
                 packages.append(pkg)
             continue
 
-        m = re.match(
-            r"^\s*(\S+)\s+"
-            r"(\d+\.\d+\S*)\s*$",
-            stripped,
-        )
+        m = re.match(r"^\s*(\S+)\s+(\d+\.\d+\S*)\s*$", stripped)
         if m:
-            name    = m.group(1).strip()
-            version = m.group(2).strip()
+            name, version = m.group(1).strip(), m.group(2).strip()
             if name.lower() in ("name", "version", "#", "columns:", "flags:"):
                 continue
             key = f"{name}|{version}"
@@ -226,13 +282,11 @@ def get_routeros_version(packages: list[dict]) -> str | None:
     for pkg in packages:
         if pkg["name"].lower() == "system":
             return pkg["version"]
-    if packages:
-        return packages[0]["version"]
     return None
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Check ONE router (silent — no logging)
+#  Check ONE router
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def check_router(
     host: str,
@@ -240,17 +294,20 @@ def check_router(
     password: str = "",
     port: int = 22,
     timeout: int = 15,
+    include_raw: bool = False,
 ) -> dict:
+    ts = datetime.now(timezone.utc).isoformat()
     result: dict = {
-        "host":              host,
-        "username":          username,
-        "port":              port,
-        "success":           False,
-        "routeros_version":  None,
-        "packages":          [],
-        "raw_output":        "",
-        "error":             None,
+        "host":             host,
+        "port":             port,
+        "query_timestamp":  ts,
+        "status":           "error",
+        "routeros_version": None,
+        "packages":         [],
+        "error":            None,
     }
+    if include_raw:
+        result["raw_output"] = ""
 
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -267,9 +324,9 @@ def check_router(
             disabled_algorithms={"pubkeys": ["rsa-sha2-256", "rsa-sha2-512"]},
         )
 
-        cmd = "/system/package/print"
-        raw = get_command_output(client, cmd)
-        result["raw_output"] = raw
+        raw = get_command_output(client, "/system/package/print")
+        if include_raw:
+            result["raw_output"] = raw
 
         if not raw.strip():
             result["error"] = "Router returned empty output"
@@ -278,15 +335,15 @@ def check_router(
         packages = parse_packages(raw)
         result["packages"] = packages
 
-        version = get_routeros_version(packages)
-        result["routeros_version"] = version
-        result["success"] = len(packages) > 0
-
-        if not packages:
+        if packages:
+            result["routeros_version"] = get_routeros_version(packages)
+            result["status"] = "success"
+        else:
             result["error"] = "Could not parse any packages from output"
 
     except paramiko.AuthenticationException:
-        result["error"] = "Authentication failed"
+        result["status"] = "auth_error"
+        result["error"]  = "Authentication failed"
     except (paramiko.SSHException, socket.error) as exc:
         result["error"] = f"SSH/network error: {exc}"
     except Exception as exc:
@@ -298,132 +355,175 @@ def check_router(
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Print results table to console
+#  Print results table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def print_results_table(results: list[dict]) -> None:
-    tw = TERMINAL_WIDTH
+def print_results_table(results: list[dict], elapsed: float, workers: int, output_path: Path) -> None:
+    headers = ["Status", "Host", "RouterOS Version", "Packages", "Error"]
 
-    headers = [
-        "Status",
-        "Host",
-        "Port",
-        "Username",
-        "RouterOS Version",
-        "Packages",
-        "Error",
-    ]
-
-    rows: list[list[str]] = []
+    rows: list[list] = []
     for r in results:
-        status  = "OK" if r["success"] else "FAIL"
-        version = r.get("routeros_version") or "N/A"
-
         pkg_list = r.get("packages", [])
         if pkg_list:
-            pkg_strs = []
-            for pkg in pkg_list:
-                disabled = " [X]" if pkg.get("disabled") else ""
-                pkg_strs.append(f"{pkg['name']}({pkg['version']}){disabled}")
-            pkg_text = ", ".join(pkg_strs)
+            pkg_strs = [
+                f"{p['name']}({p['version']})" + (" [X]" if p.get("disabled") else "")
+                for p in pkg_list
+            ]
+            pkg_text = clean(", ".join(pkg_strs))
         else:
             pkg_text = "N/A"
 
-        error = r.get("error") or ""
-
         rows.append([
-            status,
-            r["host"],
-            str(r.get("port", 22)),
-            r.get("username", "admin"),
-            version,
-            pkg_text,
-            error,
+            status_icon(r),
+            f"{WHITE}{clean(r['host'])}{RESET}",
+            f"{WHITE}{clean(r.get('routeros_version'))}{RESET}",
+            f"{WHITE}{pkg_text}{RESET}",
+            f"{WHITE}{truncate_error(r.get('error'))}{RESET}",
         ])
 
-    # Title
+    table = tabulate(rows, headers=headers, tablefmt="pretty", stralign="left", numalign="right")
+
+    # Banner width scaled to actual table content (ANSI stripped)
+    first_line = table.split("\n")[0]
+    raw_width = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
+    bw = max(raw_width, 60)
+
+    title = "MikroTik RouterOS Query Results"
+    pad = (bw - len(title)) // 2
+
+    print(f"{WHITE}")
+    print(f"  {'=' * bw}")
+    print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
+    print(f"  {'=' * bw}")
+    for line in table.split("\n"):
+        print(f"  {line}")
+
+    # Counts
+    total     = len(results)
+    ok        = sum(1 for r in results if r["status"] == "success")
+    auth_errs = sum(1 for r in results if r["status"] == "auth_error")
+    failed    = sum(1 for r in results if r["status"] == "error")
+
     print()
-    print("=" * tw)
-    print("MikroTik RouterOS — Package Version Query Results")
-    print("=" * tw)
-
-    # Table
-    table_str = tabulate(
-        rows,
-        headers=headers,
-        tablefmt="pretty",
-        stralign="left",
-        numalign="left",
+    print(
+        f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
+        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth_errs}  |  "
+        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {failed}"
     )
-    print(table_str)
 
-    # Summary
-    ok   = sum(1 for r in results if r["success"])
-    fail = len(results) - ok
-    print("-" * tw)
-    print(f"Total: {len(results)} | Success: {ok} | Failed: {fail}")
-    print("=" * tw)
+    # RouterOS version breakdown
+    version_counts = Counter(
+        r["routeros_version"]
+        for r in results
+        if r["status"] == "success" and r.get("routeros_version")
+    )
+    if version_counts:
+        breakdown = "  |  ".join(
+            f"{ver}: {cnt}" for ver, cnt in sorted(version_counts.items())
+        )
+        print(
+            f"  {BOLD}RouterOS Versions{RESET}{WHITE} \u2014 "
+            f"{breakdown}  |  Reported: {sum(version_counts.values())}/{total}"
+        )
+    else:
+        print(f"  {BOLD}RouterOS Versions{RESET}{WHITE} \u2014 No data available")
+
+    print()
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_path}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print()
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Check ALL routers
-#  ONE progress bar, scaled to terminal width,
-#  no log messages breaking the bar
+#  Check ALL routers (concurrent)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def check_all_routers(
     routers: list[dict],
     output_path: Path,
+    workers: int = 5,
+    timeout: int = 15,
     include_raw: bool = False,
 ) -> None:
-    all_results: list[dict] = []
+    all_results: list[dict] = [None] * len(routers)  # preserve order
+    start_ts = datetime.now(timezone.utc)
+    t0 = time.monotonic()
 
-    # Progress bar scaled to full terminal width
-    bar_width = max(40, TERMINAL_WIDTH - 2)
+    active_lock = threading.Lock()
+    latest_host: dict = {"value": ""}
+
+    term_width = shutil.get_terminal_size((120, 24)).columns
+    bar_fmt = (
+        f"  {WHITE}Scanning{RESET} "
+        f"{CYAN}{{bar}}{RESET}"
+        f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
+        f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
+        f"  {WHITE}{{postfix}}{RESET}"
+    )
 
     with tqdm(
         total=len(routers),
-        desc="Querying routers",
-        bar_format=(
-            "{l_bar}"
-            f"{CYAN}{{bar}}{RESET}"
-            "| {n_fmt}/{total_fmt} "
-            "[{elapsed}<{remaining}] "
-            "{postfix}"
-        ),
-        ncols=bar_width,
-        unit="router",
+        bar_format=bar_fmt,
+        ncols=term_width,
+        dynamic_ncols=True,
+        file=sys.stderr,
+        leave=True,
     ) as pbar:
-        for router in routers:
-            # Show current host on the right side of the bar
-            pbar.set_postfix_str(router["host"], refresh=True)
-
+        def task(idx: int, router: dict) -> tuple[int, dict]:
+            with active_lock:
+                latest_host["value"] = router["host"]
             result = check_router(
                 host=router["host"],
                 username=router["username"],
                 password=router["password"],
                 port=router["port"],
+                timeout=timeout,
+                include_raw=include_raw,
             )
+            return idx, result
 
-            if not include_raw:
-                result.pop("raw_output", None)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(task, i, r): i for i, r in enumerate(routers)}
+            for future in as_completed(futures):
+                idx, result = future.result()
+                all_results[idx] = result
+                with active_lock:
+                    host_display = latest_host["value"]
+                pbar.set_postfix_str(host_display, refresh=False)
+                pbar.update(1)
 
-            all_results.append(result)
-            pbar.update(1)
+        elapsed = time.monotonic() - t0
+        pbar.set_postfix_str(
+            f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
+            refresh=True,
+        )
 
-    # Clear line after progress bar finishes
-    print()
+    elapsed = time.monotonic() - t0
+
+    ok        = sum(1 for r in all_results if r["status"] == "success")
+    auth_errs = sum(1 for r in all_results if r["status"] == "auth_error")
+    errors    = sum(1 for r in all_results if r["status"] == "error")
 
     # Write JSON
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    output = {
+        "query_info": {
+            "csv_file":        str(output_path.parent / "routers.csv"),
+            "timestamp":       start_ts.isoformat(),
+            "protocol":        "SSH / RouterOS CLI",
+            "mode":            "package version query",
+            "workers":         workers,
+            "total":           len(all_results),
+            "success":         ok,
+            "auth_errors":     auth_errs,
+            "errors":          errors,
+            "elapsed_seconds": round(elapsed, 2),
+        },
+        "routers": all_results,
+    }
     with output_path.open("w", encoding="utf-8") as fh:
-        json.dump(all_results, fh, indent=2, ensure_ascii=False)
+        json.dump(output, fh, indent=2, ensure_ascii=False)
 
-    # Print results table
-    print_results_table(all_results)
-
-    # Print output location
-    print(f"Results saved to: {output_path}")
-    print()
+    print_results_table(all_results, elapsed, workers, output_path)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -431,58 +531,44 @@ def check_all_routers(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main() -> None:
     p = argparse.ArgumentParser(
-        description=(
-            "Check MikroTik router versions via SSH.\n"
-            "Defaults: reads routers.csv, writes results.json"
-        ),
+        description="Check MikroTik router versions via SSH.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument(
-        "--csv", type=Path, default=Path("routers.csv"),
-        help="Input CSV file (default: routers.csv)",
-    )
-    p.add_argument(
-        "--output", type=Path, default=Path("results.json"),
-        help="Output JSON file (default: results.json)",
-    )
-    p.add_argument(
-        "--verbose", action="store_true",
-        help="DEBUG logging - shows raw output line by line",
-    )
-    p.add_argument(
-        "--include-raw", action="store_true",
-        help="Include raw SSH output in results.json for debugging",
-    )
+    p.add_argument("--csv",         type=Path, default=Path("routers.csv"),   help="Input CSV (default: routers.csv)")
+    p.add_argument("--output",      type=Path, default=Path("results.json"),  help="Output JSON (default: results.json)")
+    p.add_argument("--workers",     type=int,  default=5,                     help="Concurrent SSH workers (default: 5)")
+    p.add_argument("--timeout",     type=int,  default=15,                    help="Per-router timeout in seconds (default: 15)")
+    p.add_argument("--verbose",     action="store_true",                      help="Enable DEBUG logging")
+    p.add_argument("--include-raw", action="store_true",                      help="Include raw SSH output in results.json")
     args = p.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Startup banner
-    tw = TERMINAL_WIDTH
-    print()
-    print("=" * tw)
-    print("MikroTik RouterOS — Package Version Checker")
-    print("=" * tw)
-    print(f"  Input CSV  : {args.csv}")
-    print(f"  Output JSON: {args.output}")
-    print(f"  Terminal    : {tw} columns")
-    print()
+    # Header block
+    print(f"{WHITE}")
+    print(f"  {BOLD}MikroTik RouterOS Version Checker{RESET}{WHITE}")
+    print(f"  Connects via SSH and queries installed package versions")
+    print(f"  Input:   {args.csv}")
+    print(f"  Output:  {args.output}")
+    print(f"  Workers: {args.workers}")
+    print(f"  Timeout: {args.timeout}s")
+    print(f"{RESET}")
 
-    if not args.csv.is_file():
-        print(f"ERROR: Cannot find {args.csv}")
-        print("Make sure the CSV exists with columns: host,username,password,port")
-        sys.exit(1)
-
-    routers = read_router_csv(args.csv)
+    routers = load_csv(str(args.csv))
     if not routers:
-        print(f"ERROR: No routers found in {args.csv}")
+        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} No routers found in {args.csv}{RESET}")
         sys.exit(1)
 
-    print(f"Loaded {len(routers)} router(s)")
-    print()
+    print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} router(s){RESET}\n")
 
-    check_all_routers(routers, args.output, include_raw=args.include_raw)
+    check_all_routers(
+        routers,
+        args.output,
+        workers=args.workers,
+        timeout=args.timeout,
+        include_raw=args.include_raw,
+    )
 
 
 if __name__ == "__main__":

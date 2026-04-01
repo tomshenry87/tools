@@ -1,554 +1,568 @@
-[
-  {
-    "host": "silsby-113-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
+{
+  "query_info": {
+    "csv_file": "routers.csv",
+    "timestamp": "2026-04-01T18:59:21.753111+00:00",
+    "protocol": "SSH / RouterOS CLI",
+    "mode": "package version query",
+    "workers": 5,
+    "total": 34,
+    "success": 34,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 10.16
   },
-  {
-    "host": "silsby-213-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "silsby-215-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "silsby-310-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "silsby-312-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "silsby-029a-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "silsby-029b-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-101b-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.7",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.7"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-101e-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.2.3",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.2.3"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-101b-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.7",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.7"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-213-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-214-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-215-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.10",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.10"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-223-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.2.3",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.2.3"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-227-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.7",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.7"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-232-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-collaboration-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.2.3",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.2.3"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "4-currier-lounge-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.2.3",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.2.3"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "court01-211-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "court01-215-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "cts-4-currier-104-router.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "fairchild-217a-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "kemeny-307-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "osher-3a-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "parkhurst-06a-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.2.3",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.2.3"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "preshouse-b02-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.10.2",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.10.2"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "robinson-322-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "doc-house-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "berry-180-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.10.2",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.10.2"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "currier04-312-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.14.1",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.14.1"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "wentworth-205-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.14.1",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.14.1"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "mcnutt-001-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.14.1",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.14.1"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "rockefeller-100-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  },
-  {
-    "host": "darthall-310-router.openav.dartmouth.edu",
-    "username": "admin",
-    "port": 22,
-    "success": true,
-    "routeros_version": "7.20.8",
-    "packages": [
-      {
-        "name": "routeros",
-        "version": "7.20.8"
-      },
-      {
-        "name": "wireless",
-        "version": "7.20.8"
-      }
-    ],
-    "error": null
-  }
-]
+  "routers": [
+    {
+      "host": "silsby-113-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:21.756738+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-213-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:21.757188+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-215-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:21.758059+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-310-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:21.758444+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-312-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:21.759064+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-029a-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:22.372316+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-029b-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:22.379736+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-101b-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:22.424086+00:00",
+      "status": "success",
+      "routeros_version": "7.7",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.7"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-101e-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:22.474734+00:00",
+      "status": "success",
+      "routeros_version": "7.2.3",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.2.3"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-101b-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:22.677125+00:00",
+      "status": "success",
+      "routeros_version": "7.7",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.7"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-213-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:22.991029+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-214-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:23.005100+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-215-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:23.726074+00:00",
+      "status": "success",
+      "routeros_version": "7.10",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.10"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-223-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:23.929742+00:00",
+      "status": "success",
+      "routeros_version": "7.2.3",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.2.3"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-227-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:23.991909+00:00",
+      "status": "success",
+      "routeros_version": "7.7",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.7"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-232-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:24.442218+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-collaboration-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:24.569752+00:00",
+      "status": "success",
+      "routeros_version": "7.2.3",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.2.3"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-lounge-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:24.654882+00:00",
+      "status": "success",
+      "routeros_version": "7.2.3",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.2.3"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "court01-211-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:24.938353+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "court01-215-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:25.203880+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "cts-4-currier-104-router.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:25.425508+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "fairchild-217a-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:26.083053+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-307-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:26.140461+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "osher-3a-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:26.492486+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "parkhurst-06a-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:26.560697+00:00",
+      "status": "success",
+      "routeros_version": "7.2.3",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.2.3"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "preshouse-b02-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:27.177191+00:00",
+      "status": "success",
+      "routeros_version": "7.10.2",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.10.2"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "robinson-322-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:27.438906+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "doc-house-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:27.746189+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "berry-180-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:28.002814+00:00",
+      "status": "success",
+      "routeros_version": "7.10.2",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.10.2"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "currier04-312-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:28.374695+00:00",
+      "status": "success",
+      "routeros_version": "7.14.1",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.14.1"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "wentworth-205-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:28.425774+00:00",
+      "status": "success",
+      "routeros_version": "7.14.1",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.14.1"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "mcnutt-001-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:28.866321+00:00",
+      "status": "success",
+      "routeros_version": "7.14.1",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.14.1"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-100-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:29.553747+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "darthall-310-router.openav.dartmouth.edu",
+      "port": 22,
+      "query_timestamp": "2026-04-01T18:59:29.681339+00:00",
+      "status": "success",
+      "routeros_version": "7.20.8",
+      "packages": [
+        {
+          "name": "routeros",
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
+        }
+      ],
+      "error": null
+    }
+  ]
+}
