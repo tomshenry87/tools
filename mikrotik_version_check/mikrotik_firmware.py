@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-MikroTik Router Version Checker
-================================
+MikroTik Router Firmware Checker
+==================================
 Reads router credentials from routers.csv (default), connects via SSH,
-runs /system/package/print, extracts name + version for each package,
+queries /system/package/print for RouterOS version and
+/system/routerboard/print for board model and current firmware,
 writes results to results.json (default), and prints a summary table.
 
 Usage:
-    python3 mikrotik_checker.py
-    python3 mikrotik_checker.py --verbose
-    python3 mikrotik_checker.py --csv other_routers.csv --output other_results.json
-    python3 mikrotik_checker.py --workers 10 --timeout 20
-    python3 mikrotik_checker.py --include-raw --verbose
+    python3 mikrotik_firmware.py
+    python3 mikrotik_firmware.py --verbose
+    python3 mikrotik_firmware.py --csv other_routers.csv --output other_results.json
+    python3 mikrotik_firmware.py --workers 10 --timeout 20
+    python3 mikrotik_firmware.py --include-raw --verbose
 """
 
 from __future__ import annotations
@@ -65,7 +66,7 @@ logging.basicConfig(
     format="%(asctime)s  %(levelname)-8s  %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-log = logging.getLogger("mikrotik_checker")
+log = logging.getLogger("mikrotik_firmware")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -286,6 +287,37 @@ def get_routeros_version(packages: list[dict]) -> str | None:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse routerboard — extract MODEL + FIRMWARE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_routerboard(raw: str) -> dict:
+    """
+    Parses the output of /system/routerboard/print.
+    Returns a dict with 'model' and 'current_firmware'.
+    Both values are None if not found (e.g. CHR / virtualized devices).
+    """
+    clean_text = strip_ansi(raw)
+    result = {"model": None, "current_firmware": None}
+
+    for line in clean_text.splitlines():
+        stripped = line.strip()
+
+        if result["model"] is None:
+            m = re.search(r"(?i)model\s*[:=]\s*(.+)", stripped)
+            if m:
+                result["model"] = m.group(1).strip()
+
+        if result["current_firmware"] is None:
+            m = re.search(r"(?i)current-firmware\s*[:=]\s*(\S+)", stripped)
+            if m:
+                result["current_firmware"] = m.group(1).strip()
+
+        if result["model"] and result["current_firmware"]:
+            break
+
+    return result
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Check ONE router
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def check_router(
@@ -302,12 +334,15 @@ def check_router(
         "port":             port,
         "query_timestamp":  ts,
         "status":           "error",
+        "model":            None,
         "routeros_version": None,
+        "current_firmware": None,
         "packages":         [],
         "error":            None,
     }
     if include_raw:
-        result["raw_output"] = ""
+        result["raw_packages"]    = ""
+        result["raw_routerboard"] = ""
 
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -324,15 +359,16 @@ def check_router(
             disabled_algorithms={"pubkeys": ["rsa-sha2-256", "rsa-sha2-512"]},
         )
 
-        raw = get_command_output(client, "/system/package/print")
+        # Query 1: packages
+        raw_pkg = get_command_output(client, "/system/package/print")
         if include_raw:
-            result["raw_output"] = raw
+            result["raw_packages"] = raw_pkg
 
-        if not raw.strip():
+        if not raw_pkg.strip():
             result["error"] = "Router returned empty output"
             return result
 
-        packages = parse_packages(raw)
+        packages = parse_packages(raw_pkg)
         result["packages"] = packages
 
         if packages:
@@ -340,6 +376,16 @@ def check_router(
             result["status"] = "success"
         else:
             result["error"] = "Could not parse any packages from output"
+
+        # Query 2: routerboard (best-effort — not all devices have a board)
+        raw_rb = get_command_output(client, "/system/routerboard/print")
+        if include_raw:
+            result["raw_routerboard"] = raw_rb
+
+        if raw_rb.strip():
+            rb = parse_routerboard(raw_rb)
+            result["model"]            = rb["model"]
+            result["current_firmware"] = rb["current_firmware"]
 
     except paramiko.AuthenticationException:
         result["status"] = "auth_error"
@@ -358,7 +404,7 @@ def check_router(
 #  Print results table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def print_results_table(results: list[dict], elapsed: float, workers: int, output_path: Path) -> None:
-    headers = ["Status", "Host", "RouterOS Version", "Packages", "Error"]
+    headers = ["Status", "Host", "Model", "RouterOS Version", "Current Firmware", "Packages", "Error"]
 
     rows: list[list] = []
     for r in results:
@@ -375,14 +421,15 @@ def print_results_table(results: list[dict], elapsed: float, workers: int, outpu
         rows.append([
             status_icon(r),
             f"{WHITE}{clean(r['host'])}{RESET}",
+            f"{WHITE}{clean(r.get('model'))}{RESET}",
             f"{WHITE}{clean(r.get('routeros_version'))}{RESET}",
+            f"{WHITE}{clean(r.get('current_firmware'))}{RESET}",
             f"{WHITE}{pkg_text}{RESET}",
             f"{WHITE}{truncate_error(r.get('error'))}{RESET}",
         ])
 
     table = tabulate(rows, headers=headers, tablefmt="pretty", stralign="left", numalign="right")
 
-    # Banner width scaled to actual table content (ANSI stripped)
     first_line = table.split("\n")[0]
     raw_width = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw = max(raw_width, 60)
@@ -397,7 +444,6 @@ def print_results_table(results: list[dict], elapsed: float, workers: int, outpu
     for line in table.split("\n"):
         print(f"  {line}")
 
-    # Counts
     total     = len(results)
     ok        = sum(1 for r in results if r["status"] == "success")
     auth_errs = sum(1 for r in results if r["status"] == "auth_error")
@@ -411,7 +457,6 @@ def print_results_table(results: list[dict], elapsed: float, workers: int, outpu
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {failed}"
     )
 
-    # RouterOS version breakdown
     version_counts = Counter(
         r["routeros_version"]
         for r in results
@@ -444,7 +489,7 @@ def check_all_routers(
     timeout: int = 15,
     include_raw: bool = False,
 ) -> None:
-    all_results: list[dict] = [None] * len(routers)  # preserve order
+    all_results: list[dict] = [None] * len(routers)
     start_ts = datetime.now(timezone.utc)
     t0 = time.monotonic()
 
@@ -503,7 +548,6 @@ def check_all_routers(
     auth_errs = sum(1 for r in all_results if r["status"] == "auth_error")
     errors    = sum(1 for r in all_results if r["status"] == "error")
 
-    # Write JSON
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output = {
         "query_info": {
@@ -531,7 +575,7 @@ def check_all_routers(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main() -> None:
     p = argparse.ArgumentParser(
-        description="Check MikroTik router versions via SSH.",
+        description="Check MikroTik router firmware and package versions via SSH.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--csv",         type=Path, default=Path("routers.csv"),   help="Input CSV (default: routers.csv)")
@@ -545,10 +589,9 @@ def main() -> None:
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Header block
     print(f"{WHITE}")
-    print(f"  {BOLD}MikroTik RouterOS Version Checker{RESET}{WHITE}")
-    print(f"  Connects via SSH and queries installed package versions")
+    print(f"  {BOLD}MikroTik RouterOS Firmware Checker{RESET}{WHITE}")
+    print(f"  Connects via SSH and queries package versions and board firmware")
     print(f"  Input:   {args.csv}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
