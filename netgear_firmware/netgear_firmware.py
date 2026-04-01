@@ -512,8 +512,6 @@ def check_all_switches(
                     include_raw=include_raw,
                 )
                 future_to_index[fut] = i
-                with active_lock:
-                    latest_host["value"] = sw["host"]
 
             for future in as_completed(future_to_index):
                 idx    = future_to_index[future]
@@ -521,6 +519,7 @@ def check_all_switches(
                 all_results[idx] = result
 
                 with active_lock:
+                    latest_host["value"] = result["host"]
                     host_display = latest_host["value"]
                 pbar.set_postfix_str(host_display, refresh=False)
                 pbar.update(1)
