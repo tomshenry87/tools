@@ -13,10 +13,10 @@ Protocol 3000 reference (VP-440H2 User Manual):
   Default TCP port: 5000
 
 Usage:
-  Normal run   : python3 query_kramer.py
-  Full debug   : python3 query_kramer.py --debug
-  Single host  : python3 query_kramer.py --debug --host 192.168.1.100
-  Single cmd   : python3 query_kramer.py --debug --host 192.168.1.100 --cmd firmware
+  Normal run   : python3 kramer_firmware.py
+  Full debug   : python3 kramer_firmware.py --debug
+  Single host  : python3 kramer_firmware.py --debug --host 192.168.1.100
+  Single cmd   : python3 kramer_firmware.py --debug --host 192.168.1.100 --cmd firmware
 
 Dependencies: pip install tabulate tqdm python-dateutil
 """
