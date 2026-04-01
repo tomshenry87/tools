@@ -52,7 +52,7 @@ tqdm
 pip install paramiko tabulate tqdm
 ```
 
-Clone or download `mikrotik_checker.py` into your working directory.
+Clone or download `mikrotik_firmware.py` into your working directory.
 
 ---
 
@@ -62,7 +62,7 @@ Clone or download `mikrotik_checker.py` into your working directory.
 2. Run the script:
 
 ```bash
-python3 mikrotik_checker.py
+python3 mikrotik_firmware.py
 ```
 
 Results are printed to the terminal and saved to `results.json`.
@@ -120,22 +120,22 @@ usage: mikrotik_checker.py [-h] [--csv CSV] [--output OUTPUT]
 
 Run with defaults:
 ```bash
-python3 mikrotik_checker.py
+python3 mikrotik_firmware.py
 ```
 
 Use a custom CSV and output file:
 ```bash
-python3 mikrotik_checker.py --csv site_a.csv --output site_a_results.json
+python3 mikrotik_firmware.py --csv site_a.csv --output site_a_results.json
 ```
 
 Increase concurrency and timeout for a large or slow network:
 ```bash
-python3 mikrotik_checker.py --workers 20 --timeout 30
+python3 mikrotik_firmware.py --workers 20 --timeout 30
 ```
 
 Debug a single router by isolating it in a CSV and using verbose + raw output:
 ```bash
-python3 mikrotik_checker.py --csv one_router.csv --verbose --include-raw
+python3 mikrotik_firmware.py --csv one_router.csv --verbose --include-raw
 ```
 
 ---
@@ -509,9 +509,9 @@ Older RouterOS versions (pre-6.45) use legacy SSH key algorithms. The script alr
 The progress bar writes to `stderr` and the table writes to `stdout`. If you are redirecting output, redirect them separately:
 
 ```bash
-python3 mikrotik_checker.py > results.txt 2> progress.txt
+python3 mikrotik_firmware.py > results.txt 2> progress.txt
 # or suppress the progress bar entirely:
-python3 mikrotik_checker.py 2>/dev/null > results.txt
+python3 mikrotik_firmware.py 2>/dev/null > results.txt
 ```
 
 **Slow scans on large networks**
@@ -519,5 +519,5 @@ python3 mikrotik_checker.py 2>/dev/null > results.txt
 Increase `--workers`. Each worker holds one SSH connection open for up to `--timeout` seconds, so the practical ceiling is roughly `(total routers × avg_response_time) / workers`. Start at 10–20 workers and increase if your network and the target devices can handle the load.
 
 ```bash
-python3 mikrotik_checker.py --workers 20 --timeout 10
+python3 mikrotik_firmware.py --workers 20 --timeout 10
 ```
