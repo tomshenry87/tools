@@ -71,6 +71,34 @@ log = logging.getLogger("mikrotik_firmware")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Per-model health field overrides
+#  Keys are matched as case-insensitive prefixes
+#  against the model string from routerboard/print.
+#  Add new models here — no other changes needed.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MODEL_HEALTH_MAP: dict[str, dict] = {
+    "CRS112-8P-4S": {"temp_field": "temperature",    "poe_field": "poe-out-consumption"},
+}
+
+# Defaults used when a model is not found in MODEL_HEALTH_MAP
+DEFAULT_HEALTH_FIELDS: dict = {"temp_field": "board-temperature1", "poe_field": "poe-out-consumption"}
+
+
+def get_health_fields(model: str | None) -> dict:
+    """
+    Returns the health field config for a given model string.
+    Matches case-insensitively against MODEL_HEALTH_MAP keys.
+    Falls back to DEFAULT_HEALTH_FIELDS if no match is found.
+    """
+    if model:
+        model_upper = model.upper()
+        for key, fields in MODEL_HEALTH_MAP.items():
+            if model_upper.startswith(key.upper()):
+                return fields
+    return DEFAULT_HEALTH_FIELDS
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CSV loader
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def load_csv(csv_path: str) -> list[dict]:
@@ -320,7 +348,7 @@ def parse_routerboard(raw: str) -> dict:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Parse health — extract POE + TEMPERATURE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def parse_health(raw: str) -> dict:
+def parse_health(raw: str, temp_field: str = "board-temperature1", poe_field: str = "poe-out-consumption") -> dict:
     """
     Parses the output of /system/health/print.
     Extracts:
@@ -371,10 +399,10 @@ def parse_health(raw: str) -> dict:
         except ValueError:
             continue
 
-        if name == "poe-out-consumption" and result["poe_out_consumption_w"] is None:
+        if name == poe_field.lower() and result["poe_out_consumption_w"] is None:
             result["poe_out_consumption_w"] = fval
 
-        if name == "board-temperature1" and result["board_temperature1_c"] is None:
+        if name == temp_field.lower() and result["board_temperature1_c"] is None:
             result["board_temperature1_c"] = fval
             result["board_temperature1_f"] = celsius_to_fahrenheit(fval)
 
@@ -459,7 +487,8 @@ def check_router(
         if include_raw:
             result["raw_health"] = raw_health
         if raw_health.strip():
-            health = parse_health(raw_health)
+            hf = get_health_fields(result.get("model"))
+            health = parse_health(raw_health, temp_field=hf["temp_field"], poe_field=hf["poe_field"])
             result["poe_out_consumption_w"] = health["poe_out_consumption_w"]
             result["board_temperature1_c"]  = health["board_temperature1_c"]
             result["board_temperature1_f"]  = health["board_temperature1_f"]
