@@ -379,14 +379,24 @@ def check_switch(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Print results table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def print_results_table(results: list[dict], elapsed: float) -> None:
+def print_results_table(results: list[dict], elapsed: float, firmware_filter: str | None = None) -> None:
     headers = ["Status", "Host", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
     rows: list[list[str]] = []
 
     temp_vals: list[float] = []
     poe_vals:  list[float] = []
 
-    for r in results:
+    # Apply firmware filter if provided
+    if firmware_filter:
+        display_results = [
+            r for r in results
+            if r.get("firmware_version") is not None
+            and r.get("firmware_version") != firmware_filter
+        ]
+    else:
+        display_results = results
+
+    for r in display_results:
         rows.append([
             status_icon(r),
             clean(r.get("host")),
@@ -556,7 +566,7 @@ def check_all_switches(
         json.dump(payload, fh, indent=2, ensure_ascii=False)
 
     # ── Print table ───────────────────────────────────────────────────────
-    print_results_table(all_results, elapsed)
+    print_results_table(all_results, elapsed, firmware_filter=firmware_filter)
 
     print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_path}{RESET}")
     print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({max_workers} workers){RESET}")
@@ -592,7 +602,9 @@ def main() -> None:
         help="Per-switch SSH timeout in seconds (default: 20)",
     )
     p.add_argument(
-        "--verbose", action="store_true",
+        "--firmware", type=str, default=None,
+        help="Only show switches whose firmware does not match this version (e.g. 12.0.20.7)",
+    )
         help="Enable DEBUG logging",
     )
     p.add_argument(
@@ -611,6 +623,8 @@ def main() -> None:
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
+    if args.firmware:
+        print(f"  Filter:  firmware != {args.firmware}")
     print(f"{RESET}")
 
     switches = load_csv(args.csv)
@@ -626,6 +640,7 @@ def main() -> None:
         include_raw=args.include_raw,
         max_workers=args.workers,
         timeout=args.timeout,
+        firmware_filter=args.firmware,
     )
 
 
