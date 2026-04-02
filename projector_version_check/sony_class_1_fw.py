@@ -55,7 +55,7 @@ def main():
             csv_path = sys.argv[idx + 1]
 
     try:
-        with open(csv_path, newline="") as f:
+        with open(csv_path, newline="", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             rows = list(reader)
     except FileNotFoundError:
