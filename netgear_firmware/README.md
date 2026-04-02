@@ -118,6 +118,12 @@ usage: netgear_firmware.py [-h] [--csv CSV] [--output OUTPUT]
 # Use 10 parallel workers with a 30-second timeout
 python3 netgear_firmware.py --workers 10 --timeout 30
 
+# Only show switches not running 12.0.20.7
+python3 netgear_firmware.py --firmware 12.0.20.7
+
+# Combine firmware filter with a custom CSV and output file
+python3 netgear_firmware.py --firmware 12.0.20.7 --csv my_switches.csv --output audit.json
+
 # Debug a single switch by including raw output and enabling verbose logging
 python3 netgear_firmware.py --csv one_switch.csv --include-raw --verbose
 
@@ -153,6 +159,46 @@ A live progress bar tracks scanning progress. It displays the most recently star
 - The bar is written to `stderr` so it does not interfere with piped or redirected output
 - The bar remains visible after scanning completes (`leave=True`)
 - Width scales dynamically to the terminal width
+
+### Firmware Filter
+
+When `--firmware` is passed, scanning still runs across all switches in the CSV but only switches with a version mismatch appear in the table. Errors and auth failures are excluded from the filtered view since they have no version to compare.
+
+The header block confirms the active filter:
+
+```
+  Netgear M4250 Firmware & CPU Temp Checker
+  Query switch firmware version and CPU temperature via SSH
+  Input:   switches.csv
+  Output:  results.json
+  Workers: 5
+  Timeout: 20s
+  Filter:  firmware != 12.0.20.7
+```
+
+The table banner changes to reflect the expected version:
+
+```
+  ============================================================
+       Netgear M4250 — Firmware Mismatch: expected 12.0.20.7
+  ============================================================
+```
+
+A firmware summary line is added to the footer:
+
+```
+  Firmware Filter: 12.0.20.7  |  ✓ Matched: 10  |  ✗ Mismatched: 2
+```
+
+If every reachable switch matches the expected version, the table is skipped entirely and a single confirmation line is printed:
+
+```
+  ✓ All reachable switches are running firmware 12.0.20.7
+```
+
+> **Note:** The JSON output always contains all results regardless of the filter. The filter only affects what is shown in the terminal table.
+
+---
 
 ### Results Table
 
