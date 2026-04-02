@@ -8,10 +8,11 @@ extracts firmware version and CPU temperature, writes results to
 results.json (default), and prints a summary table.
 
 Usage:
-    python3 netgear_m4250_checker.py
-    python3 netgear_m4250_checker.py --verbose
-    python3 netgear_m4250_checker.py --csv other_switches.csv --output other_results.json
-    python3 netgear_m4250_checker.py --include-raw --verbose
+    python3 netgear_firmware.py
+    python3 netgear_firmware.py --verbose
+    python3 netgear_firmware.py --csv other_switches.csv --output other_results.json
+    python3 netgear_firmware.py --include-raw --verbose
+    python3 netgear_firmware.py --firmware 12.0.20.7
 
 CSV columns: host, username, password, port (port defaults to 22)
 """
@@ -248,7 +249,7 @@ def parse_firmware_version(raw: str) -> str | None:
 def parse_poe_power(raw: str) -> tuple[str | None, float | None]:
     """
     Parses the output of `show poe` for a line like:
-        Total Power Consumed:  38.5
+        Total Power Consumed...........  82.4 Watts
     Returns (display_string, numeric_value) or (None, None) if not found.
     """
     clean_text = strip_ansi(raw)
@@ -297,17 +298,17 @@ def check_switch(
 ) -> dict:
     queried_at = datetime.now(timezone.utc).isoformat()
     result: dict = {
-        "host":             host,
-        "username":         username,
-        "port":             port,
-        "query_timestamp":  queried_at,
-        "status":           "error",
-        "firmware_version":    None,
-        "cpu_temp":            None,
-        "cpu_temp_value":      None,
-        "poe_consumed":        None,
-        "poe_consumed_value":  None,
-        "error":               None,
+        "host":              host,
+        "username":          username,
+        "port":              port,
+        "query_timestamp":   queried_at,
+        "status":            "error",
+        "firmware_version":  None,
+        "cpu_temp":          None,
+        "cpu_temp_value":    None,
+        "poe_consumed":      None,
+        "poe_consumed_value": None,
+        "error":             None,
     }
 
     client = paramiko.SSHClient()
@@ -326,28 +327,26 @@ def check_switch(
 
         channel = open_shell(client)
 
-        run_command(channel, "en",               timeout=10)
+        run_command(channel, "en",                timeout=10)
         run_command(channel, "terminal length 0", timeout=5)
 
-        raw_ver = run_command(channel, "show hardware",                  timeout=20)
+        raw_ver = run_command(channel, "show hardware",                   timeout=20)
         raw_env = run_command(channel, "show environment | include Temp", timeout=20)
+        raw_poe = run_command(channel, "show poe",                        timeout=20)
 
         if include_raw:
             result["raw_version"]     = raw_ver
             result["raw_environment"] = raw_env
+            result["raw_poe"]         = raw_poe
 
-        firmware = parse_firmware_version(raw_ver)
+        firmware          = parse_firmware_version(raw_ver)
         temp_str, temp_val = parse_cpu_temp(raw_env)
+        poe_str,  poe_val  = parse_poe_power(raw_poe)
 
-        raw_poe = run_command(channel, "show poe", timeout=20)
-        if include_raw:
-            result["raw_poe"] = raw_poe
-        poe_str, poe_val = parse_poe_power(raw_poe)
-
-        result["firmware_version"] = firmware
-        result["cpu_temp"]         = temp_str
-        result["cpu_temp_value"]   = temp_val
-        result["poe_consumed"]     = poe_str
+        result["firmware_version"]   = firmware
+        result["cpu_temp"]           = temp_str
+        result["cpu_temp_value"]     = temp_val
+        result["poe_consumed"]       = poe_str
         result["poe_consumed_value"] = poe_val
 
         if firmware is not None:
@@ -379,7 +378,11 @@ def check_switch(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Print results table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def print_results_table(results: list[dict], elapsed: float, firmware_filter: str | None = None) -> None:
+def print_results_table(
+    results: list[dict],
+    elapsed: float,
+    firmware_filter: str | None = None,
+) -> None:
     headers = ["Status", "Host", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
     rows: list[list[str]] = []
 
@@ -412,33 +415,40 @@ def print_results_table(results: list[dict], elapsed: float, firmware_filter: st
         if pv is not None:
             poe_vals.append(pv)
 
-    table = tabulate(
-        rows,
-        headers=headers,
-        tablefmt="pretty",
-        stralign="left",
-        numalign="right",
-    )
-
-    # Measure true width of first table line (strip ANSI before measuring)
-    first_line = table.split("\n")[0]
-    raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
-    bw         = max(raw_width, 60)
-
-    title = "Netgear M4250 Query Results \u2014 Firmware & CPU Temp"
-    pad   = max(0, (bw - len(title)) // 2)
-
-    print(f"{WHITE}")
-    print(f"  {'=' * bw}")
-    print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
-    print(f"  {'=' * bw}")
-    for line in table.split("\n"):
-        print(f"  {line}")
-
     total = len(results)
     ok    = sum(1 for r in results if r["status"] == "success")
     auth  = sum(1 for r in results if r["status"] == "auth_error")
     err   = sum(1 for r in results if r["status"] == "error")
+
+    # All-matched shortcut
+    if firmware_filter and not display_results:
+        print(f"{WHITE}")
+        print(f"  {GREEN}\u2713 All reachable switches are running firmware {firmware_filter}{RESET}")
+    else:
+        table = tabulate(
+            rows,
+            headers=headers,
+            tablefmt="pretty",
+            stralign="left",
+            numalign="right",
+        )
+
+        first_line = table.split("\n")[0]
+        raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
+        bw         = max(raw_width, 60)
+
+        if firmware_filter:
+            title = f"Netgear M4250 \u2014 Firmware Mismatch: expected {firmware_filter}"
+        else:
+            title = "Netgear M4250 Query Results \u2014 Firmware & CPU Temp"
+        pad = max(0, (bw - len(title)) // 2)
+
+        print(f"{WHITE}")
+        print(f"  {'=' * bw}")
+        print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
+        print(f"  {'=' * bw}")
+        for line in table.split("\n"):
+            print(f"  {line}")
 
     print()
     print(
@@ -447,6 +457,15 @@ def print_results_table(results: list[dict], elapsed: float, firmware_filter: st
         f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
+
+    if firmware_filter:
+        mismatches = len(display_results)
+        matched    = sum(1 for r in results if r.get("firmware_version") == firmware_filter)
+        print(
+            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
+            f"{RED}\u2717{RESET}{WHITE} {BOLD}Mismatched:{RESET}{WHITE} {mismatches}"
+        )
 
     if temp_vals:
         avg = sum(temp_vals) / len(temp_vals)
@@ -482,14 +501,15 @@ def check_all_switches(
     switches: list[dict],
     output_path: Path,
     include_raw: bool = False,
-    max_workers: int = 10,
+    max_workers: int = 5,
     timeout: int = 20,
+    firmware_filter: str | None = None,
 ) -> None:
     all_results: list[dict] = [None] * len(switches)  # preserve order
 
-    active_lock  = threading.Lock()
-    latest_host  = {"value": ""}
-    t_start      = time.time()
+    active_lock = threading.Lock()
+    latest_host = {"value": ""}
+    t_start     = time.time()
 
     term_width = shutil.get_terminal_size((120, 24)).columns
 
@@ -605,6 +625,8 @@ def main() -> None:
         "--firmware", type=str, default=None,
         help="Only show switches whose firmware does not match this version (e.g. 12.0.20.7)",
     )
+    p.add_argument(
+        "--verbose", action="store_true",
         help="Enable DEBUG logging",
     )
     p.add_argument(
