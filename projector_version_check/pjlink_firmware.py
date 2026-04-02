@@ -771,6 +771,73 @@ def print_results_table(results, firmware_filter=None):
 
 
 # ---------------------------------------------------------------------------
+# INFO mode
+# ---------------------------------------------------------------------------
+
+def run_info_mode(projectors, timeout):
+    total = len(projectors)
+    print(f"{WHITE}")
+    print(f"  {BOLD}INFO Query Mode{RESET}{WHITE} — Class 1 'Other Information' (INFO)")
+    print(f"  Querying {total} device(s) sequentially")
+    print(f"  {'─' * 60}{RESET}")
+
+    for idx, proj in enumerate(projectors, 1):
+        host = proj["host"]
+        port = proj["port"]
+        password = proj["password"]
+
+        print(f"{WHITE}  [{idx}/{total}] {BOLD}{host}{RESET}{WHITE}", end="  ", flush=True)
+
+        client = PJLinkClient(host=host, port=port, password=password, timeout=timeout)
+        try:
+            client.connect()
+            pjlink_class = client.detect_class()
+
+            raw = None
+            parsed = None
+            error = None
+
+            try:
+                raw = client.get_other_info()
+            except PJLinkError as e:
+                error = str(e)
+
+            if raw and not raw.startswith("ERROR"):
+                # _derive_fw uses other_info as fallback — replicate that logic here
+                info = {"pjlink_class": pjlink_class, "other_info": raw}
+                parsed = client._derive_fw(info)
+            elif raw and raw.startswith("ERROR"):
+                parsed = raw
+            else:
+                parsed = "N/A"
+
+            class_label = f"Class {pjlink_class}"
+
+            if error:
+                print(f"{RED}✗ {error}{RESET}")
+            else:
+                print(f"{GREEN}✓{RESET}{WHITE}  {BOLD}Class:{RESET}{WHITE} {class_label}")
+                raw_display   = raw   if raw   else "—"
+                parsed_display = parsed if parsed else "—"
+                print(f"         {BOLD}Raw:{RESET}{WHITE}    {raw_display}")
+                print(f"         {BOLD}Parsed:{RESET}{WHITE} {parsed_display}")
+
+        except PJLinkAuthError as e:
+            print(f"{YELLOW}✗ AUTH ERROR — {e}{RESET}")
+        except PJLinkError as e:
+            print(f"{RED}✗ {truncate_error(str(e))}{RESET}")
+        except Exception as e:
+            print(f"{RED}✗ {type(e).__name__}: {e}{RESET}")
+        finally:
+            client.disconnect()
+
+        print(f"{WHITE}  {'─' * 60}{RESET}")
+
+    print(f"{WHITE}  {BOLD}Done.{RESET}{WHITE} Queried {total} device(s).{RESET}")
+    print()
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -814,6 +881,8 @@ Examples:
     parser.add_argument("--firmware", nargs="+", metavar="VERSION",
                         help="Only show devices where firmware does not match any of the provided versions")
     parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
+    parser.add_argument("--info", action="store_true",
+                        help="Query INFO (other info) on Class 1 devices one by one, printing raw and parsed responses")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
 
     args = parser.parse_args()
@@ -841,6 +910,11 @@ Examples:
     if not projectors:
         print(f"  {WHITE}No projectors found in CSV.{RESET}")
         sys.exit(1)
+
+    # -- INFO mode: sequential, one device at a time --
+    if args.info:
+        run_info_mode(projectors, args.timeout)
+        sys.exit(0)
 
     total = len(projectors)
 
