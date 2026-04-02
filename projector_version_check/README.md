@@ -137,6 +137,7 @@ usage: pjlink_firmware.py [-h] [-i INPUT] [-o OUTPUT] [-t TIMEOUT] [-w WORKERS]
 | `-t`, `--timeout`      | `10`              | Per-device connection timeout in seconds           |
 | `-w`, `--workers`      | `5`               | Number of concurrent worker threads                |
 | `--all`                | off               | Query all available PJLink commands                |
+| `--firmware VERSION`   | off               | Only show devices where firmware doesn't match VERSION |
 | `--diagnostic`         | off               | Run raw diagnostic mode (see below)                |
 | `--debug`              | off               | Print protocol-level debug logs to stderr          |
 
@@ -179,6 +180,29 @@ Queries the most useful fields for fleet management:
 - Serial number — Class 2 only (`SNUM`)
 - Lamp hours (`LAMP`)
 - Power status (`POWR`)
+
+### `--firmware VERSION` Mode
+
+Filters the terminal table to show only devices where the firmware version does not exactly match the provided string. Connection errors and auth failures are suppressed from the table — only successfully queried devices with a mismatched version are shown. The full results for all devices are still written to the JSON output file regardless.
+
+```bash
+python3 pjlink_firmware.py --firmware 1.02
+```
+
+The table title changes to reflect the filter:
+
+```
+  =====================================================
+       PJLink Firmware Mismatch — Expected: 1.02
+  =====================================================
+```
+
+The summary footer shows the mismatch count and the expected version instead of the standard success/error breakdown.
+
+**Comparison rules:**
+- Exact string match only — `1.02` does not match `1.2`, `v1.02`, or `Firmware 1.02`
+- Class 1 devices that return `N/A (Class 1)` are always included as a mismatch since their firmware cannot be confirmed
+- Auth errors and connection failures are excluded from the filtered table but remain in the JSON
 
 ### `--all` Mode
 
