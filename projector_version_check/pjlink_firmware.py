@@ -678,7 +678,7 @@ def truncate_error(err, max_len=30):
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-def print_results_table(results):
+def print_results_table(results, firmware_filter=None):
     def clean(val):
         s = str(val) if val is not None else "N/A"
         if s in ("None", "-1", ""):
@@ -728,7 +728,10 @@ def print_results_table(results):
 
     print(f"{WHITE}")
     print(f"  {'=' * bw}")
-    title = "PJLink Projector Query Results \u2014 Firmware & Lamp Hours"
+    if firmware_filter:
+        title = f"PJLink Firmware Mismatch \u2014 Expected: {firmware_filter}"
+    else:
+        title = "PJLink Projector Query Results \u2014 Firmware & Lamp Hours"
     pad = (bw - len(title)) // 2
     print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
     print(f"  {'=' * bw}")
@@ -808,6 +811,8 @@ Examples:
     parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
                         help=f"Concurrent workers (default: {DEFAULT_WORKERS})")
     parser.add_argument("--all", action="store_true", help="Query all commands")
+    parser.add_argument("--firmware", metavar="VERSION",
+                        help="Only show devices where firmware does not match VERSION")
     parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
 
@@ -826,6 +831,8 @@ Examples:
     print(f"  Output:  {output_file}")
     print(f"  Workers: {workers}")
     print(f"  Timeout: {args.timeout}s")
+    if args.firmware:
+        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against '{args.firmware}'")
     print(f"{RESET}")
 
     projectors = load_csv(csv_file)
@@ -931,7 +938,15 @@ Examples:
 
     # -- Print table --
     if not args.diagnostic:
-        print_results_table(results)
+        if args.firmware:
+            mismatches = [
+                r for r in results
+                if r.get("status") == "success"
+                and r.get("firmware_version", "") != args.firmware
+            ]
+            print_results_table(mismatches, firmware_filter=args.firmware)
+        else:
+            print_results_table(results)
     else:
         print(f"\n  {WHITE}Diagnostic data written to: {output_file}{RESET}")
 
