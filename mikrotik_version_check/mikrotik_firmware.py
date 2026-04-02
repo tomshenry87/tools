@@ -14,6 +14,7 @@ Usage:
     python3 mikrotik_firmware.py --csv other_routers.csv --output other_results.json
     python3 mikrotik_firmware.py --workers 10 --timeout 20
     python3 mikrotik_firmware.py --include-raw --verbose
+    python3 mikrotik_firmware.py --firmware 7.14.2
 """
 
 from __future__ import annotations
@@ -382,12 +383,9 @@ def parse_health(raw: str, temp_field: str = "board-temperature1", poe_field: st
             continue
 
         # Columnar: index  name  value  [unit]
-        m = re.match(
-            r"^\s*\d+\s+([\w\-]+)\s+([\d.]+)\s*(\S*)",
-            stripped,
-        )
+        m = re.match(r"^\s*\d+\s+([\w\-]+)\s+([\d.]+)\s*(\S*)", stripped)
         if m:
-            name, value, _ = m.group(1).lower(), m.group(2), m.group(3)
+            name, value = m.group(1).lower(), m.group(2)
         else:
             # Key-value: name: value
             m = re.match(r"(?i)([\w\-]+)\s*[:=]\s*([\d.]+)", stripped)
@@ -510,17 +508,35 @@ def check_router(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Print results table
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def print_results_table(results: list[dict], elapsed: float, workers: int, output_path: Path) -> None:
+def print_results_table(
+    results: list[dict],
+    elapsed: float,
+    workers: int,
+    output_path: Path,
+    firmware_filter: str | None = None,
+) -> None:
     headers = [
         "Status", "Host", "Model", "RouterOS Version",
         "Firmware", "Total PoE (W)", "Temp (°F)", "Error",
     ]
 
-    rows: list[list] = []
-    for r in results:
-        poe   = r.get("poe_out_consumption_w")
-        temp  = r.get("board_temperature1_f")
+    # When --firmware is set, only show successfully queried devices
+    # whose current_firmware doesn't match the target version.
+    # Errors and unreachable devices are omitted from the table only —
+    # all results are still written to JSON.
+    if firmware_filter:
+        display_results = [
+            r for r in results
+            if r["status"] == "success"
+            and r.get("current_firmware") != firmware_filter
+        ]
+    else:
+        display_results = results
 
+    rows: list[list] = []
+    for r in display_results:
+        poe  = r.get("poe_out_consumption_w")
+        temp = r.get("board_temperature1_f")
         rows.append([
             status_icon(r),
             f"{WHITE}{clean(r['host'])}{RESET}",
@@ -538,7 +554,10 @@ def print_results_table(results: list[dict], elapsed: float, workers: int, outpu
     raw_width = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw = max(raw_width, 60)
 
-    title = "MikroTik RouterOS Query Results"
+    if firmware_filter:
+        title = f"MikroTik RouterOS — Firmware Mismatch: target {firmware_filter}"
+    else:
+        title = "MikroTik RouterOS Query Results"
     pad = (bw - len(title)) // 2
 
     print(f"{WHITE}")
@@ -548,10 +567,22 @@ def print_results_table(results: list[dict], elapsed: float, workers: int, outpu
     for line in table.split("\n"):
         print(f"  {line}")
 
+    # Counts always reflect full results, not just displayed rows
     total     = len(results)
     ok        = sum(1 for r in results if r["status"] == "success")
     auth_errs = sum(1 for r in results if r["status"] == "auth_error")
     failed    = sum(1 for r in results if r["status"] == "error")
+
+    # When filtering, also report how many matched vs mismatched
+    if firmware_filter:
+        matched    = sum(
+            1 for r in results
+            if r["status"] == "success" and r.get("current_firmware") == firmware_filter
+        )
+        mismatched = sum(
+            1 for r in results
+            if r["status"] == "success" and r.get("current_firmware") != firmware_filter
+        )
 
     print()
     print(
@@ -560,6 +591,13 @@ def print_results_table(results: list[dict], elapsed: float, workers: int, outpu
         f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth_errs}  |  "
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {failed}"
     )
+
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
+            f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Mismatch:{RESET}{WHITE} {mismatched}"
+        )
 
     # RouterOS version breakdown
     version_counts = Counter(
@@ -627,6 +665,7 @@ def check_all_routers(
     workers: int = 5,
     timeout: int = 15,
     include_raw: bool = False,
+    firmware_filter: str | None = None,
 ) -> None:
     all_results: list[dict] = [None] * len(routers)
     start_ts = datetime.now(timezone.utc)
@@ -693,7 +732,7 @@ def check_all_routers(
             "csv_file":        str(output_path.parent / "routers.csv"),
             "timestamp":       start_ts.isoformat(),
             "protocol":        "SSH / RouterOS CLI",
-            "mode":            "package version query",
+            "mode":            f"firmware filter: {firmware_filter}" if firmware_filter else "package version query",
             "workers":         workers,
             "total":           len(all_results),
             "success":         ok,
@@ -706,7 +745,7 @@ def check_all_routers(
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(output, fh, indent=2, ensure_ascii=False)
 
-    print_results_table(all_results, elapsed, workers, output_path)
+    print_results_table(all_results, elapsed, workers, output_path, firmware_filter=firmware_filter)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -717,10 +756,11 @@ def main() -> None:
         description="Check MikroTik router firmware and package versions via SSH.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--csv",         type=Path, default=Path("routers.csv"),   help="Input CSV (default: routers.csv)")
-    p.add_argument("--output",      type=Path, default=Path("results.json"),  help="Output JSON (default: results.json)")
-    p.add_argument("--workers",     type=int,  default=5,                     help="Concurrent SSH workers (default: 5)")
-    p.add_argument("--timeout",     type=int,  default=15,                    help="Per-router timeout in seconds (default: 15)")
+    p.add_argument("--csv",         type=Path,  default=Path("routers.csv"),  help="Input CSV (default: routers.csv)")
+    p.add_argument("--output",      type=Path,  default=Path("results.json"), help="Output JSON (default: results.json)")
+    p.add_argument("--workers",     type=int,   default=5,                    help="Concurrent SSH workers (default: 5)")
+    p.add_argument("--timeout",     type=int,   default=15,                   help="Per-router timeout in seconds (default: 15)")
+    p.add_argument("--firmware",    type=str,   default=None,                 help="Only show devices whose firmware does not match this version (e.g. 7.14.2)")
     p.add_argument("--verbose",     action="store_true",                      help="Enable DEBUG logging")
     p.add_argument("--include-raw", action="store_true",                      help="Include raw SSH output in results.json")
     args = p.parse_args()
@@ -735,6 +775,8 @@ def main() -> None:
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
+    if args.firmware:
+        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} {args.firmware} — showing mismatched devices only")
     print(f"{RESET}")
 
     routers = load_csv(str(args.csv))
@@ -750,6 +792,7 @@ def main() -> None:
         workers=args.workers,
         timeout=args.timeout,
         include_raw=args.include_raw,
+        firmware_filter=args.firmware,
     )
 
 
