@@ -24,9 +24,9 @@ QUERY_PARAMS = "t:26,c:12,p:132072"
 TIMEOUT = 10
 
 
-def get_firmware(host: str, port: str = "80") -> str:
+def get_firmware(host: str) -> str:
     """Query a single projector and return its firmware version string."""
-    url = f"http://{host}:{port}{RSC_CGI_PATH}?{QUERY_PARAMS}"
+    url = f"http://{host}:80{RSC_CGI_PATH}?{QUERY_PARAMS}"
 
     req = urllib.request.Request(url, method="POST")
     req.add_header("Content-Length", "0")
@@ -70,8 +70,8 @@ def main():
     results = []
     for row in rows:
         host = row["host"].strip()
-        port = row.get("port", "80").strip() or "80"
-        fw = get_firmware(host, port)
+        # CSV port is typically PJLink — the web interface is always on 80
+        fw = get_firmware(host)
         results.append((host, fw))
 
     host_width = max(len("Host"), max(len(r[0]) for r in results))
