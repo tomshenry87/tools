@@ -881,8 +881,12 @@ Examples:
     parser.add_argument("--firmware", nargs="+", metavar="VERSION",
                         help="Only show devices where firmware does not match any of the provided versions")
     parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
-    parser.add_argument("--info", action="store_true",
-                        help="Query INFO (other info) on Class 1 devices one by one, printing raw and parsed responses")
+    parser.add_argument("--info", nargs="?", const=True, metavar="HOST",
+                        help="Query INFO one by one; optionally pass a single HOST to skip CSV")
+    parser.add_argument("--port", type=int, default=PJLinkClient.DEFAULT_PORT,
+                        help=f"Port for single-host --info query (default: {PJLinkClient.DEFAULT_PORT})")
+    parser.add_argument("--password", default=None,
+                        help="Password for single-host --info query")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
 
     args = parser.parse_args()
@@ -906,15 +910,22 @@ Examples:
         print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against {label}")
     print(f"{RESET}")
 
+    # -- INFO mode: sequential, one device at a time --
+    if args.info:
+        if isinstance(args.info, str):
+            targets = [{"host": args.info, "port": args.port, "password": args.password}]
+        else:
+            targets = load_csv(csv_file)
+            if not targets:
+                print(f"  {WHITE}No projectors found in CSV.{RESET}")
+                sys.exit(1)
+        run_info_mode(targets, args.timeout)
+        sys.exit(0)
+
     projectors = load_csv(csv_file)
     if not projectors:
         print(f"  {WHITE}No projectors found in CSV.{RESET}")
         sys.exit(1)
-
-    # -- INFO mode: sequential, one device at a time --
-    if args.info:
-        run_info_mode(projectors, args.timeout)
-        sys.exit(0)
 
     total = len(projectors)
 
