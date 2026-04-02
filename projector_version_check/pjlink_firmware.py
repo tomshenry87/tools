@@ -811,8 +811,8 @@ Examples:
     parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
                         help=f"Concurrent workers (default: {DEFAULT_WORKERS})")
     parser.add_argument("--all", action="store_true", help="Query all commands")
-    parser.add_argument("--firmware", metavar="VERSION",
-                        help="Only show devices where firmware does not match VERSION")
+    parser.add_argument("--firmware", nargs="+", metavar="VERSION",
+                        help="Only show devices where firmware does not match any of the provided versions")
     parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
 
@@ -832,7 +832,9 @@ Examples:
     print(f"  Workers: {workers}")
     print(f"  Timeout: {args.timeout}s")
     if args.firmware:
-        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against '{args.firmware}'")
+        accepted = set(args.firmware)
+        label = ", ".join(f"'{v}'" for v in args.firmware)
+        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against {label}")
     print(f"{RESET}")
 
     projectors = load_csv(csv_file)
@@ -939,12 +941,14 @@ Examples:
     # -- Print table --
     if not args.diagnostic:
         if args.firmware:
+            accepted = set(args.firmware)
+            fw_label = ", ".join(args.firmware)
             mismatches = [
                 r for r in results
                 if r.get("status") == "success"
-                and r.get("firmware_version", "") != args.firmware
+                and r.get("firmware_version", "") not in accepted
             ]
-            print_results_table(mismatches, firmware_filter=args.firmware)
+            print_results_table(mismatches, firmware_filter=fw_label)
         else:
             print_results_table(results)
     else:
