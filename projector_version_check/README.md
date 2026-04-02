@@ -137,7 +137,7 @@ usage: pjlink_firmware.py [-h] [-i INPUT] [-o OUTPUT] [-t TIMEOUT] [-w WORKERS]
 | `-t`, `--timeout`      | `10`              | Per-device connection timeout in seconds           |
 | `-w`, `--workers`      | `5`               | Number of concurrent worker threads                |
 | `--all`                | off               | Query all available PJLink commands                |
-| `--firmware VERSION`   | off               | Only show devices where firmware doesn't match VERSION |
+| `--firmware VERSION [VERSION ...]` | off               | Only show devices where firmware doesn't match any provided version |
 | `--diagnostic`         | off               | Run raw diagnostic mode (see below)                |
 | `--debug`              | off               | Print protocol-level debug logs to stderr          |
 
@@ -185,15 +185,23 @@ Queries the most useful fields for fleet management:
 
 Filters the terminal table to show only devices where the firmware version does not exactly match the provided string. Connection errors and auth failures are suppressed from the table — only successfully queried devices with a mismatched version are shown. The full results for all devices are still written to the JSON output file regardless.
 
+Accepts one or more space-separated version strings. A device is included in the filtered table only if its firmware does not match **any** of the provided versions.
+
 ```bash
-python3 pjlink_firmware.py --firmware 1.02
+python3 pjlink_firmware.py --firmware 1.07 1.08
+```
+
+The header block confirms which versions are being treated as current:
+
+```
+  Firmware Filter: showing mismatches against '1.07', '1.08'
 ```
 
 The table title changes to reflect the filter:
 
 ```
   =====================================================
-       PJLink Firmware Mismatch — Expected: 1.02
+       PJLink Firmware Mismatch — Expected: 1.07, 1.08
   =====================================================
 ```
 
