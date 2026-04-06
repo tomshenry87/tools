@@ -11,7 +11,7 @@ A CLI tool for bulk-querying Kramer VP-440H2 matrix switchers over TCP using the
 - [Input File — switchers.csv](#input-file--switcherscsv)
 - [Usage](#usage)
 - [Command-Line Arguments](#command-line-arguments)
-- [What Gets Queried](#what-gets-queried)
+- [Firmware Filter](#firmware-filter)- [What Gets Queried](#what-gets-queried)
 - [Terminal Output](#terminal-output)
 - [JSON Output](#json-output)
 - [Debug Mode](#debug-mode)
@@ -94,6 +94,12 @@ switcher-rack-b.av.local,5000
 python3 kramer_firmware.py
 ```
 
+### Filter table to devices NOT on a specific firmware version
+
+```bash
+python3 kramer_firmware.py --firmware 1.02.0008
+```
+
 ### Debug run — query all hosts with full hex/ASCII socket dumps
 
 ```bash
@@ -120,6 +126,7 @@ python3 kramer_firmware.py --debug --host 192.168.1.10 --cmd serial
 
 | Argument | Type | Default | Description |
 |---|---|---|---|
+| `--firmware VERSION` | string | — | Hide devices running this firmware version from the terminal table. JSON output always contains all results |
 | `--debug` | flag | off | Enable hex+ASCII socket dump for every send/receive exchange |
 | `--host IP` | string | — | Target a single host directly instead of reading switchers.csv. Requires `--debug` |
 | `--port PORT` | int | 5000 | Override the TCP port for `--host` single-host probes |
@@ -155,6 +162,38 @@ Responses follow the pattern:
 ```
 
 The response parser uses per-field regular expressions to extract the value after the command echo, handling any two-digit device ID prefix.
+
+---
+
+## Firmware Filter
+
+The `--firmware` flag is designed for fleet audits where you want to quickly identify devices that are **not** on a known-good firmware version. Devices running the specified version are hidden from the terminal table so the operator sees only the ones that need attention. All devices are still written to `results.json` regardless.
+
+### Usage
+
+```bash
+python3 kramer_firmware.py --firmware 1.02.0008
+```
+
+### What changes in the output
+
+**Title banner** — the active filter is shown in the banner heading:
+
+```
+  Kramer VP-440H2 Query Results — Protocol 3000 — Excluding 1.02.0008
+```
+
+**Results table** — only devices whose firmware does not match the specified version are shown. Devices that could not be reached (`N/A` firmware) are always included since their version is unknown.
+
+**Summary footer** — a `Firmware Filter:` line is appended showing how many devices were hidden and how many remain visible:
+
+```
+  Total: 12  |  ✓ Success: 12  |  ✗ Auth Errors: 0  |  ✗ Failed: 0
+  Firmware Filter: hiding 9 device(s) on 1.02.0008 — 3 device(s) shown
+  MAC Addresses — Reported: 12/12
+```
+
+**JSON output** — unaffected. All 12 devices are written to `results.json` regardless of the filter.
 
 ---
 
