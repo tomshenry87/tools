@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from time import time
 
+import argparse
+
 import requests
 import urllib3
 from requests.auth import HTTPDigestAuth
@@ -335,7 +337,7 @@ def query_camera(row: dict) -> dict:
 # Display
 # ─────────────────────────────────────────────────────────────────────────────
 
-def print_header(total: int) -> None:
+def print_header(total: int, firmware_filter: str | None) -> None:
     print(f"{WHITE}")
     print(f"  {BOLD}AXIS VAPIX Camera Query{RESET}{WHITE}")
     print(f"  Queries firmware version and temperature via VAPIX API")
@@ -344,13 +346,20 @@ def print_header(total: int) -> None:
     print(f"  Workers: {MAX_WORKERS}")
     print(f"  Timeout: {TIMEOUT}s")
     print(f"  Devices: {total}")
+    if firmware_filter:
+        print(f"  Filter:  Hiding firmware version {firmware_filter} from table")
     print(f"{RESET}")
 
 
-def print_table(results: list) -> None:
+def print_table(results: list, firmware_filter: str | None = None) -> None:
+    visible = [
+        r for r in results
+        if firmware_filter is None or r.get("firmware_version") != firmware_filter
+    ]
+    filtered_count = len(results) - len(visible)
     headers = ["Status", "Host", "Model", "Firmware", "MAC", "Serial", "Temperature", "Error"]
     rows = []
-    for r in results:
+    for r in visible:
         rows.append([
             status_icon(r),
             clean(r.get("host")),
@@ -362,7 +371,8 @@ def print_table(results: list) -> None:
             truncate_error(r.get("error") or r.get("temp_error", "")),
         ])
 
-    table = tabulate(rows, headers=headers, tablefmt="pretty",
+    table = tabulate(visible if visible else [["No results to display"] + [""] * (len(headers) - 1)],
+                     headers=headers, tablefmt="pretty",
                      stralign="left", numalign="right")
 
     # Scale banner to actual table width (strip ANSI before measuring)
@@ -378,10 +388,12 @@ def print_table(results: list) -> None:
     print(f"  {'=' * bw}")
     for line in table.split("\n"):
         print(f"  {line}")
+    if filtered_count:
+        print(f"  {YELLOW}  {filtered_count} device(s) with firmware {firmware_filter} hidden by --firmware filter{RESET}{WHITE}")
     print(f"{RESET}")
 
 
-def print_summary(results: list, elapsed: float, temp_vals_f: list) -> None:
+def print_summary(results: list, elapsed: float, temp_vals_f: list, filtered_count: int = 0) -> None:
     total = len(results)
     ok    = sum(1 for r in results if r["status"] == "success")
     auth  = sum(1 for r in results if r["status"] == "auth_error")
@@ -392,6 +404,7 @@ def print_summary(results: list, elapsed: float, temp_vals_f: list) -> None:
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
         f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        + (f"  |  {YELLOW}{BOLD}Filtered:{RESET}{WHITE} {filtered_count}{RESET}" if filtered_count else "")
     )
 
     if temp_vals_f:
@@ -441,10 +454,19 @@ def save_json(results: list, elapsed: float) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="AXIS VAPIX Camera Query Tool")
+    parser.add_argument(
+        "--firmware",
+        metavar="VERSION",
+        help="Hide cameras matching this firmware version from the table (e.g. 11.11.68). Full results are still saved to JSON.",
+    )
+    args = parser.parse_args()
+    firmware_filter = args.firmware.strip() if args.firmware else None
+
     cameras = load_csv(CSV_FILE)
     total   = len(cameras)
 
-    print_header(total)
+    print_header(total, firmware_filter)
 
     term_width = shutil.get_terminal_size((120, 24)).columns
     bar_fmt = (
@@ -494,8 +516,9 @@ def main() -> None:
         except (ValueError, TypeError):
             pass
 
-    print_table(results)
-    print_summary(results, elapsed, temp_vals_f)
+    print_table(results, firmware_filter)
+    filtered_count = sum(1 for r in results if firmware_filter and r.get("firmware_version") == firmware_filter)
+    print_summary(results, elapsed, temp_vals_f, filtered_count)
     save_json(results, elapsed)
 
 
