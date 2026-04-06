@@ -371,8 +371,9 @@ def print_table(results: list, firmware_filter: str | None = None) -> None:
             truncate_error(r.get("error") or r.get("temp_error", "")),
         ])
 
-    table = tabulate(visible if visible else [["No results to display"] + [""] * (len(headers) - 1)],
-                     headers=headers, tablefmt="pretty",
+    if not rows:
+        rows = [["No results to display"] + [""] * (len(headers) - 1)]
+    table = tabulate(rows, headers=headers, tablefmt="pretty",
                      stralign="left", numalign="right")
 
     # Scale banner to actual table width (strip ANSI before measuring)
