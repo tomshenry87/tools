@@ -411,6 +411,8 @@ def main():
                         help=f"TCP port (default: {DEFAULT_TCP_PORT}).")
     parser.add_argument("--cmd", metavar="CMD", choices=ALL_CMD_KEYS,
                         help="(Debug) Probe only one command. Choices: " + ", ".join(ALL_CMD_KEYS))
+    parser.add_argument("--firmware", metavar="VERSION",
+                        help="Filter table to devices NOT running this firmware version. JSON output is unaffected.")
     args = parser.parse_args()
 
     DEBUG = args.debug
@@ -489,9 +491,17 @@ def main():
     err  = sum(1 for r in results if r["status"] == "error")
 
     # -- Build table (style guide §3) --------------------------------------
+    # Apply --firmware filter for table display only; JSON always gets all results.
+    firmware_filter = args.firmware
+    display_results = (
+        [r for r in results if r.get("firmware", "N/A") != firmware_filter]
+        if firmware_filter else results
+    )
+    filtered_count = len(results) - len(display_results)
+
     # Column order: Status | Host | Model | Firmware | Build Date | Protocol Ver | Serial | MAC | Error
     table_rows = []
-    for r in results:
+    for r in display_results:
         error_raw = r.get("error") or ""
         table_rows.append([
             status_icon(r),
@@ -521,6 +531,8 @@ def main():
     raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw         = max(raw_width, 60)
     title      = "Kramer VP-440H2 Query Results — Protocol 3000"
+    if firmware_filter:
+        title += f" — Excluding {firmware_filter}"
     pad        = (bw - len(title)) // 2
 
     print(f"{WHITE}")
@@ -538,6 +550,11 @@ def main():
         f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware Filter:{RESET}{WHITE} hiding {filtered_count} device(s) "
+            f"on {firmware_filter} — {len(display_results)} device(s) shown"
+        )
     print(f"  {BOLD}MAC Addresses{RESET}{WHITE} \u2014 Reported: {sum(1 for r in results if r.get('mac') not in ('N/A', None))}/{total}")
     print(f"{RESET}")
 
