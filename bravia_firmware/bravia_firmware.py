@@ -445,11 +445,22 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
         json.dump(output, f, indent=2, ensure_ascii=False)
 
 
-def print_results_table(results: list, output_file: str, elapsed: float, workers: int):
+def print_results_table(results: list, output_file: str, elapsed: float,
+                        workers: int, firmware_filter: str = None):
     """Render the results table following the project visual style guide."""
 
+    # Apply firmware filter — mismatched or errored rows only.
+    # The full results list is always saved to JSON regardless.
+    if firmware_filter:
+        display_results = [
+            r for r in results
+            if r.get("firmware_version", "N/A") != firmware_filter
+        ]
+    else:
+        display_results = results
+
     table_data = []
-    for r in results:
+    for r in display_results:
         row = [
             status_icon(r),
             clean(r["host"]),
@@ -476,6 +487,8 @@ def print_results_table(results: list, output_file: str, elapsed: float, workers
     bw         = max(raw_width, 60)
 
     title = "Sony Bravia BZ40H/BZ40L \u2014 Firmware Query Results"
+    if firmware_filter:
+        title += f"  \u2014  Mismatched: {len(display_results)}/{len(results)}"
     pad   = (bw - len(title)) // 2
 
     print(f"{WHITE}")
@@ -485,12 +498,17 @@ def print_results_table(results: list, output_file: str, elapsed: float, workers
     for line in table.split("\n"):
         print(f"  {line}")
 
-    total = len(results)
-    ok    = sum(1 for r in results if r["status"] == "success")
-    auth  = sum(1 for r in results if r["status"] == "auth_error")
-    err   = sum(1 for r in results if r["status"] == "error")
+    total = len(display_results)
+    ok    = sum(1 for r in display_results if r["status"] == "success")
+    auth  = sum(1 for r in display_results if r["status"] == "auth_error")
+    err   = sum(1 for r in display_results if r["status"] == "error")
 
     print()
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {len(results)} displays"
+        )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
@@ -499,7 +517,7 @@ def print_results_table(results: list, output_file: str, elapsed: float, workers
     )
 
     psm_counts = {}
-    for r in results:
+    for r in display_results:
         mode = r.get("power_saving_mode", "N/A")
         psm_counts[mode] = psm_counts.get(mode, 0) + 1
 
@@ -568,6 +586,8 @@ Power Saving Mode:
         help="Use the PSK (-k) to set each display's IP control auth to None.")
     parser.add_argument("--raw",                action="store_true", default=False,
         help="With --host: dump raw getSystemInformation responses for all API versions.")
+    parser.add_argument("--firmware",           default=None, metavar="VERSION",
+        help="Only show displays whose firmware does NOT match VERSION in the terminal table (e.g. --firmware 6.0.81.60). JSON output always contains all results.")
 
     args = parser.parse_args()
 
@@ -676,6 +696,8 @@ Power Saving Mode:
     print(f"  Timeout: {args.timeout}s")
     print(f"  Auth:    {'PSK' if args.psk else f'None (fallback: {FALLBACK_PSK})'}")
     print(f"  API:     {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)")
+    if args.firmware:
+        print(f"  Filter:  Showing displays not on firmware {args.firmware}")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
@@ -745,7 +767,7 @@ Power Saving Mode:
     host_order = {d["host"]: i for i, d in enumerate(displays)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
-    print_results_table(results, args.output, elapsed, args.workers)
+    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
     save_results_json(results, args.output, args, elapsed)
 
 
