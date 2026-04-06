@@ -73,7 +73,11 @@ tqdm>=4.66.0
 2. Run the script:
 
 ```bash
+# Query all cameras
 python3 axis_firmware.py
+
+# Query all cameras, hiding those already on firmware 11.11.68
+python3 axis_firmware.py --firmware 11.11.68
 ```
 
 Output is printed to the terminal and saved to `results.json`.
@@ -95,6 +99,42 @@ VERIFY_SSL  = False           # Set True if cameras have valid TLS certificates
 **`MAX_WORKERS`** controls how many cameras are queried at the same time. With `TIMEOUT = 10`, a full failure sweep of 50 cameras takes approximately `ceil(50 / MAX_WORKERS) * TIMEOUT` seconds in the worst case. Increase `MAX_WORKERS` on fast, reliable networks; reduce it on congested or high-latency segments.
 
 **`VERIFY_SSL`** is `False` by default because AXIS cameras ship with self-signed certificates. Set it to `True` and ensure your CA bundle is up to date if your cameras have been provisioned with valid certificates.
+
+---
+
+## CLI Flags
+
+| Flag | Argument | Description |
+|------|----------|-------------|
+| `--firmware` | `VERSION` | Hide cameras matching this firmware version from the table. Full results are still saved to JSON. |
+
+### `--firmware VERSION`
+
+Useful for filtering out cameras that are already on the target firmware version, so the table only shows devices that need attention.
+
+```bash
+python3 axis_firmware.py --firmware 11.11.68
+```
+
+When active, the header block confirms the filter is in effect:
+
+```
+  Filter:  Hiding firmware version 11.11.68 from table
+```
+
+A note is printed below the table for each run where rows were hidden:
+
+```
+  3 device(s) with firmware 11.11.68 hidden by --firmware filter
+```
+
+The summary footer also appends a **Filtered** count alongside the standard totals:
+
+```
+  Total: 12  |  ✓ Success: 10  |  ✗ Auth Errors: 1  |  ✗ Failed: 1  |  Filtered: 3
+```
+
+The `results.json` file always contains the complete, unfiltered result set regardless of this flag.
 
 ### Sensor Preference Order
 
