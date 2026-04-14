@@ -1,0 +1,109 @@
+{
+  "query_info": {
+    "csv_file": "/home/tom/tools/scripts/secrets/rlink_firmware.csv",
+    "timestamp": "2026-04-14T20:27:06.067266+00:00",
+    "protocol": "HTTP/HTTPS (RackLink Settings JSON)",
+    "mode": "json_api",
+    "workers": 5,
+    "total": 3,
+    "success": 2,
+    "errors": 1,
+    "elapsed_seconds": 10.06
+  },
+  "pdus": [
+    {
+      "host": "berry-180-pdu-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-14T20:26:56.014310+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "BER-180-PS2",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E898",
+      "mac_address": "00:1e:c5:00:e8:98",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Dell (ZRC)",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program AMP",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berry-180-pdu-3.openav.dartmouth.edu",
+      "port": 443,
+      "query_timestamp": "2026-04-14T20:26:56.015105+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "BER-180-PS3",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EFA8",
+      "mac_address": "00:1e:c5:00:ef:a8",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berry-180-pdu-3.openav.dartmouth.edu",
+      "port": 443,
+      "query_timestamp": "2026-04-14T20:26:56.016542+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    }
+  ]
+}

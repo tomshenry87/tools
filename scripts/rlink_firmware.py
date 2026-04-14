@@ -7,16 +7,18 @@ RLNK-915R, RLNK-415R, and RLNK-215 PDUs via their JSON settings
 endpoint at /assets/js/json/settings.json.
 
 Usage:
-    python rlink_firmware.py                                  # reads pdu.csv
+    python rlink_firmware.py                                  # reads secrets/rlink_firmware.csv
     python rlink_firmware.py --host 192.168.1.200             # single device
     python rlink_firmware.py --host 192.168.1.200 --port 80 -u admin -p s3cret
-    python rlink_firmware.py -i pdu.csv -o results.json -w 10
+    python rlink_firmware.py -i secrets/rlink_firmware.csv -w 10
     python rlink_firmware.py --firmware 2.0.1                 # hide up-to-date devices
 
-Input CSV (default: pdu.csv):
+Input CSV (default: secrets/rlink_firmware.csv):
     host,port,user_name,pw
     192.168.1.200,80,admin,admin
     192.168.1.201,443,admin,s3cret
+
+Output: files/results_YYYYMMDD_HHMMSS.json (timestamped, auto-created)
 
 Requirements:
     pip install tabulate tqdm
@@ -191,6 +193,7 @@ def query_racklink(host: str, port: int = 80, username: str = "admin",
         "firmware_version": None,
         "serial_number": None,
         "mac_address": None,
+        "outlets": [],
     }
 
     # Build URL candidates based on port
@@ -285,13 +288,22 @@ def main():
                         help="Password for single host (default: admin)")
     parser.add_argument("--firmware", metavar="VERSION",
                         help="Current firmware version — hides matching devices from table")
-    parser.add_argument("-i", "--input", default="pdu.csv",
-                        help="Input CSV file (default: pdu.csv)")
-    parser.add_argument("-o", "--output", default="results.json",
-                        help="Output JSON file (default: results.json)")
+    parser.add_argument("-i", "--input", default="secrets/rlink_firmware.csv",
+                        help="Input CSV file (default: secrets/rlink_firmware.csv)")
+    parser.add_argument("-o", "--output", default=None,
+                        help="Output JSON file (default: files/results_YYYYMMDD_HHMMSS.json)")
     parser.add_argument("-w", "--workers", type=int, default=5)
     parser.add_argument("-t", "--timeout", type=int, default=10)
     args = parser.parse_args()
+
+    # ── Build output path with timestamp ─────────────────────────────
+    if args.output:
+        output_file = str(Path(args.output).resolve())
+    else:
+        out_dir = Path("files")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = str((out_dir / f"results_{stamp}.json").resolve())
 
     # ── Build device list ────────────────────────────────────────────
     if args.host:
@@ -311,7 +323,6 @@ def main():
         sys.exit(1)
 
     total = len(devices)
-    output_file = str(Path(args.output).resolve())
 
     # ── Header Block ─────────────────────────────────────────────────
     print(f"{WHITE}")
@@ -489,7 +500,7 @@ def main():
         "pdus": results,
     }
 
-    with open(args.output, "w", encoding="utf-8") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, default=str)
 
 

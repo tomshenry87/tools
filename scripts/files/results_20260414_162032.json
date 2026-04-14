@@ -1,0 +1,57 @@
+{
+  "query_info": {
+    "csv_file": "/home/tom/tools/scripts/secrets/rlink_firmware.csv",
+    "timestamp": "2026-04-14T20:20:32.566623+00:00",
+    "protocol": "HTTP/HTTPS (RackLink Settings JSON)",
+    "mode": "json_api",
+    "workers": 5,
+    "total": 3,
+    "success": 0,
+    "errors": 3,
+    "elapsed_seconds": 0.19
+  },
+  "pdus": [
+    {
+      "host": "berry-180-pdu-1.openav.dartmout.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-14T20:20:32.375546+00:00",
+      "status": "error",
+      "error": "Could not connect to berry-180-pdu-1.openav.dartmout.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "berry-180-pdu-3.openav.dartmout.edu",
+      "port": 443,
+      "query_timestamp": "2026-04-14T20:20:32.378439+00:00",
+      "status": "error",
+      "error": "Could not connect to berry-180-pdu-3.openav.dartmout.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "berry-180-pdu-3.openav.dartmout.edu",
+      "port": 443,
+      "query_timestamp": "2026-04-14T20:20:32.377690+00:00",
+      "status": "error",
+      "error": "Could not connect to berry-180-pdu-3.openav.dartmout.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    }
+  ]
+}

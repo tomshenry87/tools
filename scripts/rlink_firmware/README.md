@@ -99,7 +99,7 @@ sudo apt install python3-tabulate python3-tqdm
 
 ## Input CSV Format
 
-Create a file called `pdu.csv` in the same directory as the script. The file must have a header row with the following columns:
+Create a file called `rlink_firmware.csv` in a `secrets/` subdirectory. The file must have a header row with the following columns:
 
 | Column      | Required | Default | Description                        |
 |-------------|----------|---------|------------------------------------|
@@ -108,7 +108,7 @@ Create a file called `pdu.csv` in the same directory as the script. The file mus
 | `user_name` | No       | `admin` | Login username                     |
 | `pw`        | No       | `admin` | Login password                     |
 
-### Example `pdu.csv`
+### Example `secrets/rlink_firmware.csv`
 
 ```csv
 host,port,user_name,pw
@@ -131,7 +131,7 @@ host,port,user_name,pw
 
 ### CSV Batch Mode (default)
 
-Read from `pdu.csv` in the current directory and write results to `results.json`:
+Read from `secrets/rlink_firmware.csv` and write results to `files/results_YYYYMMDD_HHMMSS.json`:
 
 ```bash
 python rlink_firmware.py
@@ -176,8 +176,8 @@ This is useful when auditing a fleet — the table shows only the devices that s
 | `--username`          | `-u`  | `admin`          | Username for single host mode                        |
 | `--password`          | `-p`  | `admin`          | Password for single host mode                        |
 | `--firmware`          |       | —                | Hide devices matching this firmware from the table   |
-| `--input`             | `-i`  | `pdu.csv`        | Input CSV file path                                  |
-| `--output`            | `-o`  | `results.json`   | Output JSON file path                                |
+| `--input`             | `-i`  | `secrets/rlink_firmware.csv` | Input CSV file path                                  |
+| `--output`            | `-o`  | `files/results_<timestamp>.json` | Output JSON file path (auto-timestamped)      |
 | `--workers`           | `-w`  | `5`              | Number of concurrent threads                         |
 | `--timeout`           | `-t`  | `10`             | Connection timeout in seconds per device             |
 
@@ -204,7 +204,7 @@ A summary footer shows total counts, success/failure breakdown, and unique firmw
 
 ### JSON File
 
-Results are written to `results.json` (or the path specified with `-o`). The JSON always contains **all** queried devices, regardless of the `--firmware` filter.
+Results are written to `files/results_YYYYMMDD_HHMMSS.json` by default (or the path specified with `-o`). The `files/` directory is created automatically if it doesn't exist. The JSON always contains **all** queried devices, regardless of the `--firmware` filter.
 
 ```json
 {
