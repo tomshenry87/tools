@@ -841,9 +841,14 @@ def run_info_mode(projectors, timeout):
 # Main
 # ---------------------------------------------------------------------------
 
-DEFAULT_CSV = "projectors.csv"
-DEFAULT_OUTPUT = "results.json"
+DEFAULT_CSV = "secrets/pjlink_firmware.csv"
+DEFAULT_OUTPUT_DIR = "projector_version_check/files"
 DEFAULT_WORKERS = 5
+
+
+def default_output_path() -> str:
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return str(Path(DEFAULT_OUTPUT_DIR) / f"results_{ts}.json")
 
 
 def main():
@@ -871,8 +876,8 @@ Examples:
 
     parser.add_argument("-i", "--input", default=DEFAULT_CSV,
                         help=f"Input CSV (default: {DEFAULT_CSV})")
-    parser.add_argument("-o", "--output", default=DEFAULT_OUTPUT,
-                        help=f"Output JSON (default: {DEFAULT_OUTPUT})")
+    parser.add_argument("-o", "--output", default=None,
+                        help=f"Output JSON (default: {DEFAULT_OUTPUT_DIR}/results_YYYY-MM-DD_HH-MM-SS.json)")
     parser.add_argument("-t", "--timeout", type=int, default=10,
                         help="Timeout per device in seconds (default: 10)")
     parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
@@ -893,7 +898,10 @@ Examples:
     setup_logging(args.debug)
 
     csv_file = args.input
-    output_file = args.output
+    output_file = args.output if args.output else default_output_path()
+
+    # Ensure output directory exists
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     workers = max(1, args.workers)
 
     # -- Header --

@@ -64,7 +64,7 @@ pip3 install tabulate tqdm paramiko
 
 ## Quick Start
 
-1. Create a `projectors.csv` file listing your devices:
+1. Create a `secrets/pjlink_firmware.csv` file listing your devices:
 
 ```csv
 host,port,password
@@ -79,7 +79,7 @@ host,port,password
 python3 pjlink_firmware.py
 ```
 
-3. Results are printed to the terminal and saved to `results.json`.
+3. Results are printed to the terminal and saved to `projector_version_check/files/results_YYYY-MM-DD_HH-MM-SS.json`.
 
 ---
 
@@ -132,8 +132,8 @@ usage: pjlink_firmware.py [-h] [-i INPUT] [-o OUTPUT] [-t TIMEOUT] [-w WORKERS]
 
 | Flag                   | Default           | Description                                        |
 |------------------------|-------------------|----------------------------------------------------|
-| `-i`, `--input`        | `projectors.csv`  | Path to input CSV file                             |
-| `-o`, `--output`       | `results.json`    | Path to output JSON file                           |
+| `-i`, `--input`        | `secrets/pjlink_firmware.csv`  | Path to input CSV file                             |
+| `-o`, `--output`       | `projector_version_check/files/results_YYYY-MM-DD_HH-MM-SS.json` | Path to output JSON file      |
 | `-t`, `--timeout`      | `10`              | Per-device connection timeout in seconds           |
 | `-w`, `--workers`      | `5`               | Number of concurrent worker threads                |
 | `--all`                | off               | Query all available PJLink commands                |
