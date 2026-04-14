@@ -3,7 +3,7 @@
 PJLink Projector Firmware & Lamp Hours Query (Class 1 + Class 2)
 
 Dependencies:
-    pip install tabulate tqdm paramiko
+    pip3 install tabulate tqdm paramiko
 
 Queries projectors via PJLink protocol for:
     - Firmware version (INFO for Class 1, SVER for Class 2)
@@ -16,8 +16,8 @@ Features:
     - White text results table
 
 Defaults:
-    Input:  projectors.csv
-    Output: results.json
+    Input:  secrets/pjlink_firmware.csv
+    Output: projector_version_check/files/results_YYYY-MM-DD_HH-MM-SS.json
 """
 
 import socket
@@ -750,12 +750,18 @@ def print_results_table(results, firmware_filter=None):
     ]
 
     print()
-    print(
-        f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
-    )
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware mismatches:{RESET}{WHITE} {total}  |  "
+            f"{YELLOW}Expected:{RESET}{WHITE} {firmware_filter}"
+        )
+    else:
+        print(
+            f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
+            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+            f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+            f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        )
 
     if lamp_vals:
         avg = sum(lamp_vals) / len(lamp_vals)
@@ -803,7 +809,6 @@ def run_info_mode(projectors, timeout):
                 error = str(e)
 
             if raw and not raw.startswith("ERROR"):
-                # _derive_fw uses other_info as fallback — replicate that logic here
                 info = {"pjlink_class": pjlink_class, "other_info": raw}
                 parsed = client._derive_fw(info)
             elif raw and raw.startswith("ERROR"):
@@ -817,7 +822,7 @@ def run_info_mode(projectors, timeout):
                 print(f"{RED}✗ {error}{RESET}")
             else:
                 print(f"{GREEN}✓{RESET}{WHITE}  {BOLD}Class:{RESET}{WHITE} {class_label}")
-                raw_display   = raw   if raw   else "—"
+                raw_display    = raw    if raw    else "—"
                 parsed_display = parsed if parsed else "—"
                 print(f"         {BOLD}Raw:{RESET}{WHITE}    {raw_display}")
                 print(f"         {BOLD}Parsed:{RESET}{WHITE} {parsed_display}")
@@ -858,7 +863,7 @@ def main():
         epilog=f"""
 Defaults:
     Input CSV:   {DEFAULT_CSV}
-    Output JSON: {DEFAULT_OUTPUT}
+    Output JSON: {DEFAULT_OUTPUT_DIR}/results_YYYY-MM-DD_HH-MM-SS.json
     Workers:     {DEFAULT_WORKERS}
 
 CSV Format:
@@ -902,6 +907,7 @@ Examples:
 
     # Ensure output directory exists
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
     workers = max(1, args.workers)
 
     # -- Header --
@@ -913,7 +919,6 @@ Examples:
     print(f"  Workers: {workers}")
     print(f"  Timeout: {args.timeout}s")
     if args.firmware:
-        accepted = set(args.firmware)
         label = ", ".join(f"'{v}'" for v in args.firmware)
         print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against {label}")
     print(f"{RESET}")
@@ -998,7 +1003,6 @@ Examples:
                         "lamp_hours_summary": "N/A",
                     }
 
-                # Show only the most recently started host
                 with active_lock:
                     host_display = latest_host["value"]
                 pbar.set_postfix_str(host_display, refresh=False)
