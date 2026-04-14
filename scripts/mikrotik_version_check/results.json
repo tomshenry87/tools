@@ -1,7 +1,7 @@
 {
   "query_info": {
     "csv_file": "routers.csv",
-    "timestamp": "2026-04-01T18:59:21.753111+00:00",
+    "timestamp": "2026-04-06T15:51:23.285244+00:00",
     "protocol": "SSH / RouterOS CLI",
     "mode": "package version query",
     "workers": 5,
@@ -9,15 +9,20 @@
     "success": 34,
     "auth_errors": 0,
     "errors": 0,
-    "elapsed_seconds": 10.16
+    "elapsed_seconds": 11.03
   },
   "routers": [
     {
       "host": "silsby-113-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:21.756738+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.294334+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 65.1,
+      "board_temperature1_c": 39.0,
+      "board_temperature1_f": 102.2,
       "packages": [
         {
           "name": "routeros",
@@ -33,9 +38,14 @@
     {
       "host": "silsby-213-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:21.757188+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.296933+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 66.9,
+      "board_temperature1_c": 43.0,
+      "board_temperature1_f": 109.4,
       "packages": [
         {
           "name": "routeros",
@@ -51,9 +61,14 @@
     {
       "host": "silsby-215-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:21.758059+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.297616+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 65.9,
+      "board_temperature1_c": 39.0,
+      "board_temperature1_f": 102.2,
       "packages": [
         {
           "name": "routeros",
@@ -69,9 +84,14 @@
     {
       "host": "silsby-310-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:21.758444+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.298843+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 65.5,
+      "board_temperature1_c": 40.0,
+      "board_temperature1_f": 104.0,
       "packages": [
         {
           "name": "routeros",
@@ -87,9 +107,14 @@
     {
       "host": "silsby-312-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:21.759064+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.299847+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 64.1,
+      "board_temperature1_c": 32.0,
+      "board_temperature1_f": 89.6,
       "packages": [
         {
           "name": "routeros",
@@ -105,9 +130,14 @@
     {
       "host": "silsby-029a-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:22.372316+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.808055+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 69.0,
+      "board_temperature1_c": 38.0,
+      "board_temperature1_f": 100.4,
       "packages": [
         {
           "name": "routeros",
@@ -123,9 +153,14 @@
     {
       "host": "silsby-029b-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:22.379736+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.813114+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 65.2,
+      "board_temperature1_c": 36.0,
+      "board_temperature1_f": 96.8,
       "packages": [
         {
           "name": "routeros",
@@ -141,13 +176,22 @@
     {
       "host": "4-currier-101b-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:22.424086+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.814761+00:00",
       "status": "success",
-      "routeros_version": "7.7",
+      "model": "RB960PGS",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 51.0,
+      "board_temperature1_f": 123.8,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.7"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -155,13 +199,22 @@
     {
       "host": "4-currier-101e-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:22.474734+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.820682+00:00",
       "status": "success",
-      "routeros_version": "7.2.3",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 45.0,
+      "board_temperature1_f": 113.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.2.3"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -169,13 +222,22 @@
     {
       "host": "4-currier-101b-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:22.677125+00:00",
+      "query_timestamp": "2026-04-06T15:51:23.906755+00:00",
       "status": "success",
-      "routeros_version": "7.7",
+      "model": "RB960PGS",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 51.0,
+      "board_temperature1_f": 123.8,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.7"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -183,9 +245,14 @@
     {
       "host": "4-currier-213-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:22.991029+00:00",
+      "query_timestamp": "2026-04-06T15:51:24.273440+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 52.0,
+      "board_temperature1_f": 125.6,
       "packages": [
         {
           "name": "routeros",
@@ -201,9 +268,14 @@
     {
       "host": "4-currier-214-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:23.005100+00:00",
+      "query_timestamp": "2026-04-06T15:51:24.359778+00:00",
       "status": "success",
+      "model": "RB960PGS",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 45.0,
+      "board_temperature1_f": 113.0,
       "packages": [
         {
           "name": "routeros",
@@ -219,13 +291,22 @@
     {
       "host": "4-currier-215-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:23.726074+00:00",
+      "query_timestamp": "2026-04-06T15:51:24.996048+00:00",
       "status": "success",
-      "routeros_version": "7.10",
+      "model": "RB960PGS",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 45.0,
+      "board_temperature1_f": 113.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.10"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -233,13 +314,22 @@
     {
       "host": "4-currier-223-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:23.929742+00:00",
+      "query_timestamp": "2026-04-06T15:51:25.000163+00:00",
       "status": "success",
-      "routeros_version": "7.2.3",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 50.0,
+      "board_temperature1_f": 122.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.2.3"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -247,13 +337,22 @@
     {
       "host": "4-currier-227-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:23.991909+00:00",
+      "query_timestamp": "2026-04-06T15:51:25.086065+00:00",
       "status": "success",
-      "routeros_version": "7.7",
+      "model": "RB960PGS",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 58.0,
+      "board_temperature1_f": 136.4,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.7"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -261,9 +360,14 @@
     {
       "host": "4-currier-232-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:24.442218+00:00",
+      "query_timestamp": "2026-04-06T15:51:25.609175+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 45.3,
+      "board_temperature1_c": 44.0,
+      "board_temperature1_f": 111.2,
       "packages": [
         {
           "name": "routeros",
@@ -279,13 +383,22 @@
     {
       "host": "4-currier-collaboration-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:24.569752+00:00",
+      "query_timestamp": "2026-04-06T15:51:25.723571+00:00",
       "status": "success",
-      "routeros_version": "7.2.3",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 50.0,
+      "board_temperature1_f": 122.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.2.3"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -293,13 +406,22 @@
     {
       "host": "4-currier-lounge-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:24.654882+00:00",
+      "query_timestamp": "2026-04-06T15:51:26.154964+00:00",
       "status": "success",
-      "routeros_version": "7.2.3",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.12.1",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 38.0,
+      "board_temperature1_f": 100.4,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.2.3"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -307,9 +429,14 @@
     {
       "host": "court01-211-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:24.938353+00:00",
+      "query_timestamp": "2026-04-06T15:51:26.250926+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 52.0,
+      "board_temperature1_f": 125.6,
       "packages": [
         {
           "name": "routeros",
@@ -321,9 +448,14 @@
     {
       "host": "court01-215-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:25.203880+00:00",
+      "query_timestamp": "2026-04-06T15:51:26.644020+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 41.0,
+      "board_temperature1_f": 105.8,
       "packages": [
         {
           "name": "routeros",
@@ -339,9 +471,14 @@
     {
       "host": "cts-4-currier-104-router.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:25.425508+00:00",
+      "query_timestamp": "2026-04-06T15:51:28.266241+00:00",
       "status": "success",
+      "model": "RB960PGS",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 42.0,
+      "board_temperature1_f": 107.6,
       "packages": [
         {
           "name": "routeros",
@@ -357,9 +494,14 @@
     {
       "host": "fairchild-217a-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:26.083053+00:00",
+      "query_timestamp": "2026-04-06T15:51:28.660379+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 38.0,
+      "board_temperature1_f": 100.4,
       "packages": [
         {
           "name": "routeros",
@@ -375,9 +517,14 @@
     {
       "host": "kemeny-307-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:26.140461+00:00",
+      "query_timestamp": "2026-04-06T15:51:28.889733+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 55.0,
+      "board_temperature1_f": 131.0,
       "packages": [
         {
           "name": "routeros",
@@ -393,9 +540,14 @@
     {
       "host": "osher-3a-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:26.492486+00:00",
+      "query_timestamp": "2026-04-06T15:51:29.316650+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 74.7,
+      "board_temperature1_c": 34.0,
+      "board_temperature1_f": 93.2,
       "packages": [
         {
           "name": "routeros",
@@ -411,13 +563,22 @@
     {
       "host": "parkhurst-06a-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:26.560697+00:00",
+      "query_timestamp": "2026-04-06T15:51:29.418421+00:00",
       "status": "success",
-      "routeros_version": "7.2.3",
+      "model": "CRS112-8G-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 35.0,
+      "board_temperature1_f": 95.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.2.3"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -425,13 +586,22 @@
     {
       "host": "preshouse-b02-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:27.177191+00:00",
+      "query_timestamp": "2026-04-06T15:51:29.656922+00:00",
       "status": "success",
-      "routeros_version": "7.10.2",
+      "model": "CRS328-24P-4S+",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 14.9,
+      "board_temperature1_c": 39.0,
+      "board_temperature1_f": 102.2,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.10.2"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -439,9 +609,14 @@
     {
       "host": "robinson-322-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:27.438906+00:00",
+      "query_timestamp": "2026-04-06T15:51:29.884194+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 48.0,
+      "board_temperature1_f": 118.4,
       "packages": [
         {
           "name": "routeros",
@@ -457,9 +632,14 @@
     {
       "host": "doc-house-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:27.746189+00:00",
+      "query_timestamp": "2026-04-06T15:51:30.199121+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 46.0,
+      "board_temperature1_f": 114.8,
       "packages": [
         {
           "name": "routeros",
@@ -475,13 +655,22 @@
     {
       "host": "berry-180-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:28.002814+00:00",
+      "query_timestamp": "2026-04-06T15:51:30.474566+00:00",
       "status": "success",
-      "routeros_version": "7.10.2",
+      "model": "CRS328-24P-4S+",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 84.8,
+      "board_temperature1_c": 39.0,
+      "board_temperature1_f": 102.2,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.10.2"
+          "version": "7.20.8"
+        },
+        {
+          "name": "wireless",
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -489,13 +678,18 @@
     {
       "host": "currier04-312-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:28.374695+00:00",
+      "query_timestamp": "2026-04-06T15:51:31.084911+00:00",
       "status": "success",
-      "routeros_version": "7.14.1",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 45.0,
+      "board_temperature1_f": 113.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.14.1"
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -503,13 +697,18 @@
     {
       "host": "wentworth-205-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:28.425774+00:00",
+      "query_timestamp": "2026-04-06T15:51:31.577470+00:00",
       "status": "success",
-      "routeros_version": "7.14.1",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 60.0,
+      "board_temperature1_f": 140.0,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.14.1"
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -517,13 +716,18 @@
     {
       "host": "mcnutt-001-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:28.866321+00:00",
+      "query_timestamp": "2026-04-06T15:51:31.585152+00:00",
       "status": "success",
-      "routeros_version": "7.14.1",
+      "model": "CRS112-8P-4S",
+      "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 57.0,
+      "board_temperature1_f": 134.6,
       "packages": [
         {
           "name": "routeros",
-          "version": "7.14.1"
+          "version": "7.20.8"
         }
       ],
       "error": null
@@ -531,9 +735,14 @@
     {
       "host": "rockefeller-100-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:29.553747+00:00",
+      "query_timestamp": "2026-04-06T15:51:31.688343+00:00",
       "status": "success",
+      "model": "CRS112-8P-4S",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": null,
+      "board_temperature1_c": 56.0,
+      "board_temperature1_f": 132.8,
       "packages": [
         {
           "name": "routeros",
@@ -549,9 +758,14 @@
     {
       "host": "darthall-310-router.openav.dartmouth.edu",
       "port": 22,
-      "query_timestamp": "2026-04-01T18:59:29.681339+00:00",
+      "query_timestamp": "2026-04-06T15:51:32.553691+00:00",
       "status": "success",
+      "model": "CRS328-24P-4S+",
       "routeros_version": "7.20.8",
+      "current_firmware": "7.20.8",
+      "poe_out_consumption_w": 11.1,
+      "board_temperature1_c": 40.0,
+      "board_temperature1_f": 104.0,
       "packages": [
         {
           "name": "routeros",
