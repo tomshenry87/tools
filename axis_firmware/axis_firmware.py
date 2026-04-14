@@ -40,8 +40,9 @@ BOLD   = "\033[1m"    # Section headers, label emphasis
 RESET  = "\033[0m"    # Always close every colour block
 
 # ── Config ────────────────────────────────────────────────────────────────────
-CSV_FILE    = "cameras.csv"
-OUTPUT_FILE = "results.json"
+FILES_DIR   = Path("files")
+CSV_FILE    = str(FILES_DIR / "cameras.csv")
+OUTPUT_FILE = str(FILES_DIR / "results.json")
 MAX_WORKERS = 5
 TIMEOUT     = 10      # seconds per request
 VERIFY_SSL  = False   # set True if your cameras have valid certs
@@ -464,6 +465,7 @@ def main() -> None:
     args = parser.parse_args()
     firmware_filter = args.firmware.strip() if args.firmware else None
 
+    FILES_DIR.mkdir(exist_ok=True)
     cameras = load_csv(CSV_FILE)
     total   = len(cameras)
 
