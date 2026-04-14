@@ -1,1 +1,8 @@
 cameras.csv
+scripts/secrets/axis_firmware.csv
+scripts/secrets/bravia_firmware.csv
+scripts/secrets/kramer_firmware.csv
+scripts/secrets/mikrotik_firmware.csv
+scripts/secrets/netgear_firmware.csv
+scripts/secrets/pjlink_firmware.csv
+scripts/secrets/rlink_firmware.csv
