@@ -77,8 +77,9 @@ DEFAULT_TCP_PORT = 5000
 CONNECT_TIMEOUT  = 8.0
 RECV_TIMEOUT     = 8.0
 BUFFER_SIZE      = 4096
-CSV_FILE         = "switchers.csv"
-JSON_FILE        = "results.json"
+CSV_FILE         = "secrets/kramer_firmware.csv"
+OUTPUT_DIR       = Path("kramer_version_check/files")
+JSON_FILE        = OUTPUT_DIR / f"results_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.json"
 WORKERS          = 5
 SEND_PAUSE       = 0.02       # 20 ms post-send pause
 DRAIN_WINDOW     = 0.05       # 50 ms non-blocking drain window
@@ -432,6 +433,9 @@ def main():
     total      = len(devices)
     start_time = time.time()
 
+    # Ensure output directory exists
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
     # -- Header block (style guide §2) --------------------------------------
     print(f"{WHITE}")
     print(f"  {BOLD}Kramer VP-440H2 Query Tool{RESET}{WHITE}")
@@ -580,8 +584,7 @@ def main():
         "switches": results,
     }
 
-    with open(JSON_FILE, "w", encoding="utf-8") as fh:
-        json.dump(output, fh, indent=2)
+    with open(JSON_FILE, "w", encoding="utf-8") as fh:        json.dump(output, fh, indent=2)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ results.json (default), and prints a summary table.
 Usage:
     python3 netgear_firmware.py
     python3 netgear_firmware.py --verbose
-    python3 netgear_firmware.py --csv other_switches.csv --output other_results.json
+    python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --output netgear_firmware/files/results.json
     python3 netgear_firmware.py --include-raw --verbose
     python3 netgear_firmware.py --firmware 12.0.20.7
 
@@ -596,7 +596,7 @@ def check_all_switches(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def main() -> None:
+def main() -> None:  # noqa: C901
     p = argparse.ArgumentParser(
         description=(
             "Check Netgear M4250 switch firmware versions and CPU temps via SSH.\n"
@@ -606,12 +606,14 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument(
-        "--csv", type=Path, default=Path("switches.csv"),
-        help="Input CSV file (default: switches.csv)",
+        "--csv", type=Path, default=Path("secrets/netgear_firmware.csv"),
+        help="Input CSV file (default: secrets/netgear_firmware.csv)",
     )
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     p.add_argument(
-        "--output", type=Path, default=Path("results.json"),
-        help="Output JSON file (default: results.json)",
+        "--output", type=Path,
+        default=Path(f"netgear_firmware/files/results_{timestamp}.json"),
+        help="Output JSON file (default: netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json)",
     )
     p.add_argument(
         "--workers", type=int, default=5,

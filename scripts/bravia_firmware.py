@@ -64,8 +64,12 @@ RESET  = "\033[0m"
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV      = "displays.csv"
-DEFAULT_OUTPUT   = "results.json"
+DEFAULT_CSV      = "secrets/bravia_firmware.csv"
+OUTPUT_DIR       = "bravia_firmware/files"
+DEFAULT_OUTPUT   = os.path.join(
+    OUTPUT_DIR,
+    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+)
 DEFAULT_PSK      = None
 DEFAULT_TIMEOUT  = 10
 DEFAULT_PORT     = 80
@@ -423,6 +427,7 @@ def query_display(host: str, port: int, psk: str = None,
 # Output
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")

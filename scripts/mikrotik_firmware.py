@@ -663,6 +663,7 @@ def print_results_table(
 def check_all_routers(
     routers: list[dict],
     output_path: Path,
+    csv_path: Path,
     workers: int = 5,
     timeout: int = 15,
     include_raw: bool = False,
@@ -730,7 +731,7 @@ def check_all_routers(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output = {
         "query_info": {
-            "csv_file":        str(output_path.parent / "routers.csv"),
+            "csv_file":        str(csv_path.resolve()),
             "timestamp":       start_ts.isoformat(),
             "protocol":        "SSH / RouterOS CLI",
             "mode":            f"firmware filter: {firmware_filter}" if firmware_filter else "package version query",
@@ -757,8 +758,9 @@ def main() -> None:
         description="Check MikroTik router firmware and package versions via SSH.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--csv",         type=Path,  default=Path("routers.csv"),  help="Input CSV (default: routers.csv)")
-    p.add_argument("--output",      type=Path,  default=Path("results.json"), help="Output JSON (default: results.json)")
+    default_ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    p.add_argument("--csv",         type=Path,  default=Path("secrets/mikrotik_firmware.csv"),                         help="Input CSV (default: secrets/mikrotik_firmware.csv)")
+    p.add_argument("--output",      type=Path,  default=Path(f"mikrotik_version_check/files/results_{default_ts}.json"),     help="Output JSON (default: mikrotik_version_check/files/results_<timestamp>.json)")
     p.add_argument("--workers",     type=int,   default=5,                    help="Concurrent SSH workers (default: 5)")
     p.add_argument("--timeout",     type=int,   default=15,                   help="Per-router timeout in seconds (default: 15)")
     p.add_argument("--firmware",    type=str,   default=None,                 help="Only show devices whose firmware does not match this version (e.g. 7.14.2)")
@@ -790,6 +792,7 @@ def main() -> None:
     check_all_routers(
         routers,
         args.output,
+        csv_path=args.csv,
         workers=args.workers,
         timeout=args.timeout,
         include_raw=args.include_raw,
