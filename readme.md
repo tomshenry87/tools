@@ -41,6 +41,11 @@ Queries projectors using the PJLink protocol (Class 1 and Class 2). Retrieves fi
 - Templates for each script are located in /scripts/secrets/templates
 - Remove _template from CSV file sname
 
+## JSON OUTPUT FILES
+- Are stored in /scripts/'script_name'/files
+- The results JSON file will be saved with date and timestamp
+- overtime you might need to remove these files
+
 ## Dependencies
 
 ```
