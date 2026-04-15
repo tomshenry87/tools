@@ -36,6 +36,11 @@ Queries projectors using the PJLink protocol (Class 1 and Class 2). Retrieves fi
 - **Output:** Formatted CLI table + `results.json` with full detail
 - **Error handling:** Distinguishes auth failures, timeouts, and unreachable hosts
 
+## CSV INPUT FILES
+- Must be savd in /scripts/secrets
+- Templates for each script are located in /scripts/secrets/templates
+- Remove _template from CSV file sname
+
 ## Dependencies
 
 ```
