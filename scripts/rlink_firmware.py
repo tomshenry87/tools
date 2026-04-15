@@ -18,7 +18,7 @@ Input CSV (default: secrets/rlink_firmware.csv):
     192.168.1.200,80,admin,admin
     192.168.1.201,443,admin,s3cret
 
-Output: files/results_YYYYMMDD_HHMMSS.json (timestamped, auto-created)
+Output: rlink_firmware/files/results_YYYYMMDD_HHMMSS.json (timestamped, auto-created)
 
 Requirements:
     pip install tabulate tqdm
@@ -291,7 +291,7 @@ def main():
     parser.add_argument("-i", "--input", default="secrets/rlink_firmware.csv",
                         help="Input CSV file (default: secrets/rlink_firmware.csv)")
     parser.add_argument("-o", "--output", default=None,
-                        help="Output JSON file (default: files/results_YYYYMMDD_HHMMSS.json)")
+                        help="Output JSON file (default: rlink_firmware/files/results_YYYYMMDD_HHMMSS.json)")
     parser.add_argument("-w", "--workers", type=int, default=5)
     parser.add_argument("-t", "--timeout", type=int, default=10)
     args = parser.parse_args()
@@ -300,7 +300,8 @@ def main():
     if args.output:
         output_file = str(Path(args.output).resolve())
     else:
-        out_dir = Path("files")
+        script_dir = Path(__file__).resolve().parent
+        out_dir = script_dir / "rlink_firmware" / "files"
         out_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = str((out_dir / f"results_{stamp}.json").resolve())
