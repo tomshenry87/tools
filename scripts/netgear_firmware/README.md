@@ -1,8 +1,8 @@
 # Netgear M4250 Firmware & CPU Temp Checker
 
-A command-line tool that connects to one or more Netgear M4250 managed switches over SSH, retrieves firmware version and CPU temperature, and outputs a formatted terminal table and a structured JSON report.
+A command-line tool that connects to one or more Netgear M4250 routers over SSH, retrieves firmware version, CPU temperature, and total PoE power consumed, and outputs a formatted terminal table and a structured JSON report.
 
-> **Note:** All examples in this document use `python3`. On some systems Python 3 may also be invoked as `python` — verify with `python --version` before substituting.
+> **Note:** All examples use `python3`. On some systems Python 3 may also be invoked as `python` — verify with `python --version` before substituting.
 
 ---
 
@@ -11,6 +11,7 @@ A command-line tool that connects to one or more Netgear M4250 managed switches 
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Directory Structure](#directory-structure)
 - [CSV Input Format](#csv-input-format)
 - [Command-Line Arguments](#command-line-arguments)
 - [Terminal Output](#terminal-output)
@@ -23,7 +24,7 @@ A command-line tool that connects to one or more Netgear M4250 managed switches 
 ## Requirements
 
 - Python 3.10+
-- Netgear M4250 switches accessible over SSH
+- Netgear M4250 routers accessible over SSH
 - The following Python packages:
 
 ```
@@ -40,21 +41,27 @@ tqdm
 pip install paramiko tabulate tqdm
 ```
 
-Place `netgear_m4250_checker.py` and your `switches.csv` in the same directory.
+Place `netgear_firmware.py` in your scripts directory and create the required input/output folders alongside it.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Run with all defaults (reads switches.csv, writes results.json)
+# Run with all defaults
 python3 netgear_firmware.py
 
 # Specify a different CSV and output file
-python3 netgear_firmware.py --csv my_switches.csv --output my_results.json
+python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --output netgear_firmware/files/results.json
 
 # Increase concurrency and enable verbose logging
 python3 netgear_firmware.py --workers 10 --verbose
+
+# Only show routers not running the expected firmware version
+python3 netgear_firmware.py --firmware 13.0.4.9
+
+# Combine firmware filter with a custom CSV for an audit run
+python3 netgear_firmware.py --firmware 13.0.4.9 --csv secrets/netgear_firmware.csv --output netgear_firmware/files/audit.json
 
 # Include raw SSH output in the JSON for debugging
 python3 netgear_firmware.py --include-raw
@@ -62,18 +69,34 @@ python3 netgear_firmware.py --include-raw
 
 ---
 
+## Directory Structure
+
+```
+scripts/
+├── netgear_firmware.py
+├── secrets/
+│   └── netgear_firmware.csv       # Router credentials (input)
+└── netgear_firmware/
+    └── files/
+        └── results_2024-01-15_09-30-00.json   # Timestamped output
+```
+
+The `netgear_firmware/files/` directory is created automatically on first run if it does not exist.
+
+---
+
 ## CSV Input Format
 
-The script reads switch credentials from a CSV file. The file must have at minimum a `host` column. All other columns are optional and fall back to defaults if omitted.
+The script reads router credentials from `secrets/netgear_firmware.csv` by default. The file must have at minimum a `host` column. All other columns are optional and fall back to defaults if omitted.
 
 ### Supported Columns
 
-| Column     | Required | Default | Description                        |
-|------------|----------|---------|------------------------------------|
-| `host`     | Yes      | —       | IP address or hostname of the switch |
-| `username` | No       | `admin` | SSH login username                 |
-| `password` | No       | `""`    | SSH login password                 |
-| `port`     | No       | `22`    | SSH port number                    |
+| Column     | Required | Default | Description                         |
+|------------|----------|---------|-------------------------------------|
+| `host`     | Yes      | —       | IP address or hostname of the router |
+| `username` | No       | `admin` | SSH login username                  |
+| `password` | No       | `""`    | SSH login password                  |
+| `port`     | No       | `22`    | SSH port number                     |
 
 ### Example CSV
 
@@ -100,17 +123,19 @@ host,username,password,port
 ```
 usage: netgear_firmware.py [-h] [--csv CSV] [--output OUTPUT]
                             [--workers WORKERS] [--timeout TIMEOUT]
+                            [--firmware FIRMWARE]
                             [--verbose] [--include-raw]
 ```
 
-| Argument        | Default          | Description                                              |
-|-----------------|------------------|----------------------------------------------------------|
-| `--csv`         | `switches.csv`   | Path to the input CSV file                               |
-| `--output`      | `results.json`   | Path to write the JSON results file                      |
-| `--workers`     | `5`              | Number of concurrent SSH connections                     |
-| `--timeout`     | `20`             | Per-switch SSH connection timeout in seconds             |
-| `--verbose`     | off              | Enable DEBUG-level logging to stderr                     |
-| `--include-raw` | off              | Append raw SSH command output to each device in the JSON |
+| Argument        | Default                                                   | Description                                                                      |
+|-----------------|-----------------------------------------------------------|----------------------------------------------------------------------------------|
+| `--csv`         | `secrets/netgear_firmware.csv`                            | Path to the input CSV file                                                       |
+| `--output`      | `netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json` | Path to write the JSON results file                                              |
+| `--workers`     | `5`                                                       | Number of concurrent SSH connections                                             |
+| `--timeout`     | `20`                                                      | Per-router SSH connection timeout in seconds                                     |
+| `--firmware`    | off                                                       | Only show routers whose firmware does not match this version (e.g. `13.0.4.9`)  |
+| `--verbose`     | off                                                       | Enable DEBUG-level logging to stderr                                             |
+| `--include-raw` | off                                                       | Append raw SSH command output to each router entry in the JSON                  |
 
 ### Examples
 
@@ -118,17 +143,14 @@ usage: netgear_firmware.py [-h] [--csv CSV] [--output OUTPUT]
 # Use 10 parallel workers with a 30-second timeout
 python3 netgear_firmware.py --workers 10 --timeout 30
 
-# Only show switches not running 12.0.20.7
-python3 netgear_firmware.py --firmware 12.0.20.7
+# Only show routers not running 13.0.4.9
+python3 netgear_firmware.py --firmware 13.0.4.9
 
-# Combine firmware filter with a custom CSV and output file
-python3 netgear_firmware.py --firmware 12.0.20.7 --csv my_switches.csv --output audit.json
+# Debug a single router by including raw output and enabling verbose logging
+python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --include-raw --verbose
 
-# Debug a single switch by including raw output and enabling verbose logging
-python3 netgear_firmware.py --csv one_switch.csv --include-raw --verbose
-
-# Write results to a timestamped file
-python3 netgear_firmware.py --output results_2024-01-15.json
+# Write results to a custom filename
+python3 netgear_firmware.py --output netgear_firmware/files/audit_2024-01-15.json
 ```
 
 ---
@@ -141,64 +163,30 @@ On launch, the script prints a confirmation header before any scanning begins:
 
 ```
   Netgear M4250 Firmware & CPU Temp Checker
-  Query switch firmware version and CPU temperature via SSH
-  Input:   switches.csv
-  Output:  results.json
+  Query router firmware version and CPU temperature via SSH
+  Input:   secrets/netgear_firmware.csv
+  Output:  netgear_firmware/files/results_2024-01-15_09-30-00.json
   Workers: 5
   Timeout: 20s
 ```
 
+When `--firmware` is active, a Filter line is appended:
+
+```
+  Filter:  firmware != 13.0.4.9
+```
+
 ### Progress Bar
 
-A live progress bar tracks scanning progress. It displays the most recently started host in the postfix and updates as each switch completes. On finish, it shows total elapsed time.
+A live progress bar tracks scanning progress, showing the most recently completed host in the postfix. On finish it shows total elapsed time.
 
 ```
   Scanning ████████████████████ 12/12 [00:18<00:00]  Complete in 18.3s
 ```
 
-- The bar is written to `stderr` so it does not interfere with piped or redirected output
-- The bar remains visible after scanning completes (`leave=True`)
+- Written to `stderr` so it does not interfere with piped or redirected output
+- Remains visible after scanning completes
 - Width scales dynamically to the terminal width
-
-### Firmware Filter
-
-When `--firmware` is passed, scanning still runs across all switches in the CSV but only switches with a version mismatch appear in the table. Errors and auth failures are excluded from the filtered view since they have no version to compare.
-
-The header block confirms the active filter:
-
-```
-  Netgear M4250 Firmware & CPU Temp Checker
-  Query switch firmware version and CPU temperature via SSH
-  Input:   switches.csv
-  Output:  results.json
-  Workers: 5
-  Timeout: 20s
-  Filter:  firmware != 12.0.20.7
-```
-
-The table banner changes to reflect the expected version:
-
-```
-  ============================================================
-       Netgear M4250 — Firmware Mismatch: expected 12.0.20.7
-  ============================================================
-```
-
-A firmware summary line is added to the footer:
-
-```
-  Firmware Filter: 12.0.20.7  |  ✓ Matched: 10  |  ✗ Mismatched: 2
-```
-
-If every reachable switch matches the expected version, the table is skipped entirely and a single confirmation line is printed:
-
-```
-  ✓ All reachable switches are running firmware 12.0.20.7
-```
-
-> **Note:** The JSON output always contains all results regardless of the filter. The filter only affects what is shown in the terminal table.
-
----
 
 ### Results Table
 
@@ -206,45 +194,71 @@ After scanning, a formatted table is printed to `stdout`:
 
 ```
   ============================================================
-        Netgear M4250 Query Results — Firmware & CPU Temp
+      Netgear M4250 Query Results — Firmware & CPU Temp
   ============================================================
-  +----------+---------------+----------+----------+----------+
-  | Status   | Host          | Firmware | CPU Temp | Error    |
-  +----------+---------------+----------+----------+----------+
-  | ✓ OK     | 192.168.1.10  | 12.0.20.7| 109 °F   | 38.5 W        |          |
-  | ✓ OK     | 192.168.1.11  | 12.0.20.7| 113 °F   | 42.0 W        |          |
-  | ✗ ERROR  | 192.168.1.12  | N/A      | N/A      | N/A           | Timed out|
-  | ✗ AUTH ERR| 192.168.1.13 | N/A      | N/A      | N/A           | Auth failed|
-  +----------+---------------+----------+----------+----------+
+  +------------+---------------+-----------+----------+---------------+----------+
+  | Status     | Host          | Firmware  | CPU Temp | Total PoE (W) | Error    |
+  +------------+---------------+-----------+----------+---------------+----------+
+  | ✓ OK       | 192.168.1.10  | M4250-10G2F-PoE+ | ABC1234567890 | 13.0.4.9  | 109 °F   | 82.4 W        |          |
+  | ✓ OK       | 192.168.1.11  | M4250-10G2F-PoE+ | DEF0987654321 | 13.0.4.9  | 113 °F   | 91.0 W        |          |
+  | ✗ ERROR    | 192.168.1.12  | N/A              | N/A           | N/A       | N/A      | N/A           | Timed out|
+  | ✗ AUTH ERR | 192.168.1.13  | N/A              | N/A           | N/A       | N/A      | N/A           | Auth failed|
+  +------------+---------------+-----------+----------+---------------+----------+
 
   Total: 4  |  ✓ Success: 2  |  ✗ Auth Errors: 1  |  ✗ Failed: 1
   CPU Temp (°F) — Avg: 111  |  Min: 109  |  Max: 113  |  Reported: 2/4
-  Total PoE (W) — Avg: 40.3  |  Min: 38.5  |  Max: 42.0  |  Reported: 2/4
+  Total PoE (W) — Avg: 86.7  |  Min: 82.4  |  Max: 91.0  |  Reported: 2/4
 
-  Results saved: results.json
+  Results saved: netgear_firmware/files/results_2024-01-15_09-30-00.json
   Elapsed: 18.3s (5 workers)
 ```
 
 ### Status Icons
 
-| Status      | Display      | Meaning                              |
-|-------------|--------------|--------------------------------------|
-| `success`   | `✓ OK`       | Firmware and/or temp retrieved       |
-| `auth_error`| `✗ AUTH ERR` | SSH credentials were rejected        |
-| `error`     | `✗ ERROR`    | Connection failed or parse error     |
+| Status      | Display       | Meaning                              |
+|-------------|---------------|--------------------------------------|
+| `success`   | `✓ OK`        | Firmware and/or temp retrieved       |
+| `auth_error`| `✗ AUTH ERR`  | SSH credentials were rejected        |
+| `error`     | `✗ ERROR`     | Connection failed or parse error     |
+
+### Firmware Filter
+
+When `--firmware` is passed, only routers with a version mismatch appear in the table. Routers that failed to connect are excluded from the filtered view since they have no version to compare.
+
+The banner title changes to reflect the expected version:
+
+```
+  ============================================================
+       Netgear M4250 — Firmware Mismatch: expected 13.0.4.9
+  ============================================================
+```
+
+A firmware summary line is added to the footer:
+
+```
+  Firmware Filter: 13.0.4.9  |  ✓ Matched: 10  |  ✗ Mismatched: 2
+```
+
+If every reachable router matches the expected version, the table is skipped and a single confirmation line is printed instead:
+
+```
+  ✓ All reachable routers are running firmware 13.0.4.9
+```
+
+> **Note:** The JSON output always contains all results regardless of the filter. The filter only affects what is shown in the terminal table.
 
 ---
 
 ## JSON Output
 
-Results are written to the output file with a `query_info` metadata block and a `switches` array.
+Results are written to a timestamped file under `netgear_firmware/files/` with a `query_info` metadata block and a `routers` array.
 
 ### Structure
 
 ```json
 {
   "query_info": {
-    "csv_file": "/path/to/switches.csv",
+    "csv_file": "/path/to/netgear_firmware/files",
     "timestamp": "2024-01-15T14:32:00.123456+00:00",
     "protocol": "SSH / Netgear M4250 CLI",
     "mode": "firmware+temp",
@@ -254,18 +268,20 @@ Results are written to the output file with a `query_info` metadata block and a 
     "errors": 2,
     "elapsed_seconds": 18.3
   },
-  "switches": [
+  "routers": [
     {
       "host": "192.168.1.10",
       "username": "admin",
       "port": 22,
       "query_timestamp": "2024-01-15T14:31:52.001234+00:00",
       "status": "success",
-      "firmware_version": "12.0.20.7",
+      "model": "M4250-10G2F-PoE+",
+      "serial_number": "ABC1234567890",
+      "firmware_version": "13.0.4.9",
       "cpu_temp": "109 °F",
       "cpu_temp_value": 109.4,
-      "poe_consumed": "38.5 W",
-      "poe_consumed_value": 38.5,
+      "poe_consumed": "82.4 W",
+      "poe_consumed_value": 82.4,
       "error": null
     },
     {
@@ -274,9 +290,13 @@ Results are written to the output file with a `query_info` metadata block and a 
       "port": 22,
       "query_timestamp": "2024-01-15T14:31:58.004321+00:00",
       "status": "error",
+      "model": null,
+      "serial_number": null,
       "firmware_version": null,
       "cpu_temp": null,
       "cpu_temp_value": null,
+      "poe_consumed": null,
+      "poe_consumed_value": null,
       "error": "SSH/network error: Connection timed out"
     }
   ]
@@ -289,31 +309,36 @@ Results are written to the output file with a `query_info` metadata block and a 
 
 | Field             | Type    | Description                                  |
 |-------------------|---------|----------------------------------------------|
-| `csv_file`        | string  | Path to the input CSV                        |
+| `csv_file`        | string  | Path to the output directory                 |
 | `timestamp`       | string  | UTC ISO 8601 time the run completed          |
 | `protocol`        | string  | Always `"SSH / Netgear M4250 CLI"`           |
 | `mode`            | string  | Always `"firmware+temp"`                     |
 | `workers`         | integer | Number of concurrent workers used            |
-| `total`           | integer | Total switches queried                       |
+| `total`           | integer | Total routers queried                        |
 | `success`         | integer | Number of successful queries                 |
 | `errors`          | integer | Number of failed queries                     |
 | `elapsed_seconds` | float   | Total wall-clock runtime in seconds          |
 
-#### Per-switch entry (`switches[]`)
+#### Per-router entry (`routers[]`)
 
-| Field              | Type           | Description                                           |
-|--------------------|----------------|-------------------------------------------------------|
-| `host`             | string         | IP or hostname from the CSV                           |
-| `username`         | string         | SSH username used                                     |
-| `port`             | integer        | SSH port used                                         |
-| `query_timestamp`  | string         | UTC ISO 8601 time this switch was queried             |
-| `status`           | string         | `"success"`, `"auth_error"`, or `"error"`             |
-| `firmware_version` | string or null | Parsed firmware version string, e.g. `"12.0.20.7"`   |
-| `cpu_temp`         | string or null | Formatted temperature string, e.g. `"109 °F"`        |
-| `cpu_temp_value`   | float or null  | Raw numeric temperature in °F for calculations       |
-| `error`            | string or null | Error message on failure, `null` on success           |
-| `raw_version`      | string         | Raw `show hardware` output — only present with `--include-raw` |
-| `raw_environment`  | string         | Raw `show environment` output — only present with `--include-raw` |
+| Field               | Type           | Description                                               |
+|---------------------|----------------|-----------------------------------------------------------|
+| `host`              | string         | IP or hostname from the CSV                               |
+| `username`          | string         | SSH username used                                         |
+| `port`              | integer        | SSH port used                                             |
+| `query_timestamp`   | string         | UTC ISO 8601 time this router was queried                 |
+| `status`            | string         | `"success"`, `"auth_error"`, or `"error"`                 |
+| `model`             | string or null | Parsed model string, e.g. `"M4250-10G2F-PoE+"`            |
+| `serial_number`     | string or null | Parsed serial number, e.g. `"ABC1234567890"`               |
+| `firmware_version`  | string or null | Parsed firmware version string, e.g. `"13.0.4.9"`         |
+| `cpu_temp`          | string or null | Formatted temperature string, e.g. `"109 °F"`            |
+| `cpu_temp_value`    | float or null  | Raw numeric temperature in °F                            |
+| `poe_consumed`      | string or null | Formatted PoE string, e.g. `"82.4 W"`                    |
+| `poe_consumed_value`| float or null  | Raw numeric PoE watts                                     |
+| `error`             | string or null | Error message on failure, `null` on success               |
+| `raw_version`       | string         | Raw `show hardware` output — only with `--include-raw`    |
+| `raw_environment`   | string         | Raw `show environment` output — only with `--include-raw` |
+| `raw_poe`           | string         | Raw `show poe` output — only with `--include-raw`         |
 
 ---
 
@@ -321,22 +346,22 @@ Results are written to the output file with a `query_info` metadata block and a 
 
 ### `load_csv(csv_path)`
 
-Reads switch credentials from a CSV file. Handles BOM encoding, auto-detects delimiters, and skips comment lines.
+Reads router credentials from a CSV file. Handles BOM encoding, auto-detects delimiters, and skips comment lines.
 
 ```python
-switches = load_csv(Path("switches.csv"))
-# Returns a list of dicts:
+routers = load_csv(Path("secrets/netgear_firmware.csv"))
+# Returns:
 # [{"host": "192.168.1.10", "username": "admin", "password": "pass", "port": 22}, ...]
 ```
 
 ---
 
-### `check_switch(host, username, password, port, timeout, include_raw)`
+### `check_router(host, username, password, port, timeout, include_raw)`
 
-Connects to a single switch via SSH and retrieves firmware version and CPU temperature. Returns a result dict.
+Connects to a single router via SSH and retrieves firmware version, CPU temperature, and total PoE power consumed. Returns a result dict.
 
 ```python
-result = check_switch(
+result = check_router(
     host="192.168.1.10",
     username="admin",
     password="mypassword",
@@ -348,15 +373,38 @@ result = check_switch(
 # {
 #   "host": "192.168.1.10",
 #   "status": "success",
-#   "firmware_version": "12.0.20.7",
+#   "firmware_version": "13.0.4.9",
 #   "cpu_temp": "109 °F",
 #   "cpu_temp_value": 109.4,
-#   "error": null,
-#   ...
+#   "poe_consumed": "82.4 W",
+#   "poe_consumed_value": 82.4,
+#   "error": null
 # }
 ```
 
-The function opens an interactive SSH shell (rather than using exec channels) because the M4250 CLI requires an interactive session for commands like `terminal length 0` and `en` (enable mode).
+---
+
+### `parse_serial_number(raw)`
+
+Extracts the serial number from the raw output of `show hardware`. Since `show hardware` is already called, no additional SSH command is required.
+
+```python
+raw = "Serial Number.................. ABC1234567890"
+serial = parse_serial_number(raw)
+# Returns: "ABC1234567890"
+```
+
+---
+
+### `parse_machine_model(raw)`
+
+Extracts the machine model string from the raw output of `show hardware`. Since `show hardware` is already called to retrieve firmware version, no additional SSH command is required.
+
+```python
+raw = "Machine Model.................. M4250-10G2F-PoE+"
+model = parse_machine_model(raw)
+# Returns: "M4250-10G2F-PoE+"
+```
 
 ---
 
@@ -365,39 +413,18 @@ The function opens an interactive SSH shell (rather than using exec channels) be
 Extracts the firmware version string from the raw output of `show hardware`. Tries multiple regex patterns to handle variation across firmware builds.
 
 ```python
-raw = """
-  Software Version...................  12.0.20.7
-  Boot Version.......................  1.0.0.8
-"""
+raw = "Software Version...................  13.0.4.9"
 version = parse_firmware_version(raw)
-# Returns: "12.0.20.7"
+# Returns: "13.0.4.9"
 ```
 
-Patterns tried in order:
-1. `Software Version....... X.Y.Z`
-2. `Firmware Version: X.Y.Z`
-3. `Build Number: N`
-4. Generic `Version X.Y.Z` anywhere in the output
-
----
-
-### `parse_poe_power(raw)`
-
-Extracts the total PoE power consumed from the raw output of `show poe`. Returns a tuple of `(display_string, numeric_value)` where the value is in watts.
-
-```python
-raw = "Total Power Consumed...........................  82.4 Watts"
-display, value = parse_poe_power(raw)
-# Returns: ("82.4 W", 82.4)
-```
-
-The display string is always formatted to one decimal place (e.g. `"38.5 W"`, `"120.0 W"`).
+Patterns tried in order: `Software Version`, `Firmware Version`, `Build Number`, then a generic `Version X.Y.Z` anywhere in the output.
 
 ---
 
 ### `parse_cpu_temp(raw)`
 
-Extracts the CPU temperature from the raw output of `show environment | include Temp`. Returns a tuple of `(display_string, numeric_value)` where the value is in °F.
+Extracts the CPU temperature from the raw output of `show environment | include Temp`. Returns a `(display_string, numeric_value)` tuple. The raw router value is in Celsius and is converted to Fahrenheit using `°F = °C × 9/5 + 32`.
 
 ```python
 raw = "Temp (C)....................................... 40"
@@ -405,45 +432,58 @@ display, value = parse_cpu_temp(raw)
 # Returns: ("104 °F", 104.0)
 ```
 
-The raw switch output is in Celsius. The function converts to Fahrenheit using the standard formula: `°F = °C × 9/5 + 32`.
+---
+
+### `parse_poe_power(raw)`
+
+Extracts the total PoE power consumed from the raw output of `show poe`. Returns a `(display_string, numeric_value)` tuple in watts.
+
+```python
+raw = "Total Power Consumed...........................  82.4 Watts"
+display, value = parse_poe_power(raw)
+# Returns: ("82.4 W", 82.4)
+```
+
+The display string is always formatted to one decimal place (e.g. `"82.4 W"`, `"120.0 W"`).
 
 ---
 
-### `check_all_switches(switches, output_path, include_raw, max_workers, timeout)`
+### `check_all_routers(routers, output_path, include_raw, max_workers, timeout, firmware_filter)`
 
-Runs `check_switch` concurrently across all switches using a `ThreadPoolExecutor`. Results are stored in order regardless of completion order. Displays the progress bar during execution, then calls `print_results_table` and writes the JSON output file.
+Runs `check_router` concurrently across all routers using a `ThreadPoolExecutor`. Results are stored in CSV order regardless of completion order. Displays the progress bar during execution, writes the JSON file, then calls `print_results_table`.
 
 ```python
-switches = load_csv(Path("switches.csv"))
-check_all_switches(
-    switches=switches,
-    output_path=Path("results.json"),
+routers = load_csv(Path("secrets/netgear_firmware.csv"))
+check_all_routers(
+    routers=routers,
+    output_path=Path("netgear_firmware/files/results_2024-01-15_09-30-00.json"),
     include_raw=False,
     max_workers=5,
     timeout=20,
+    firmware_filter="13.0.4.9",
 )
 ```
 
 ---
 
-### `print_results_table(results, elapsed)`
+### `print_results_table(results, elapsed, firmware_filter)`
 
-Renders the terminal results table, summary footer, and metrics line from a completed list of result dicts.
+Renders the terminal results table, summary footer, and metrics lines. When `firmware_filter` is provided, only mismatched routers are shown. If all routers match, a single confirmation line is printed instead of the table.
 
 ```python
-print_results_table(all_results, elapsed=18.3)
+print_results_table(all_results, elapsed=18.3, firmware_filter="13.0.4.9")
 ```
 
 ---
 
 ### `status_icon(r)`
 
-Returns a color-coded status string for use in the table's Status column.
+Returns a color-coded status string for the table's Status column.
 
 ```python
-status_icon({"status": "success"})   # "✓ OK"   (green)
-status_icon({"status": "auth_error"})# "✗ AUTH ERR" (yellow)
-status_icon({"status": "error"})     # "✗ ERROR" (red)
+status_icon({"status": "success"})    # "✓ OK"       (green)
+status_icon({"status": "auth_error"}) # "✗ AUTH ERR" (yellow)
+status_icon({"status": "error"})      # "✗ ERROR"    (red)
 ```
 
 ---
@@ -453,10 +493,10 @@ status_icon({"status": "error"})     # "✗ ERROR" (red)
 Normalizes a value for table display. Converts `None`, `"-1"`, empty strings, and known error strings to `"N/A"`.
 
 ```python
-clean(None)          # "N/A"
-clean("12.0.20.7")   # "12.0.20.7"
-clean("")            # "N/A"
-clean(-1)            # "N/A"
+clean(None)         # "N/A"
+clean("13.0.4.9")   # "13.0.4.9"
+clean("")           # "N/A"
+clean(-1)           # "N/A"
 ```
 
 ---
@@ -477,32 +517,35 @@ truncate_error(None)                             # ""
 
 ### `strip_ansi(text)`
 
-Strips all ANSI escape sequences and non-printable control characters from a string. Used to clean raw SSH terminal output before parsing.
+Strips all ANSI escape sequences and non-printable control characters from a string. Used to clean raw SSH terminal output before regex parsing.
 
 ```python
-raw = "\033[96mSoftware Version....... 12.0.20.7\033[0m"
+raw = "\033[96mSoftware Version....... 13.0.4.9\033[0m"
 clean_text = strip_ansi(raw)
-# Returns: "Software Version....... 12.0.20.7"
+# Returns: "Software Version....... 13.0.4.9"
 ```
 
 ---
 
 ## Troubleshooting
 
-**`Authentication failed` on all switches**
-Verify the username and password columns in your CSV. If the switch has an enable password configured, the `en` command will hang — this is not currently handled automatically.
+**`Authentication failed` on all routers**
+Verify the username and password columns in your CSV. If the router has an enable password configured, the `en` command will hang waiting for a prompt that is not currently handled.
 
-**`Timed out` on reachable switches**
-Try increasing `--timeout`. Default is 20 seconds; switches under load or on slow links may need 30–60 seconds.
+**`Timed out` on reachable routers**
+Try increasing `--timeout`. The default is 20 seconds; routers under load or on slow links may need 30–60 seconds.
 
 **`Parse error` — firmware version not found**
-Run with `--include-raw` and inspect the `raw_version` field in the JSON to see the actual `show hardware` output from that switch. The firmware may use a format not yet covered by `parse_firmware_version`.
+Run with `--include-raw` and inspect the `raw_version` field in the JSON to see the actual `show hardware` output. The firmware may use a format not yet covered by `parse_firmware_version`.
 
-**CPU Temp shows `N/A` for all switches**
-Some M4250 firmware versions do not support the `| include` pipe filter. Run with `--include-raw` and check `raw_environment` in the JSON. If the output is present but in a different format, the regex in `parse_cpu_temp` may need adjusting.
+**Total PoE shows `N/A` for all routers**
+Run with `--include-raw` and check `raw_poe` in the JSON. The label on the router should read `Total Power Consumed...` with dots separating the label from the value. If the format differs, the regex in `parse_poe_power` may need adjusting.
+
+**CPU Temp shows `N/A` for all routers**
+Some M4250 firmware versions do not support the `| include` pipe filter. Run with `--include-raw` and check `raw_environment` in the JSON to see what the router is actually returning.
 
 **Progress bar and table output are interleaved**
-The progress bar writes to `stderr` and the table writes to `stdout`. If both are being redirected to the same destination (e.g. a log file via `2>&1`), they will interleave. Redirect them separately:
+The progress bar writes to `stderr` and the table writes to `stdout`. If both are redirected to the same destination they will interleave. Redirect them separately:
 
 ```bash
 python3 netgear_firmware.py > results.txt 2> progress.txt
