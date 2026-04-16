@@ -325,33 +325,32 @@ function FleetConsole(){
 
         {/* ATTENTION */}
         {view==="attention"&&<div>
-          <div style={{background:T.surface,border:`1px solid ${T.borderHi}`,borderRadius:8,padding:14,marginBottom:14}}>
+          <div style={{background:T.surface,border:`1px solid ${T.borderHi}`,borderRadius:8,padding:20,marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-              <div style={{fontSize:13,fontWeight:600,color:T.textBright}}>Target Firmware per Device Type</div>
-              {fwSaving&&<span style={{fontSize:13,color:T.green,fontFamily:M}}>✓ saved</span>}
-              {!isAdmin&&<Badge color={T.textMuted} bg="rgba(92,110,136,0.1)">view only</Badge>}
+              <div style={{fontSize:16,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>Target Firmware per Device Type</div>
+              {fwSaving&&<span style={{fontSize:13,color:T.green,fontFamily:S}}>✓ saved</span>}
               <div style={{flex:1}}/>
-              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=["*"]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.red}`,background:T.redDim,color:T.red,fontFamily:M,fontSize:13,fontWeight:600,cursor:"pointer"}}>All: Errors Only</button>}
-              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=[]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.border}`,background:"transparent",color:T.textMuted,fontFamily:M,fontSize:13,cursor:"pointer"}}>Clear All</button>}
+              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=["*"]);saveTargetFw(t);}} style={{padding:"6px 14px",borderRadius:4,border:`1px solid ${T.red}`,background:T.redDim,color:T.red,fontFamily:S,fontSize:13,fontWeight:600,cursor:"pointer"}}>All: Errors Only</button>}
+              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=[]);saveTargetFw(t);}} style={{padding:"6px 14px",borderRadius:4,border:`1px solid ${T.border}`,background:"transparent",color:T.textMuted,fontFamily:S,fontSize:13,cursor:"pointer"}}>Clear All</button>}
             </div>
-            <div style={{fontSize:13,color:T.textMuted,marginBottom:16}}>Click firmware versions to accept them. Devices on unselected versions will be flagged.</div>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            <div style={{fontSize:14,color:T.textMuted,marginBottom:16}}>Click firmware versions to accept them. Devices on unselected versions will be flagged.</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
               {typeOpts.map(type=>{const cfg=DTYPES[type]||DTYPES.unknown;const versions=fwByType[type]||{};const vList=Object.entries(versions).sort((a,b)=>b[1]-a[1]);const selected=targetFw[type]||[];const isErrOnly=Array.isArray(selected)&&selected.includes("*");
                 const toggleVer=(v)=>{if(!isAdmin)return;let cur=Array.isArray(selected)?selected.filter(x=>x!=="*"):[];if(cur.includes(v))cur=cur.filter(x=>x!==v);else cur=[...cur,v];saveTargetFw({...targetFw,[type]:cur});};
                 const toggleErrOnly=()=>{if(!isAdmin)return;saveTargetFw({...targetFw,[type]:isErrOnly?[]:["*"]});};
                 const selectAll=()=>{if(!isAdmin)return;saveTargetFw({...targetFw,[type]:vList.map(([v])=>v)});};
-                return <div key={type} style={{flex:"1 1 240px",minWidth:200,background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:6,padding:14}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}><span style={{fontSize:16}}>{cfg.icon}</span><span style={{fontWeight:600,fontSize:14,color:cfg.color}}>{cfg.label}</span><span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{vList.length} ver.</span><span style={{fontSize:13,color:T.textDim,fontFamily:M,marginLeft:"auto"}}>{allDevs.filter(d=>d._type===type).length}</span></div>
-                  <div style={{display:"flex",gap:6,marginBottom:8}}>
-                    {isAdmin&&<span onClick={toggleErrOnly} style={{fontSize:12,fontFamily:S,padding:"4px 10px",borderRadius:4,cursor:"pointer",background:isErrOnly?T.redDim:"transparent",border:`1px solid ${isErrOnly?T.red:T.border}`,color:isErrOnly?T.red:T.textMuted,transition:"all 0.15s",fontWeight:500}}>Errors only</span>}
-                    {isAdmin&&!isErrOnly&&vList.length>1&&<span onClick={selectAll} style={{fontSize:12,fontFamily:S,padding:"4px 10px",borderRadius:4,cursor:"pointer",background:"transparent",border:`1px solid ${T.border}`,color:T.textMuted,transition:"all 0.15s",fontWeight:500}}>Select all</span>}
+                return <div key={type} style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:8,padding:16}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><span style={{fontSize:18}}>{cfg.icon}</span><span style={{fontWeight:700,fontSize:15,color:cfg.color}}>{cfg.label}</span><span style={{fontSize:13,color:T.textDim}}>{vList.length} version{vList.length!==1?"s":""}</span><span style={{fontSize:14,color:T.textDim,fontFamily:S,marginLeft:"auto",fontWeight:600}}>{allDevs.filter(d=>d._type===type).length}</span></div>
+                  <div style={{display:"flex",gap:6,marginBottom:10}}>
+                    {isAdmin&&<span onClick={toggleErrOnly} style={{fontSize:13,fontFamily:S,padding:"5px 12px",borderRadius:4,cursor:"pointer",background:isErrOnly?T.redDim:"transparent",border:`1px solid ${isErrOnly?T.red:T.border}`,color:isErrOnly?T.red:T.textMuted,transition:"all 0.15s",fontWeight:500}}>Errors only</span>}
+                    {isAdmin&&!isErrOnly&&vList.length>1&&<span onClick={selectAll} style={{fontSize:13,fontFamily:S,padding:"5px 12px",borderRadius:4,cursor:"pointer",background:"transparent",border:`1px solid ${T.border}`,color:T.textMuted,transition:"all 0.15s",fontWeight:500}}>Select all</span>}
                     {!isAdmin&&isErrOnly&&<Badge color={T.red} bg={T.redDim}>Errors only</Badge>}
                   </div>
-                  <div style={{maxHeight:160,overflowY:"auto",display:"flex",gap:6,flexWrap:"wrap",padding:"2px 0"}}>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     {vList.map(([v,n])=>{const isSelected=!isErrOnly&&Array.isArray(selected)&&selected.includes(v);
-                      return <span key={v} onClick={()=>{if(!isErrOnly)toggleVer(v);}} style={{fontSize:13,fontFamily:S,padding:"4px 10px",borderRadius:4,cursor:isAdmin&&!isErrOnly?"pointer":"default",background:isSelected?cfg.bg:isErrOnly?"transparent":"transparent",border:`1px solid ${isSelected?cfg.color:T.border}`,color:isSelected?cfg.color:T.textMuted,opacity:isErrOnly?0.4:1,transition:"all 0.15s",fontWeight:500}}>{v} ({n})</span>;})}
+                      return <span key={v} onClick={()=>{if(!isErrOnly)toggleVer(v);}} style={{fontSize:13,fontFamily:S,padding:"5px 12px",borderRadius:4,cursor:isAdmin&&!isErrOnly?"pointer":"default",background:isSelected?cfg.bg:isErrOnly?"transparent":"transparent",border:`1px solid ${isSelected?cfg.color:T.border}`,color:isSelected?cfg.color:T.textMuted,opacity:isErrOnly?0.4:1,transition:"all 0.15s",fontWeight:500}}>{v} ({n})</span>;})}
                   </div>
-                  {!isErrOnly&&Array.isArray(selected)&&selected.length>0&&<div style={{marginTop:8,fontSize:13,color:T.green,fontFamily:S,fontWeight:500}}>✓ {selected.length} version{selected.length!==1?"s":""} accepted</div>}
+                  {!isErrOnly&&Array.isArray(selected)&&selected.length>0&&<div style={{marginTop:10,fontSize:14,color:T.green,fontFamily:S,fontWeight:600}}>✓ {selected.length} version{selected.length!==1?"s":""} accepted</div>}
                 </div>;})}
             </div>
           </div>
