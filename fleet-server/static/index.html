@@ -70,7 +70,7 @@ function ProgBar({label,value,max,color,icon}){const pct=max>0?(value/max)*100:0
 // Auto-refresh interval (ms)
 const REFRESH_INTERVAL = 60000;
 
-function FwStatusPie({devices,targetFw}){
+function FwStatusPie({devices,targetFw,large}){
   if(!devices||devices.length===0)return null;
   var naC="N/A (Class 1)";
   var okCount=0,outdatedCount=0,offlineCount=0,noTargetCount=0;
@@ -89,7 +89,7 @@ function FwStatusPie({devices,targetFw}){
     {label:"Offline",count:offlineCount,color:T.red},
     {label:"No Target",count:noTargetCount,color:T.textDim}
   ].filter(function(s){return s.count>0;});
-  var sz=140,scx=70,scy=70,sr=56,sa=-90;
+  var sz=large?280:140,scx=sz/2,scy=sz/2,sr=large?115:56,sa=-90;
   var arcs=segments.map(function(seg){
     var ang=(seg.count/total)*360;
     var ea=sa+ang,la=ang>180?1:0;
@@ -102,23 +102,34 @@ function FwStatusPie({devices,targetFw}){
     sa=ea;
     return {label:seg.label,count:seg.count,color:seg.color,path:p,pct:Math.round(seg.count/total*100)};
   });
-  return <div style={{display:"flex",gap:20,alignItems:"center",background:T.surface,border:"1px solid "+T.border,borderRadius:8,padding:20,marginBottom:14}}>
-    <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
-      {arcs.map(function(a,i){return <path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>;})}
-      <circle cx={scx} cy={scy} r={30} fill={T.surface}/>
-      <text x={scx} y={scy-2} textAnchor="middle" fill={T.textBright} fontSize={22} fontWeight={700} fontFamily={S}>{total}</text>
-      <text x={scx} y={scy+13} textAnchor="middle" fill={T.textMuted} fontSize={10} fontFamily={S}>shown</text>
-    </svg>
-    <div style={{display:"flex",gap:24,flexWrap:"wrap",flex:1}}>
-      {arcs.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:14,height:14,borderRadius:3,background:a.color}}/>
-        <div>
-          <div style={{fontSize:24,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
-          <div style={{fontSize:13,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
-        </div>
-      </div>;})}
+  var innerR=large?58:30;
+  var titleFs=large?36:22;
+  var subFs=large?14:10;
+  var subY=large?18:13;
+  return <div style={{background:T.surface,border:"1px solid "+T.border,borderRadius:8,padding:large?24:20,marginBottom:large?0:14}}>
+    {large&&<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
+      <span style={{fontSize:22}}>📊</span>
+      <span style={{fontSize:20,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>Firmware Status</span>
+      <span style={{fontSize:15,color:T.textMuted,fontFamily:S}}>{total} devices</span>
+    </div>}
+    <div style={{display:"flex",gap:large?24:20,alignItems:"center"}}>
+      <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
+        {arcs.map(function(a,i){return <path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={large?2:1.5}/>;})}
+        <circle cx={scx} cy={scy} r={innerR} fill={T.surface}/>
+        <text x={scx} y={scy-4} textAnchor="middle" fill={T.textBright} fontSize={titleFs} fontWeight={700} fontFamily={S}>{total}</text>
+        <text x={scx} y={scy+subY} textAnchor="middle" fill={T.textMuted} fontSize={subFs} fontFamily={S}>{large?"total devices":"shown"}</text>
+      </svg>
+      <div style={{display:"flex",gap:large?20:24,flexWrap:"wrap",flex:1,flexDirection:large?"column":"row"}}>
+        {arcs.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:large?12:10}}>
+          <div style={{width:large?16:14,height:large?16:14,borderRadius:large?4:3,background:a.color}}/>
+          <div>
+            <div style={{fontSize:large?30:24,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
+            <div style={{fontSize:large?15:13,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
+          </div>
+        </div>;})}
+      </div>
     </div>
-    <div style={{fontSize:15,color:T.textMuted,fontWeight:500}}>Firmware Status</div>
+    {!large&&<div style={{marginTop:10,fontSize:15,color:T.textMuted,fontWeight:500,textAlign:"right"}}>Firmware Status</div>}
   </div>;
 }
 
@@ -417,8 +428,8 @@ function FleetConsole(){
 
         {/* CHARTS */}
         {view==="charts"&&<div>
-          <FwStatusPie devices={allDevs} targetFw={targetFw}/>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(460px,1fr))",gap:16}}>
+          <FwStatusPie devices={allDevs} targetFw={targetFw} large={true}/>
+          <div style={{marginTop:16,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(460px,1fr))",gap:16}}>
           {typeOpts.map(type=>{
             const cfg=DTYPES[type];
             const devsOfType=allDevs.filter(d=>d._type===type);
