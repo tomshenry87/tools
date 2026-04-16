@@ -218,6 +218,26 @@ def run_command(channel: paramiko.Channel, command: str, timeout: float = 20.0) 
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse serial number from `show hardware`
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_serial_number(raw: str) -> str | None:
+    """
+    Parses the output of `show hardware` for a line like:
+        Serial Number.................. ABC1234567890
+    Returns the serial number string or None if not found.
+    """
+    clean_text = strip_ansi(raw)
+    m = re.search(
+        r"Serial\s+Number[.\s]+(\S+)",
+        clean_text,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1).strip().rstrip(".,;")
+    return None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  Parse machine model from `show hardware`
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def parse_machine_model(raw: str) -> str | None:
@@ -324,6 +344,7 @@ def check_router(
         "query_timestamp":    queried_at,
         "status":             "error",
         "model":              None,
+        "serial_number":      None,
         "firmware_version":   None,
         "cpu_temp":           None,
         "cpu_temp_value":     None,
@@ -362,10 +383,12 @@ def check_router(
 
         firmware           = parse_firmware_version(raw_ver)
         model              = parse_machine_model(raw_ver)
+        serial             = parse_serial_number(raw_ver)
         temp_str, temp_val = parse_cpu_temp(raw_env)
         poe_str,  poe_val  = parse_poe_power(raw_poe)
 
         result["model"]              = model
+        result["serial_number"]      = serial
         result["firmware_version"]   = firmware
         result["cpu_temp"]           = temp_str
         result["cpu_temp_value"]     = temp_val
@@ -406,7 +429,7 @@ def print_results_table(
     elapsed: float,
     firmware_filter: str | None = None,
 ) -> None:
-    headers = ["Status", "Host", "Model", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
+    headers = ["Status", "Host", "Model", "Serial Number", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
     rows: list[list[str]] = []
 
     temp_vals: list[float] = []
@@ -427,6 +450,7 @@ def print_results_table(
             status_icon(r),
             clean(r.get("host")),
             clean(r.get("model")),
+            clean(r.get("serial_number")),
             clean(r.get("firmware_version")),
             clean(r.get("cpu_temp")),
             clean(r.get("poe_consumed")),
