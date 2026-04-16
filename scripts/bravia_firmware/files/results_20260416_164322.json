@@ -1,15 +1,15 @@
 {
   "query_info": {
-    "csv_file": "/home/tom/tools/scripts/secrets/bravia_firmware.csv",
-    "timestamp": "2026-04-14T17:07:35.568618+00:00",
+    "csv_file": "/home/admin/tools/scripts/secrets/bravia_firmware.csv",
+    "timestamp": "2026-04-16T16:43:36.230838+00:00",
     "protocol": "Sony BRAVIA REST API (JSON-RPC, versions 1.7, 1.4, 1.0)",
     "mode": "None (fallback: 1234)",
     "workers": 5,
     "total": 65,
-    "success": 62,
+    "success": 61,
     "auth_errors": 0,
-    "errors": 3,
-    "elapsed_seconds": 16.78
+    "errors": 4,
+    "elapsed_seconds": 13.44
   },
   "displays": [
     {
@@ -29,7 +29,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:18.805641+00:00"
+      "query_timestamp": "2026-04-16T16:43:22.765125+00:00"
     },
     {
       "host": "lsc-100-display-1.openav.dartmouth.edu",
@@ -48,7 +48,7 @@
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:18.806162+00:00"
+      "query_timestamp": "2026-04-16T16:43:22.766189+00:00"
     },
     {
       "host": "lsc-100-display-2.openav.dartmouth.edu",
@@ -67,45 +67,45 @@
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:18.806639+00:00"
+      "query_timestamp": "2026-04-16T16:43:22.767012+00:00"
     },
     {
       "host": "lsc-105-1-display-1.openav.dartmouth.edu",
       "port": 80,
-      "status": "success",
-      "model": "FW-55BZ40L",
-      "serial": "3001461",
-      "firmware_version": "5.5.0",
+      "status": "error",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
       "firmware_version_raw": "N/A",
-      "mac_address": "AC:80:0A:B5:0E:D4",
-      "device_name": "BRAVIA",
-      "interface_version": "5.5.0",
-      "product_name": "TV",
-      "generation": "5.5.0",
-      "api_version_used": "1.0",
-      "power_saving_mode": "off",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "power_saving_mode": "N/A",
       "auth_note": null,
-      "error": null,
-      "query_timestamp": "2026-04-14T17:07:18.807129+00:00"
+      "error": "Connection timed out",
+      "query_timestamp": "2026-04-16T16:43:22.767840+00:00"
     },
     {
       "host": "lsc-105-1-display-2.openav.dartmouth.edu",
       "port": 80,
-      "status": "success",
-      "model": "FW-55BZ40L",
-      "serial": "3001463",
-      "firmware_version": "5.5.0",
+      "status": "error",
+      "model": "N/A",
+      "serial": "N/A",
+      "firmware_version": "N/A",
       "firmware_version_raw": "N/A",
-      "mac_address": "AC:80:0A:B5:0E:D5",
-      "device_name": "BRAVIA",
-      "interface_version": "5.5.0",
-      "product_name": "TV",
-      "generation": "5.5.0",
-      "api_version_used": "1.0",
-      "power_saving_mode": "off",
+      "mac_address": "N/A",
+      "device_name": "N/A",
+      "interface_version": "N/A",
+      "product_name": "N/A",
+      "generation": "N/A",
+      "api_version_used": "N/A",
+      "power_saving_mode": "N/A",
       "auth_note": null,
-      "error": null,
-      "query_timestamp": "2026-04-14T17:07:18.807565+00:00"
+      "error": "Connection timed out",
+      "query_timestamp": "2026-04-16T16:43:22.768494+00:00"
     },
     {
       "host": "lsc-105-2-display-1.openav.dartmouth.edu",
@@ -124,7 +124,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.157501+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.070875+00:00"
     },
     {
       "host": "lsc-105-2-display-2.openav.dartmouth.edu",
@@ -143,7 +143,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.173213+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.212596+00:00"
     },
     {
       "host": "lsc-105-2-display-3.openav.dartmouth.edu",
@@ -162,7 +162,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.202975+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.264349+00:00"
     },
     {
       "host": "lsc-205-1-display-1.openav.dartmouth.edu",
@@ -181,7 +181,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.317593+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.361744+00:00"
     },
     {
       "host": "lsc-205-1-display-2.openav.dartmouth.edu",
@@ -200,7 +200,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.355605+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.468734+00:00"
     },
     {
       "host": "lsc-205-2-display-1.openav.dartmouth.edu",
@@ -219,7 +219,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.496391+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.552212+00:00"
     },
     {
       "host": "lsc-205-2-display-2.openav.dartmouth.edu",
@@ -238,7 +238,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.547467+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.647524+00:00"
     },
     {
       "host": "lsc-205-2-display-3.openav.dartmouth.edu",
@@ -257,7 +257,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.559798+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.754968+00:00"
     },
     {
       "host": "4-currier-101b-display.openav.dartmouth.edu",
@@ -276,7 +276,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.668912+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.831199+00:00"
     },
     {
       "host": "4-currier-101e-display.openav.dartmouth.edu",
@@ -295,7 +295,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.719086+00:00"
+      "query_timestamp": "2026-04-16T16:43:23.935582+00:00"
     },
     {
       "host": "4-currier-213-display.openav.dartmouth.edu",
@@ -314,7 +314,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.863277+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.045275+00:00"
     },
     {
       "host": "4-currier-214-display.openav.dartmouth.edu",
@@ -333,7 +333,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.921692+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.234279+00:00"
     },
     {
       "host": "4-currier-215-display.openav.dartmouth.edu",
@@ -352,7 +352,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:19.922033+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.407933+00:00"
     },
     {
       "host": "4-currier-223-display.openav.dartmouth.edu",
@@ -371,7 +371,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.123500+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.507185+00:00"
     },
     {
       "host": "4-currier-227-display.openav.dartmouth.edu",
@@ -390,7 +390,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.216079+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.564955+00:00"
     },
     {
       "host": "4-currier-232-vr-display.openav.dartmouth.edu",
@@ -409,7 +409,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.358306+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.759484+00:00"
     },
     {
       "host": "4-currier-collaboration-display.openav.dartmouth.edu",
@@ -428,7 +428,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.387914+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.859875+00:00"
     },
     {
       "host": "4-currier-lounge-display.openav.dartmouth.edu",
@@ -447,7 +447,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.388912+00:00"
+      "query_timestamp": "2026-04-16T16:43:24.890802+00:00"
     },
     {
       "host": "baker-102-display.openav.dartmouth.edu",
@@ -466,7 +466,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.593534+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.092911+00:00"
     },
     {
       "host": "bartlett-105a-display.openav.dartmouth.edu",
@@ -485,7 +485,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.775899+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.236661+00:00"
     },
     {
       "host": "berry-180-display.openav.dartmouth.edu",
@@ -504,7 +504,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.869521+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.245675+00:00"
     },
     {
       "host": "berrysport-045-display.openav.dartmouth.edu",
@@ -523,7 +523,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:20.876580+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.507197+00:00"
     },
     {
       "host": "berrysport-010-display.openav.dartmouth.edu",
@@ -542,7 +542,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.037116+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.564441+00:00"
     },
     {
       "host": "berrysport-206-display.openav.dartmouth.edu",
@@ -561,7 +561,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.229015+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.580617+00:00"
     },
     {
       "host": "carson-061-2-display-1.openav.dartmouth.edu",
@@ -580,7 +580,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.275573+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.799881+00:00"
     },
     {
       "host": "carson-061-2-display-2.openav.dartmouth.edu",
@@ -599,7 +599,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.282794+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.853288+00:00"
     },
     {
       "host": "carson-061-2-display-3.openav.dartmouth.edu",
@@ -618,7 +618,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.387995+00:00"
+      "query_timestamp": "2026-04-16T16:43:25.863563+00:00"
     },
     {
       "host": "carson-061-2-display-4.openav.dartmouth.edu",
@@ -637,7 +637,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.635481+00:00"
+      "query_timestamp": "2026-04-16T16:43:26.088412+00:00"
     },
     {
       "host": "carson-061-2-display-5.openav.dartmouth.edu",
@@ -656,7 +656,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.676676+00:00"
+      "query_timestamp": "2026-04-16T16:43:26.154752+00:00"
     },
     {
       "host": "carson-061-2-display-6.openav.dartmouth.edu",
@@ -675,7 +675,7 @@
       "power_saving_mode": "N/A",
       "auth_note": null,
       "error": "Connection timed out",
-      "query_timestamp": "2026-04-14T17:07:21.694545+00:00"
+      "query_timestamp": "2026-04-16T16:43:26.157919+00:00"
     },
     {
       "host": "court01-211-display.openav.dartmouth.edu",
@@ -694,7 +694,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.695475+00:00"
+      "query_timestamp": "2026-04-16T16:43:26.381715+00:00"
     },
     {
       "host": "court01-215-display.openav.dartmouth.edu",
@@ -713,7 +713,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:21.743849+00:00"
+      "query_timestamp": "2026-04-16T16:43:26.445229+00:00"
     },
     {
       "host": "cts-4-currier-104-display.dartmouth.edu",
@@ -731,8 +731,8 @@
       "api_version_used": "N/A",
       "power_saving_mode": "N/A",
       "auth_note": null,
-      "error": "Connection timed out",
-      "query_timestamp": "2026-04-14T17:07:22.051990+00:00"
+      "error": "Cannot connect to cts-4-currier-104-display.dartmouth.edu:80",
+      "query_timestamp": "2026-04-16T16:43:26.750332+00:00"
     },
     {
       "host": "doc-house-display.openav.dartmouth.edu",
@@ -751,7 +751,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:22.147183+00:00"
+      "query_timestamp": "2026-04-16T16:43:26.916309+00:00"
     },
     {
       "host": "fairchild-217a-display.openav.dartmouth.edu",
@@ -770,7 +770,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:22.303545+00:00"
+      "query_timestamp": "2026-04-16T16:43:27.258069+00:00"
     },
     {
       "host": "floren-332-display-1.openav.dartmouth.edu",
@@ -789,7 +789,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:22.662596+00:00"
+      "query_timestamp": "2026-04-16T16:43:27.601302+00:00"
     },
     {
       "host": "floren-332-display-2.openav.dartmouth.edu",
@@ -808,7 +808,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:22.753167+00:00"
+      "query_timestamp": "2026-04-16T16:43:27.906951+00:00"
     },
     {
       "host": "hopkins-051-display.openav.dartmouth.edu",
@@ -827,7 +827,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.028591+00:00"
+      "query_timestamp": "2026-04-16T16:43:28.213430+00:00"
     },
     {
       "host": "lewinstein-111-display.openav.dartmouth.edu",
@@ -846,7 +846,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.063916+00:00"
+      "query_timestamp": "2026-04-16T16:43:28.516373+00:00"
     },
     {
       "host": "lsc-200-1-display-1.openav.dartmouth.edu",
@@ -865,7 +865,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.123372+00:00"
+      "query_timestamp": "2026-04-16T16:43:28.826037+00:00"
     },
     {
       "host": "lsc-200-1-display-2.openav.dartmouth.edu",
@@ -884,7 +884,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.407499+00:00"
+      "query_timestamp": "2026-04-16T16:43:29.140871+00:00"
     },
     {
       "host": "lsc-200-2-display-1.openav.dartmouth.edu",
@@ -903,7 +903,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.452226+00:00"
+      "query_timestamp": "2026-04-16T16:43:29.441806+00:00"
     },
     {
       "host": "lsc-200-2-display-2.openav.dartmouth.edu",
@@ -922,7 +922,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.462652+00:00"
+      "query_timestamp": "2026-04-16T16:43:29.750994+00:00"
     },
     {
       "host": "lsc-200-2-display-3.openav.dartmouth.edu",
@@ -941,7 +941,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.777006+00:00"
+      "query_timestamp": "2026-04-16T16:43:29.877733+00:00"
     },
     {
       "host": "lsc-200-2-display-4.openav.dartmouth.edu",
@@ -960,7 +960,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.807881+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.047403+00:00"
     },
     {
       "host": "lsc-200-2-display-5.openav.dartmouth.edu",
@@ -979,7 +979,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:23.809491+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.186997+00:00"
     },
     {
       "host": "lsc-200-2-display-6.openav.dartmouth.edu",
@@ -998,7 +998,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:24.149342+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.356445+00:00"
     },
     {
       "host": "lsc-200-2-display-7.openav.dartmouth.edu",
@@ -1017,7 +1017,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:24.151881+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.483363+00:00"
     },
     {
       "host": "lsc-200-2-display-8.openav.dartmouth.edu",
@@ -1036,7 +1036,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:24.166404+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.658842+00:00"
     },
     {
       "host": "parkhurst-06a-display.openav.dartmouth.edu",
@@ -1055,7 +1055,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:24.518614+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.778570+00:00"
     },
     {
       "host": "preshouse-b02-display.openav.dartmouth.edu",
@@ -1074,7 +1074,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:24.537412+00:00"
+      "query_timestamp": "2026-04-16T16:43:30.959384+00:00"
     },
     {
       "host": "dewey-010-display.openav.dartmouth.edu",
@@ -1093,7 +1093,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:24.539086+00:00"
+      "query_timestamp": "2026-04-16T16:43:31.132878+00:00"
     },
     {
       "host": "kemeny-307-display.openav.dartmouth.edu",
@@ -1112,7 +1112,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:25.070298+00:00"
+      "query_timestamp": "2026-04-16T16:43:31.333759+00:00"
     },
     {
       "host": "robinson-322-display.openav.dartmouth.edu",
@@ -1131,26 +1131,26 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:25.151276+00:00"
+      "query_timestamp": "2026-04-16T16:43:31.713180+00:00"
     },
     {
       "host": "mcnutt-001-display.openav.dartmouth.edu",
       "port": 80,
-      "status": "error",
-      "model": "N/A",
-      "serial": "N/A",
-      "firmware_version": "N/A",
+      "status": "success",
+      "model": "FW-98BZ50L",
+      "serial": "3000320",
+      "firmware_version": "5.5.0",
       "firmware_version_raw": "N/A",
-      "mac_address": "N/A",
-      "device_name": "N/A",
-      "interface_version": "N/A",
-      "product_name": "N/A",
-      "generation": "N/A",
-      "api_version_used": "N/A",
-      "power_saving_mode": "N/A",
+      "mac_address": "AC:80:0A:B1:F9:A3",
+      "device_name": "BRAVIA",
+      "interface_version": "5.5.0",
+      "product_name": "TV",
+      "generation": "5.5.0",
+      "api_version_used": "1.0",
+      "power_saving_mode": "off",
       "auth_note": null,
-      "error": "Connection timed out",
-      "query_timestamp": "2026-04-14T17:07:25.532498+00:00"
+      "error": null,
+      "query_timestamp": "2026-04-16T16:43:31.833061+00:00"
     },
     {
       "host": "parkhurst-009b-display.openav.dartmouth.edu",
@@ -1169,7 +1169,7 @@
       "power_saving_mode": "off",
       "auth_note": "fallback PSK '1234' used",
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:25.696754+00:00"
+      "query_timestamp": "2026-04-16T16:43:32.115919+00:00"
     },
     {
       "host": "wentworth-205-display.openav.dartmouth.edu",
@@ -1188,7 +1188,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:26.187281+00:00"
+      "query_timestamp": "2026-04-16T16:43:32.156584+00:00"
     },
     {
       "host": "rockefeller-100-display.openav.dartmouth.edu",
@@ -1207,7 +1207,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:26.189687+00:00"
+      "query_timestamp": "2026-04-16T16:43:32.478811+00:00"
     },
     {
       "host": "osher-3a-display.openav.dartmouth.edu",
@@ -1226,7 +1226,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:26.559953+00:00"
+      "query_timestamp": "2026-04-16T16:43:32.500797+00:00"
     },
     {
       "host": "osher-3a-confidence-display.openav.dartmouth.edu",
@@ -1245,7 +1245,7 @@
       "power_saving_mode": "off",
       "auth_note": null,
       "error": null,
-      "query_timestamp": "2026-04-14T17:07:26.830326+00:00"
+      "query_timestamp": "2026-04-16T16:43:32.792869+00:00"
     }
   ]
 }

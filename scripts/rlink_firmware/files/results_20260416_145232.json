@@ -1,0 +1,134 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/rlink_firmware.csv",
+    "timestamp": "2026-04-16T18:52:32.553972+00:00",
+    "protocol": "HTTP/HTTPS (RackLink Settings JSON)",
+    "mode": "json_api",
+    "workers": 5,
+    "total": 4,
+    "success": 3,
+    "errors": 1,
+    "elapsed_seconds": 0.06
+  },
+  "pdus": [
+    {
+      "host": "berry-180-pdu-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-16T18:52:32.504882+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "BER-180-PS2",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E898",
+      "mac_address": "00:1e:c5:00:e8:98",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Dell (ZRC)",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program AMP",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berry-180-pdu-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-16T18:52:32.507434+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "BER-180-PS4",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EE0D",
+      "mac_address": "00:1e:c5:00:ee:0d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Rear TV",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berry-180-pdu-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-16T18:52:32.509495+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "BER-180-PS3",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EFA8",
+      "mac_address": "00:1e:c5:00:ef:a8",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "o",
+      "port": 80,
+      "query_timestamp": "2026-04-16T18:52:32.510958+00:00",
+      "status": "error",
+      "error": "Could not connect to o via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    }
+  ]
+}
