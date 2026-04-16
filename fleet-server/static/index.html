@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firmware Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f7f7f7}body.dark{background:#1a1a1a}#root{min-height:100vh}#loading{color:#707070;font-family:Arial,sans-serif;text-align:center;padding:60px;font-size:14px}</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"><div id="loading">Loading Firmware Dashboard...</div></div>
+<script type="text/babel">
+const {useState,useMemo,useCallback,useRef,useEffect}=React;
+
+const LIGHT={bg:"#f7f7f7",surface:"#ffffff",surfaceAlt:"#f0f0f0",surfaceHi:"#e2e2e2",border:"#e2e2e2",borderHi:"#ccc",text:"#1a1a1a",textBright:"#000000",textMuted:"#707070",textDim:"#999",accent:"#00693e",accentDim:"rgba(0,105,62,0.08)",accentGlow:"rgba(0,105,62,0.15)",green:"#00693e",greenDim:"rgba(0,105,62,0.08)",amber:"#b45309",amberDim:"rgba(180,83,9,0.08)",red:"#9d162e",redDim:"rgba(157,22,46,0.06)",teal:"#003c73",tealDim:"rgba(0,60,115,0.08)",indigo:"#8a6996",indigoDim:"rgba(138,105,150,0.08)",pink:"#d94415",pinkDim:"rgba(217,68,21,0.08)",orange:"#b45309",orangeDim:"rgba(180,83,9,0.08)",cyan:"#267aba",cyanDim:"rgba(38,122,186,0.08)"};
+const DARK={bg:"#1a1a1a",surface:"#242424",surfaceAlt:"#2e2e2e",surfaceHi:"#3a3a3a",border:"#3a3a3a",borderHi:"#4a4a4a",text:"#e2e2e2",textBright:"#f7f7f7",textMuted:"#999",textDim:"#666",accent:"#00693e",accentDim:"rgba(0,105,62,0.15)",accentGlow:"rgba(0,105,62,0.25)",green:"#4ade80",greenDim:"rgba(74,222,128,0.12)",amber:"#fbbf24",amberDim:"rgba(251,191,36,0.12)",red:"#f87171",redDim:"rgba(248,113,113,0.10)",teal:"#67b8e3",tealDim:"rgba(103,184,227,0.12)",indigo:"#b89cc7",indigoDim:"rgba(184,156,199,0.12)",pink:"#f0764a",pinkDim:"rgba(240,118,74,0.12)",orange:"#fbbf24",orangeDim:"rgba(251,191,36,0.12)",cyan:"#5ba3d9",cyanDim:"rgba(91,163,217,0.12)"};
+const DTYPES_LIGHT={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#267aba",bg:"rgba(38,122,186,0.08)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#00693e",bg:"rgba(0,105,62,0.08)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#8a6996",bg:"rgba(138,105,150,0.08)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#d94415",bg:"rgba(217,68,21,0.08)"},router:{icon:"\u{1F310}",label:"Router",color:"#b45309",bg:"rgba(180,83,9,0.08)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#003c73",bg:"rgba(0,60,115,0.08)"},unknown:{icon:"?",label:"Device",color:"#707070",bg:"rgba(112,112,112,0.08)"}};
+const DTYPES_DARK={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3",bg:"rgba(103,184,227,0.12)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80",bg:"rgba(74,222,128,0.12)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7",bg:"rgba(184,156,199,0.12)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a",bg:"rgba(240,118,74,0.12)"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24",bg:"rgba(251,191,36,0.12)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9",bg:"rgba(91,163,217,0.12)"},unknown:{icon:"?",label:"Device",color:"#999",bg:"rgba(153,153,153,0.1)"}};
+const CHART_COLORS=["#267aba","#00693e","#8a6996","#d94415","#b45309","#003c73","#643c20","#9d162e"];
+const M="'JetBrains Mono','Fira Code','SF Mono',monospace";
+const S="Arial,'Helvetica Neue',sans-serif";
+var T=LIGHT;
+var DTYPES=DTYPES_LIGHT;
+
+function extractBR(host){if(!host)return{building:"Unknown",room:"?"};const p=host.split(".")[0].split("-");if(p[0]==="cts")return{building:(p[1]||"CTS").charAt(0).toUpperCase()+(p[1]||"").slice(1),room:p[2]||"?"};if(/^\d+$/.test(p[0]))return{building:(p[1]||"?").charAt(0).toUpperCase()+(p[1]||"").slice(1),room:p[2]||"?"};return{building:p[0].charAt(0).toUpperCase()+p[0].slice(1),room:p[1]||"?"};}
+
+function norm(raw){
+  const host=raw.host||"";const{building,room}=extractBR(host);const type=raw._type||"unknown";
+  const d={host,building,room,status:raw.status||"unknown",error:raw.error||null,_type:type,_source:raw._source||"",model:raw.model||raw.product_name||"N/A",serial:raw.serial||raw.serial_number||"N/A",mac:raw.mac||raw.mac_address||"N/A",firmware:raw.firmware_version||raw.firmware||raw.routeros_version||"N/A"};
+  if(type==="camera"){d.temp_c=raw.temperature_c||raw.temp_c||null;d.build_date=raw.build_date||null;}
+  else if(type==="projector"){d.manufacturer=raw.manufacturer||"";d.lamp_hours=raw.lamp_hours_total??null;d.power_status=raw.power_status||"";}
+  else if(type==="display"){d.device_name=raw.device_name||"";d.power_saving=raw.power_saving_mode||"";}
+  else if(type==="router"){d.routeros=raw.routeros_version||"";d.poe_w=raw.poe_out_consumption_w??null;d.board_temp_c=raw.board_temperature1_c??null;}
+  else if(type==="switch"){d.cpu_temp=raw.cpu_temp||null;d.cpu_temp_value=raw.cpu_temp_value??null;d.poe_consumed=raw.poe_consumed||null;d.build_date=raw.build_date||null;}
+  else if(type==="pdu"){d.manufacturer=raw.manufacturer||"";d.device_name=raw.device_name||"";d.outlets=raw.outlets||[];}
+  return d;
+}
+
+function Badge({children,color,bg,style:s}){return <span style={{display:"inline-block",fontSize:10,fontWeight:600,fontFamily:M,padding:"2px 7px",borderRadius:3,background:bg,color,lineHeight:"17px",whiteSpace:"nowrap",...s}}>{children}</span>;}
+function DBadge({type}){const c=DTYPES[type]||DTYPES.unknown;return <Badge color={c.color} bg={c.bg}>{c.icon} {c.label}</Badge>;}
+const stColor=s=>s==="success"?T.green:s==="auth_error"?T.amber:T.red;
+const tmpColor=t=>{const v=parseFloat(t);return isNaN(v)?T.textDim:v>=50?T.red:v>=45?T.amber:T.green;};
+const lampColor=h=>h>=10000?T.red:h>=5000?T.amber:T.green;
+
+function TBar({value,max=65,label="C"}){const v=parseFloat(value);if(isNaN(v))return <span style={{color:T.textDim,fontSize:11,fontFamily:M}}>—</span>;const pct=Math.min((v/max)*100,100);const c=tmpColor(v);
+  return <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:44,height:4,borderRadius:2,background:T.surfaceHi,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",borderRadius:2,background:c}}/></div><span style={{fontFamily:M,fontSize:11,fontWeight:600,color:c}}>{v.toFixed(1)}°{label}</span></div>;}
+
+function DDetail({d}){
+  const common=<span style={{color:T.textMuted,fontSize:11,fontFamily:M}}>{d.model!=="N/A"?d.model:""}</span>;
+  const fw=d.firmware!=="N/A"?<span style={{color:T.green,fontSize:11,fontFamily:M}}>fw {d.firmware}</span>:null;
+  switch(d._type){
+    case"camera":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{d.temp_c&&<TBar value={d.temp_c}/>}</div>;
+    case"projector":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:11,fontFamily:M}}>{d.manufacturer} {d.model}</span><Badge color={d.power_status==="Standby"?T.amber:T.textMuted} bg={d.power_status==="Standby"?T.amberDim:"rgba(55,72,96,0.2)"}>{d.power_status||"?"}</Badge>{d.lamp_hours!=null&&<span style={{fontFamily:M,fontSize:11,fontWeight:600,color:lampColor(d.lamp_hours)}}>{d.lamp_hours.toLocaleString()}h</span>}</div>;
+    case"display":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}</div>;
+    case"router":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}<span style={{color:T.green,fontSize:11,fontFamily:M}}>ROS {d.routeros}</span>{d.poe_w!=null&&<span style={{fontFamily:M,fontSize:11,color:T.orange}}>⚡{d.poe_w}W</span>}{d.board_temp_c!=null&&<TBar value={d.board_temp_c}/>}</div>;
+    case"switch":{const isMT=d.cpu_temp!=null;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{isMT&&d.cpu_temp_value&&<TBar value={((d.cpu_temp_value-32)*5/9).toFixed(1)}/>}{isMT&&d.poe_consumed&&<span style={{fontFamily:M,fontSize:11,color:T.orange}}>⚡{d.poe_consumed}</span>}</div>;}
+    case"pdu":{const on=(d.outlets||[]).filter(o=>o.status==="on").length;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:11,fontFamily:M}}>{d.manufacturer} {d.model}</span>{fw}<Badge color={T.green} bg={T.greenDim}>{on}/{d.outlets.length} on</Badge></div>;}
+    default:return <div style={{display:"flex",gap:10,alignItems:"center"}}>{common}{fw}</div>;
+  }
+}
+function HBarChart({data,width=600,barHeight=18,gap=4}){const maxVal=Math.max(...data.map(d=>d.total),1);const labelW=90;const chartW=width-labelW-40;const h=data.length*(barHeight+gap)+10;
+  return <svg width="100%" viewBox={`0 0 ${width} ${h}`} style={{fontFamily:S}}>{data.map((d,i)=>{const y=i*(barHeight+gap)+5;const onW=(d.online/maxVal)*chartW;const errW=(d.errors/maxVal)*chartW;
+    return <g key={d.name}><text x={labelW-6} y={y+barHeight/2+4} textAnchor="end" fill={T.textMuted} fontSize={10}>{d.name}</text><rect x={labelW} y={y} width={onW} height={barHeight} rx={2} fill={T.green} fillOpacity={0.7}/><rect x={labelW+onW} y={y} width={errW} height={barHeight} rx={errW>0?2:0} fill={T.red} fillOpacity={0.7}/><text x={labelW+onW+errW+6} y={y+barHeight/2+4} fill={T.textDim} fontSize={10}>{d.total}</text></g>;})}</svg>;}
+function ProgBar({label,value,max,color,icon}){const pct=max>0?(value/max)*100:0;
+  return <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>{icon&&<span style={{fontSize:13,width:18}}>{icon}</span>}<span style={{fontFamily:M,fontSize:11,color,minWidth:70}}>{label}</span><div style={{flex:1,height:5,borderRadius:3,background:T.surfaceHi}}><div style={{width:`${pct}%`,height:"100%",borderRadius:3,background:color}}/></div><span style={{fontFamily:M,fontSize:11,color:T.textMuted,minWidth:25,textAlign:"right"}}>{value}</span></div>;}
+
+// Auto-refresh interval (ms)
+const REFRESH_INTERVAL = 60000;
+
+function FleetConsole(){
+  const[dark,setDark]=useState(false);
+  T=dark?DARK:LIGHT;
+  DTYPES=dark?DTYPES_DARK:DTYPES_LIGHT;
+
+  useEffect(()=>{document.body.className=dark?"dark":"";},[dark]);
+
+  const[allDevs,setAllDevs]=useState([]);
+  const[fMeta,setFMeta]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[lastUpdate,setLastUpdate]=useState(null);
+  const[error,setError]=useState(null);
+  const[view,setView]=useState("hierarchy");
+  const[expB,setExpB]=useState(new Set());
+  const[expR,setExpR]=useState(new Set());
+  const[search,setSearch]=useState("");
+  const[fType,setFType]=useState("all");
+  const[fStatus,setFStatus]=useState("all");
+  const[fBldg,setFBldg]=useState("all");
+  const[sortCol,setSortCol]=useState("building");
+  const[sortDir,setSortDir]=useState("asc");
+  const[targetFw,setTargetFw]=useState({});
+  const[fwSaving,setFwSaving]=useState(false);
+  const[logoErr,setLogoErr]=useState(false);
+
+  const[userRole,setUserRole]=useState(null);
+  const[userName,setUserName]=useState("");
+
+  // Fetch data from server
+  const fetchData=useCallback(async()=>{
+    try{
+      const res=await fetch("/api/data");
+      if(res.status===401){window.location.href="/login";return;}
+      const data=await res.json();
+      const devs=data.devices.map(d=>norm(d));
+      setAllDevs(devs);
+      setFMeta(data.sources||[]);
+      if(data.target_firmware)setTargetFw(prev=>{
+        const merged={...data.target_firmware};
+        Object.keys(prev).forEach(k=>{if(prev[k]&&prev[k].length)merged[k]=prev[k];});
+        return merged;
+      });
+      if(data.role)setUserRole(data.role);
+      if(data.user)setUserName(data.user);
+      setLastUpdate(new Date());
+      setError(null);
+      setLoading(false);
+    }catch(err){
+      setError("Failed to load data from server");
+      setLoading(false);
+    }
+  },[]);
+
+  // Auto-load on mount + refresh interval
+  useEffect(()=>{
+    fetchData();
+    const interval=setInterval(fetchData,REFRESH_INTERVAL);
+    return()=>clearInterval(interval);
+  },[fetchData]);
+
+  const isAdmin=userRole==="admin";
+
+  // Save target firmware to server (admin only)
+  const saveTargetFw=useCallback(async(targets)=>{
+    setTargetFw(targets);
+    if(!isAdmin)return;
+    setFwSaving(true);
+    try{const res=await fetch("/api/target-firmware",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(targets)});if(res.status===401)window.location.href="/login";}catch(e){}
+    setTimeout(()=>setFwSaving(false),800);
+  },[isAdmin]);
+
+  const stats=useMemo(()=>{const on=allDevs.filter(d=>d.status==="success").length;const types={};allDevs.forEach(d=>{types[d._type]=(types[d._type]||0)+1;});return{total:allDevs.length,online:on,errors:allDevs.length-on,types,buildings:new Set(allDevs.map(d=>d.building)).size,rooms:new Set(allDevs.map(d=>`${d.building}::${d.room}`)).size};},[allDevs]);
+  const typeOpts=useMemo(()=>[...new Set(allDevs.map(d=>d._type))].sort(),[allDevs]);
+  const bldgOpts=useMemo(()=>[...new Set(allDevs.map(d=>d.building))].sort(),[allDevs]);
+  const fwByType=useMemo(()=>{const m={};allDevs.forEach(d=>{if(d.firmware==="N/A"||d.firmware==="N/A (Class 1)")return;if(!m[d._type])m[d._type]={};m[d._type][d.firmware]=(m[d._type][d.firmware]||0)+1;});return m;},[allDevs]);
+
+  const attentionDevs=useMemo(()=>allDevs.filter(d=>{
+    if(d.status!=="success")return true;
+    const t=targetFw[d._type];
+    if(!t||!Array.isArray(t)||t.length===0)return false;
+    if(t.includes("*"))return false;
+    if(d.firmware==="N/A"||d.firmware==="N/A (Class 1)")return false;
+    return !t.includes(d.firmware);
+  }),[allDevs,targetFw]);
+  const attStats=useMemo(()=>{const off=attentionDevs.filter(d=>d.status!=="success").length;const outdated=attentionDevs.filter(d=>{
+    if(d.status!=="success")return false;
+    const t=targetFw[d._type];
+    if(!t||!Array.isArray(t)||t.length===0||t.includes("*"))return false;
+    return d.firmware!=="N/A"&&d.firmware!=="N/A (Class 1)"&&!t.includes(d.firmware);
+  }).length;return{total:attentionDevs.length,offline:off,outdated};},[attentionDevs,targetFw]);
+  const attHierarchy=useMemo(()=>{const map={};attentionDevs.forEach(d=>{if(!map[d.building])map[d.building]={};if(!map[d.building][d.room])map[d.building][d.room]=[];map[d.building][d.room].push(d);});return Object.entries(map).map(([building,rooms])=>({building,rooms:Object.entries(rooms).map(([room,devices])=>({room,devices})).sort((a,b)=>a.room.localeCompare(b.room,undefined,{numeric:true})),total:Object.values(rooms).flat().length})).sort((a,b)=>a.building.localeCompare(b.building));},[attentionDevs]);
+
+  const filtered=useMemo(()=>{let l=allDevs;if(fType!=="all")l=l.filter(d=>d._type===fType);if(fStatus==="success")l=l.filter(d=>d.status==="success");else if(fStatus==="errors")l=l.filter(d=>d.status!=="success");if(fBldg!=="all")l=l.filter(d=>d.building===fBldg);if(search){const q=search.toLowerCase();l=l.filter(d=>d.host.toLowerCase().includes(q)||d.building.toLowerCase().includes(q)||d.room.toLowerCase().includes(q)||d.model.toLowerCase().includes(q)||d.firmware.toLowerCase().includes(q));}return l;},[allDevs,fType,fStatus,fBldg,search]);
+  const hierarchy=useMemo(()=>{const map={};filtered.forEach(d=>{if(!map[d.building])map[d.building]={};if(!map[d.building][d.room])map[d.building][d.room]=[];map[d.building][d.room].push(d);});return Object.entries(map).map(([building,rooms])=>{const all=Object.values(rooms).flat();return{building,types:[...new Set(all.map(d=>d._type))],rooms:Object.entries(rooms).map(([room,devices])=>({room,devices,types:[...new Set(devices.map(d=>d._type))],online:devices.filter(d=>d.status==="success").length})).sort((a,b)=>a.room.localeCompare(b.room,undefined,{numeric:true})),total:all.length,online:all.filter(d=>d.status==="success").length};}).sort((a,b)=>a.building.localeCompare(b.building));},[filtered]);
+  const chartData=useMemo(()=>hierarchy.map(b=>({name:b.building,total:b.total,online:b.online,errors:b.total-b.online})).sort((a,b)=>b.total-a.total),[hierarchy]);
+  const sorted=useMemo(()=>{const l=[...filtered];l.sort((a,b)=>{
+    let va,vb;
+    if(sortCol==="_fwStatus"){
+      const getFwSort=(d)=>{const t=targetFw[d._type];const hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");if(d.status!=="success")return 2;if(!hasT)return 1;return(d.firmware!=="N/A"&&t.includes(d.firmware))?0:3;};
+      va=getFwSort(a);vb=getFwSort(b);
+    }else{va=a[sortCol]||"";vb=b[sortCol]||"";}
+    if(typeof va==="string"){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return sortDir==="asc"?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);});return l;},[filtered,sortCol,sortDir,targetFw]);
+
+  const hSort=col=>{if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("asc");}};
+  const SA=({col})=>sortCol!==col?<span style={{opacity:0.25,fontSize:9}}> ↕</span>:<span style={{color:T.accent,fontSize:9}}> {sortDir==="asc"?"↑":"↓"}</span>;
+  const tB=b=>setExpB(p=>{const n=new Set(p);n.has(b)?n.delete(b):n.add(b);return n;});
+  const tR=k=>setExpR(p=>{const n=new Set(p);n.has(k)?n.delete(k):n.add(k);return n;});
+  const expAll=()=>{const src=view==="attention"?attHierarchy:hierarchy;setExpB(new Set(src.map(h=>h.building)));setExpR(new Set(src.flatMap(h=>h.rooms.map(r=>`${h.building}::${r.room}`))));};
+  const colAll=()=>{setExpB(new Set());setExpR(new Set());};
+
+  const selStyle={background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"3px 6px",color:T.text,fontFamily:M,fontSize:10.5};
+  const btnSm=(fn,lbl)=><button onClick={fn} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:3,padding:"2px 8px",color:T.textMuted,fontFamily:M,fontSize:10,cursor:"pointer"}}>{lbl}</button>;
+  const attReason=d=>{const r=[];if(d.status!=="success")r.push({label:d.error||d.status,color:stColor(d.status),bg:d.status==="auth_error"?T.amberDim:T.redDim});
+    const t=targetFw[d._type];
+    if(t&&Array.isArray(t)&&t.length>0&&!t.includes("*")&&d.firmware!=="N/A"&&d.firmware!=="N/A (Class 1)"&&!t.includes(d.firmware)&&d.status==="success")
+      r.push({label:"fw "+d.firmware+" not accepted",color:T.amber,bg:T.amberDim});
+    return r;};
+
+  // Loading state
+  if(loading)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div style={{textAlign:"center"}}><div style={{fontSize:36,marginBottom:12,opacity:0.4}}>📡</div><div style={{color:T.textMuted,fontFamily:S,fontSize:14}}>Loading fleet data...</div></div></div>;
+
+  // Error state
+  if(error&&allDevs.length===0)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div style={{textAlign:"center",maxWidth:400}}><div style={{fontSize:36,marginBottom:12}}>⚠️</div><div style={{color:T.red,fontFamily:S,fontSize:14,marginBottom:8}}>{error}</div>
+      <div style={{color:T.textMuted,fontFamily:M,fontSize:11}}>Make sure the server is running and JSON files are in the data directory.</div>
+      <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:12,fontWeight:600,cursor:"pointer"}}>Retry</button></div></div>;
+
+  // No data
+  if(allDevs.length===0)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div style={{textAlign:"center",maxWidth:420}}><div style={{fontSize:36,marginBottom:12,opacity:0.4}}>📂</div><div style={{color:T.textBright,fontFamily:S,fontSize:15,fontWeight:600,marginBottom:6}}>No scan files found</div>
+      <div style={{color:T.textMuted,fontFamily:S,fontSize:12,lineHeight:1.5}}>Copy your JSON scan outputs to the server's data directory. The dashboard will auto-detect and load them.</div>
+      <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:12,fontWeight:600,cursor:"pointer"}}>Refresh</button></div></div>;
+
+  return(
+    <div style={{minHeight:"100vh",background:T.bg,fontFamily:S,color:T.text}}>
+      {/* HEADER */}
+      <div style={{padding:"10px 20px",borderBottom:"1px solid #e2e2e2",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#00693e"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          {!logoErr?<img src="/static/d-pine.png" alt="D" style={{width:36,height:36,objectFit:"contain",filter:"brightness(0) invert(1)"}} onError={()=>setLogoErr(true)}/>
+          :<div style={{width:36,height:36,borderRadius:4,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:"#fff",fontWeight:700,fontFamily:"'EB Garamond',Georgia,serif"}}>D</div>}
+          <div>
+            <div style={{fontWeight:700,fontSize:16,color:"#fff",fontFamily:"'EB Garamond',Georgia,serif",lineHeight:1.2}}>Firmware Dashboard</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontFamily:S,letterSpacing:0.3}}>Design & Engineering · {stats.total} devices · {stats.buildings} buildings</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          <div style={{display:"flex",borderRadius:4,overflow:"hidden",border:"1px solid rgba(255,255,255,0.2)"}}>
+            {[{id:"hierarchy",label:"Buildings"},{id:"attention",label:"Attention"+(attStats.total>0?` (${attStats.total})`:"")} ,{id:"table",label:"Table"},{id:"charts",label:"Charts"}].map(t=>
+              <button key={t.id} onClick={()=>setView(t.id)} style={{padding:"5px 12px",border:"none",cursor:"pointer",fontFamily:S,fontSize:11,fontWeight:600,background:view===t.id?"rgba(255,255,255,0.2)":"transparent",color:view===t.id?"#fff":"rgba(255,255,255,0.65)"}}>{t.label}</button>)}
+          </div>
+          <button onClick={fetchData} style={{padding:"5px 12px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontFamily:S,fontSize:11,fontWeight:600,cursor:"pointer"}} title="Refresh data">↻</button>
+          <button onClick={()=>setDark(d=>!d)} style={{padding:"5px 10px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:13,cursor:"pointer"}} title={dark?"Light mode":"Dark mode"}>{dark?"☀":"☾"}</button>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:4,padding:"4px 10px",background:"rgba(255,255,255,0.1)",borderRadius:4}}>
+            <span style={{fontSize:10,color:"#fff",fontFamily:M,fontWeight:600}}>{userName}</span>
+            <span style={{fontSize:9,color:"rgba(255,255,255,0.5)",fontFamily:M}}>{userRole}</span>
+            <a href="/logout" style={{fontSize:10,color:"rgba(255,255,255,0.6)",textDecoration:"none",marginLeft:4,fontFamily:M}}>logout</a>
+          </div>
+        </div>
+      </div>
+
+      <div style={{padding:"10px 20px"}}>
+        {/* SOURCE FILES */}
+        <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+          {fMeta.map((f,i)=>{const c=DTYPES[f.type]||DTYPES.unknown;return <div key={i} style={{display:"flex",alignItems:"center",gap:5,background:T.surface,border:`1px solid ${T.border}`,borderRadius:4,padding:"3px 8px",fontSize:10,fontFamily:M}}>
+            <span>{c.icon}</span><span style={{color:T.text}}>{f.filename}</span><span style={{color:c.color}}>({f.count})</span></div>;})}
+          <span style={{fontSize:10,color:T.textDim,fontFamily:M}}>auto-refreshes every 60s</span>
+        </div>
+
+        {/* STATS */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+          {[{label:"Devices",value:stats.total,sub:`${stats.buildings} bldgs · ${stats.rooms} rooms`},{label:"Online",value:stats.online,color:T.green,sub:stats.total>0?((stats.online/stats.total)*100).toFixed(0)+"%":""},{label:"Issues",value:stats.errors,color:stats.errors>0?T.red:T.green},
+            ...Object.entries(stats.types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>({label:DTYPES[t]?DTYPES[t].label:t,value:n,color:DTYPES[t]?DTYPES[t].color:T.textMuted,icon:DTYPES[t]?DTYPES[t].icon:""}))
+          ].map((s,i)=><div key={i} style={{flex:"1 1 90px",minWidth:80,background:T.surface,border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 12px"}}>
+            <div style={{fontSize:9,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:0.8}}>{s.icon?s.icon+" ":""}{s.label}</div>
+            <div style={{fontSize:20,fontWeight:700,color:s.color||T.textBright,fontFamily:S}}>{s.value}</div>
+            {s.sub&&<div style={{fontSize:9,color:T.textDim,fontFamily:M}}>{s.sub}</div>}</div>)}
+        </div>
+
+        {/* FILTERS */}
+        {view!=="attention"&&<div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"6px 10px",background:T.surface,borderRadius:6,border:`1px solid ${T.border}`}}>
+          <span style={{fontSize:9,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:1}}>Filter</span>
+          <select value={fType} onChange={e=>setFType(e.target.value)} style={selStyle}><option value="all">All Types</option>{typeOpts.map(t=><option key={t} value={t}>{DTYPES[t]?DTYPES[t].icon+" "+DTYPES[t].label:t}</option>)}</select>
+          <select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={selStyle}><option value="all">All Status</option><option value="success">Online</option><option value="errors">Errors</option></select>
+          <select value={fBldg} onChange={e=>setFBldg(e.target.value)} style={selStyle}><option value="all">All Buildings</option>{bldgOpts.map(b=><option key={b} value={b}>{b}</option>)}</select>
+          <div style={{flex:1}}/><input placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"3px 8px",color:T.text,fontFamily:M,fontSize:10.5,outline:"none",width:140}}/>
+          <span style={{fontSize:10,color:T.textDim,fontFamily:M}}>{filtered.length}/{allDevs.length}</span>
+        </div>}
+
+        {/* ATTENTION */}
+        {view==="attention"&&<div>
+          <div style={{background:T.surface,border:`1px solid ${T.borderHi}`,borderRadius:8,padding:14,marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+              <div style={{fontSize:13,fontWeight:600,color:T.textBright}}>Target Firmware per Device Type</div>
+              {fwSaving&&<span style={{fontSize:10,color:T.green,fontFamily:M}}>✓ saved</span>}
+              {!isAdmin&&<Badge color={T.textMuted} bg="rgba(92,110,136,0.1)">view only</Badge>}
+              <div style={{flex:1}}/>
+              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=["*"]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.red}`,background:T.redDim,color:T.red,fontFamily:M,fontSize:10,fontWeight:600,cursor:"pointer"}}>All: Errors Only</button>}
+              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=[]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.border}`,background:"transparent",color:T.textMuted,fontFamily:M,fontSize:10,cursor:"pointer"}}>Clear All</button>}
+            </div>
+            <div style={{fontSize:11,color:T.textMuted,marginBottom:12}}>Click firmware versions to accept them. Devices on unselected versions will be flagged.</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {typeOpts.map(type=>{const cfg=DTYPES[type]||DTYPES.unknown;const versions=fwByType[type]||{};const vList=Object.entries(versions).sort((a,b)=>b[1]-a[1]);const selected=targetFw[type]||[];const isErrOnly=Array.isArray(selected)&&selected.includes("*");
+                const toggleVer=(v)=>{if(!isAdmin)return;let cur=Array.isArray(selected)?selected.filter(x=>x!=="*"):[];if(cur.includes(v))cur=cur.filter(x=>x!==v);else cur=[...cur,v];saveTargetFw({...targetFw,[type]:cur});};
+                const toggleErrOnly=()=>{if(!isAdmin)return;saveTargetFw({...targetFw,[type]:isErrOnly?[]:["*"]});};
+                const selectAll=()=>{if(!isAdmin)return;saveTargetFw({...targetFw,[type]:vList.map(([v])=>v)});};
+                return <div key={type} style={{flex:"1 1 200px",minWidth:180,background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:6,padding:10}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><span style={{fontSize:14}}>{cfg.icon}</span><span style={{fontWeight:600,fontSize:12,color:cfg.color}}>{cfg.label}</span><span style={{fontSize:10,color:T.textDim,fontFamily:M,marginLeft:"auto"}}>{allDevs.filter(d=>d._type===type).length}</span></div>
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                    {isAdmin&&<span onClick={toggleErrOnly} style={{fontSize:10,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:"pointer",background:isErrOnly?T.redDim:"transparent",border:`1px solid ${isErrOnly?T.red:T.border}`,color:isErrOnly?T.red:T.textMuted,transition:"all 0.15s"}}>Errors only</span>}
+                    {isAdmin&&!isErrOnly&&vList.length>1&&<span onClick={selectAll} style={{fontSize:10,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:"pointer",background:"transparent",border:`1px solid ${T.border}`,color:T.textMuted,transition:"all 0.15s"}}>Select all</span>}
+                    {!isAdmin&&isErrOnly&&<Badge color={T.red} bg={T.redDim}>Errors only</Badge>}
+                    {vList.map(([v,n])=>{const isSelected=!isErrOnly&&Array.isArray(selected)&&selected.includes(v);
+                      return <span key={v} onClick={()=>{if(!isErrOnly)toggleVer(v);}} style={{fontSize:10,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:isAdmin&&!isErrOnly?"pointer":"default",background:isSelected?cfg.bg:isErrOnly?"transparent":"transparent",border:`1px solid ${isSelected?cfg.color:T.border}`,color:isSelected?cfg.color:T.textMuted,opacity:isErrOnly?0.4:1,transition:"all 0.15s"}}>{v} ({n})</span>;})}
+                  </div>
+                  {!isErrOnly&&Array.isArray(selected)&&selected.length>0&&<div style={{marginTop:6,fontSize:10,color:T.green,fontFamily:M}}>✓ {selected.length} version{selected.length!==1?"s":""} accepted</div>}
+                </div>;})}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+            <div style={{background:T.redDim,border:"1px solid rgba(239,68,68,0.25)",borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.red}}>{attStats.offline}</span><span style={{fontSize:11,color:T.red,fontWeight:600}}>Offline / Error</span></div>
+            <div style={{background:T.amberDim,border:"1px solid rgba(245,158,11,0.25)",borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.amber}}>{attStats.outdated}</span><span style={{fontSize:11,color:T.amber,fontWeight:600}}>Outdated Firmware</span></div>
+            <div style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.textBright}}>{attStats.total}</span><span style={{fontSize:11,color:T.textMuted,fontWeight:600}}>Total Attention</span></div>
+          </div>
+          {attStats.total===0?<div style={{textAlign:"center",padding:"40px 20px",color:T.green}}><div style={{fontSize:32,marginBottom:8}}>✅</div><div style={{fontSize:15,fontWeight:600}}>All clear!</div><div style={{fontSize:12,color:T.textMuted,marginTop:4}}>{Object.values(targetFw).some(v=>Array.isArray(v)&&v.length>0)?"All devices online and on accepted firmware.":"Select accepted firmware versions above to check."}</div></div>
+          :<div>
+            <div style={{display:"flex",gap:4,marginBottom:8}}>{btnSm(expAll,"Expand All")}{btnSm(colAll,"Collapse All")}</div>
+            {attHierarchy.map(b=>{const open=expB.has(b.building);return <div key={b.building} style={{marginBottom:3}}>
+              <div onClick={()=>tB(b.building)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",borderLeft:`3px solid ${T.red}`}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background=T.surface}>
+                <span style={{color:T.textDim,fontSize:10,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                <span style={{fontWeight:700,fontSize:13,color:T.textBright,minWidth:100}}>{b.building}</span><Badge color={T.red} bg={T.redDim}>{b.total} device{b.total!==1?"s":""}</Badge></div>
+              {open&&<div style={{marginLeft:18,borderLeft:`1px solid ${T.border}`}}>{b.rooms.map(r=>{const rk=b.building+"::"+r.room;const ro=expR.has(rk);return <div key={rk}>
+                <div onClick={()=>tR(rk)} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",cursor:"pointer",borderRadius:3}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                  <span style={{color:T.textDim,fontSize:8,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                  <span style={{fontWeight:600,fontSize:12.5,color:T.text}}>{r.room}</span><span style={{fontSize:10,color:T.textDim,fontFamily:M}}>{r.devices.length} issue{r.devices.length!==1?"s":""}</span></div>
+                {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=>{const reasons=attReason(d);return <div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderBottom:`1px solid ${T.border}`,fontSize:11}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                  <DBadge type={d._type}/>{reasons.map((r,ri)=><Badge key={ri} color={r.color} bg={r.bg}>{r.label}</Badge>)}<DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:9,color:T.textDim,fontFamily:M,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</span></div>;})}</div>}
+              </div>;})}</div>}</div>;})}
+          </div>}
+        </div>}
+
+        {/* HIERARCHY */}
+        {view==="hierarchy"&&<div>
+          <div style={{display:"flex",gap:4,marginBottom:8}}>{btnSm(expAll,"Expand All")}{btnSm(colAll,"Collapse All")}</div>
+          {hierarchy.map(b=>{const open=expB.has(b.building);const issues=b.total-b.online;return <div key={b.building} style={{marginBottom:3}}>
+            <div onClick={()=>tB(b.building)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",borderLeft:`3px solid ${issues>0?T.amber:T.green}`}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background=T.surface}>
+              <span style={{color:T.textDim,fontSize:10,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+              <span style={{fontWeight:700,fontSize:13,color:T.textBright,minWidth:100}}>{b.building}</span>
+              <span style={{fontSize:10,color:T.textDim,fontFamily:M}}>{b.rooms.length} rm{b.rooms.length!==1?"s":""}</span>
+              <span style={{fontSize:10,color:T.textMuted,fontFamily:M}}>{b.online}/{b.total}</span>
+              <div style={{display:"flex",gap:3}}>{b.types.map(t=><span key={t} style={{fontSize:12}} title={DTYPES[t]?DTYPES[t].label:""}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
+              {issues>0&&<Badge color={T.amber} bg={T.amberDim}>{issues} issue{issues!==1?"s":""}</Badge>}</div>
+            {open&&<div style={{marginLeft:18,borderLeft:`1px solid ${T.border}`}}>{b.rooms.map(r=>{const rk=b.building+"::"+r.room;const ro=expR.has(rk);const ri=r.devices.length-r.online;return <div key={rk}>
+              <div onClick={()=>tR(rk)} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",cursor:"pointer",borderRadius:3}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <span style={{color:T.textDim,fontSize:8,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                <span style={{fontWeight:600,fontSize:12.5,color:T.text}}>{r.room}</span>
+                <div style={{display:"flex",gap:2}}>{r.types.map(t=><span key={t} style={{fontSize:11}}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
+                <span style={{fontSize:10,color:T.textDim,fontFamily:M}}>{r.online}/{r.devices.length}</span>
+                {ri>0&&<Badge color={T.red} bg={T.redDim} style={{fontSize:9}}>{ri} err</Badge>}</div>
+              {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=><div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 8px",borderBottom:`1px solid ${T.border}`,fontSize:11}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <DBadge type={d._type}/><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim} style={{fontSize:9}}>{d.status==="success"?"OK":d.error||d.status}</Badge>
+                <DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:9,color:T.textDim,fontFamily:M,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</span></div>)}</div>}
+            </div>;})}</div>}</div>;})}
+        </div>}
+
+        {/* TABLE */}
+        {view==="table"&&<div style={{overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`,maxHeight:"calc(100vh - 260px)"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:M,fontSize:11}}>
+            <thead><tr>{[{key:"building",label:"Building"},{key:"room",label:"Room"},{key:"_type",label:"Type"},{key:"host",label:"Host"},{key:"model",label:"Model"},{key:"firmware",label:"Firmware"},{key:"_fwStatus",label:"FW Status"},{key:"status",label:"Status"},{key:"serial",label:"Serial"}].map(col=>
+              <th key={col.key} onClick={()=>hSort(col.key)} style={{position:"sticky",top:0,zIndex:2,background:T.surfaceAlt,color:T.textMuted,textAlign:"left",padding:"8px 8px",borderBottom:`2px solid ${T.border}`,cursor:"pointer",userSelect:"none",fontSize:9.5,textTransform:"uppercase",letterSpacing:0.7,fontWeight:600,whiteSpace:"nowrap"}}>{col.label}<SA col={col.key}/></th>)}</tr></thead>
+            <tbody>{sorted.map((d,i)=>{
+              const t=targetFw[d._type];const hasTarget=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
+              const naClass="N/A (Class 1)";
+              const fwOk=!hasTarget||d.firmware==="N/A"||d.firmware===naClass||t.includes(d.firmware);
+              const fwStatus=d.status!=="success"?"\u2014":!hasTarget?"\u2014":fwOk?"\u2713 OK":"\u26A0 Outdated";
+              const fwColor=fwStatus.includes("OK")?T.green:fwStatus.includes("Outdated")?T.amber:T.textDim;
+              return <tr key={i} onMouseEnter={e=>{for(const td of e.currentTarget.children)td.style.background=T.surfaceAlt;}} onMouseLeave={e=>{for(const td of e.currentTarget.children)td.style.background="transparent";}}>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,fontWeight:500,color:T.text}}>{d.building}</td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,color:T.textMuted}}>{d.room}</td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`}}><DBadge type={d._type}/></td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,color:T.textMuted,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,color:T.text}}>{d.model!=="N/A"?d.model:"—"}</td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,color:d.firmware!=="N/A"?T.green:T.textDim}}>{d.firmware!=="N/A"?d.firmware:"—"}</td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,fontWeight:600,color:fwColor}}>{fwStatus}</td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`}}><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim}>{d.status==="success"?"OK":d.error||d.status}</Badge></td>
+              <td style={{padding:"6px 8px",borderBottom:`1px solid ${T.border}`,color:T.textDim,fontSize:10}}>{d.serial!=="N/A"?d.serial:"—"}</td></tr>})}</tbody>
+          </table>
+        </div>}
+
+        {/* CHARTS */}
+        {view==="charts"&&<div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          {typeOpts.map(type=>{
+            const cfg=DTYPES[type];
+            const devsOfType=allDevs.filter(d=>d._type===type);
+            const fwMap={};
+            devsOfType.forEach(d=>{const fw=d.firmware||"N/A";fwMap[fw]=(fwMap[fw]||0)+1;});
+            const fwList=Object.entries(fwMap).sort((a,b)=>b[1]-a[1]);
+            const total=devsOfType.length;
+            const selected=targetFw[type]||[];
+            const hasTarget=Array.isArray(selected)&&selected.length>0&&!selected.includes("*");
+
+            // Build pie slices
+            const size=140;const cx=size/2;const cy=size/2;const r=55;
+            let startAngle=-90;
+            const slices=fwList.map(([fw,count],i)=>{
+              const angle=(count/total)*360;
+              const endAngle=startAngle+angle;
+              const largeArc=angle>180?1:0;
+              const rad=d=>d*Math.PI/180;
+              const x1=cx+r*Math.cos(rad(startAngle));
+              const y1=cy+r*Math.sin(rad(startAngle));
+              const x2=cx+r*Math.cos(rad(endAngle));
+              const y2=cy+r*Math.sin(rad(endAngle));
+              const isAccepted=hasTarget&&selected.includes(fw);
+              const naC1="N/A (Class 1)";
+              const isOutdated=hasTarget&&!selected.includes(fw)&&fw!=="N/A"&&fw!==naC1;
+              const color=isAccepted?T.green:isOutdated?T.amber:CHART_COLORS[i%CHART_COLORS.length];
+              const path=angle>=359.9
+                ?`M${cx-r},${cy}A${r},${r},0,1,1,${cx+r},${cy}A${r},${r},0,1,1,${cx-r},${cy}`
+                :`M${cx},${cy}L${x1},${y1}A${r},${r},0,${largeArc},1,${x2},${y2}Z`;
+              startAngle=endAngle;
+              return {fw,count,color,path,isAccepted,isOutdated,pct:((count/total)*100).toFixed(0)};
+            });
+
+            return <div key={type} style={{flex:"1 1 300px",minWidth:280,background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <span style={{fontSize:16}}>{cfg.icon}</span>
+                <span style={{fontSize:14,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
+                <span style={{fontSize:11,color:T.textMuted,fontFamily:M}}>{total}</span>
+              </div>
+              <div style={{display:"flex",gap:16,alignItems:"center"}}>
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                  {slices.map((s,i)=><path key={i} d={s.path} fill={s.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>)}
+                  <circle cx={cx} cy={cy} r={28} fill={T.surface}/>
+                  <text x={cx} y={cy-4} textAnchor="middle" fill={T.textBright} fontSize={18} fontWeight={700} fontFamily={S}>{total}</text>
+                  <text x={cx} y={cy+10} textAnchor="middle" fill={T.textMuted} fontSize={9} fontFamily={M}>devices</text>
+                </svg>
+                <div style={{flex:1,display:"flex",flexDirection:"column",gap:3}}>
+                  {slices.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}}/>
+                    <span style={{fontFamily:M,fontSize:11,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
+                    <span style={{fontFamily:M,fontSize:10,color:T.textMuted}}>{s.count}</span>
+                    <span style={{fontFamily:M,fontSize:10,color:T.textDim,minWidth:28,textAlign:"right"}}>{s.pct}%</span>
+                    {hasTarget&&<span style={{fontSize:10,width:12,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"✓":s.isOutdated?"⚠":""}</span>}
+                  </div>)}
+                </div>
+              </div>
+            </div>;
+          })}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(FleetConsole));
+</script>
+</body>
+</html>

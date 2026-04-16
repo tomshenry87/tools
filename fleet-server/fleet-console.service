@@ -1,0 +1,14 @@
+[Unit]
+Description=Fleet Console Web Server
+After=network.target
+
+[Service]
+Type=simple
+User=tom
+WorkingDirectory=/home/tom/tools/fleet-server
+ExecStart=/usr/bin/python3 /home/tom/tools/fleet-server/server.py --data-dir /home/tom/tools/fleet-server/data --port 5000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+{
+  "root": {
+    "password": "c03440dc5c9594a17e611c15d6ee6d96:5471282e5470aee78167293752c923123247fc39d7f82b65ab6e4a87dea242f7",
+    "role": "admin"
+  },
+  "user": {
+    "password": "6586540844f2bb72b2c399e73e44e537:ae11ff9f0b7ac7a527e13bc17b7c447a4950bd9cd55a49228a3cfe85e35dc510",
+    "role": "viewer"
+  }
+}

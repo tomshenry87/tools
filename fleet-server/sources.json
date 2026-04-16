@@ -1,0 +1,9 @@
+[
+  "~/tools/scripts/axis_firmware/files",
+  "~/tools/scripts/bravia_firmware/files",
+  "~/tools/scripts/kramer_version_check/files",
+  "~/tools/scripts/mikrotik_version_check/files",
+  "~/tools/scripts/netgear_firmware/files",
+  "~/tools/scripts/projector_version_check/files",
+  "~/tools/scripts/rlink_firmware/files"
+]
