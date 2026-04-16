@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Netgear M4250 Switch Version & CPU Temp Checker
+Netgear M4250 Router Version & CPU Temp Checker
 =================================================
-Reads switch credentials from switches.csv (default), connects via SSH,
+Reads router credentials from secrets/netgear_firmware.csv (default), connects via SSH,
 runs `show hardware` and `show environment | include Temp`,
 extracts firmware version and CPU temperature, writes results to
-results.json (default), and prints a summary table.
+netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json (default), and prints a summary table.
 
 Usage:
     python3 netgear_firmware.py
@@ -79,7 +79,7 @@ def load_csv(csv_path: Path) -> list[dict]:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
         sys.exit(1)
 
-    devices: list[dict] = []
+    routers: list[dict] = []
     with csv_path.open("r", encoding="utf-8-sig") as fh:
         sample = fh.read(4096)
         fh.seek(0)
@@ -108,14 +108,14 @@ def load_csv(csv_path: Path) -> list[dict]:
                 port = int(row.get(col_map.get("port", ""), "") or 22)
             except ValueError:
                 port = 22
-            devices.append({
+            routers.append({
                 "host":     host,
                 "username": username,
                 "password": password,
                 "port":     port,
             })
 
-    return devices
+    return routers
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -286,9 +286,9 @@ def parse_cpu_temp(raw: str) -> tuple[str | None, float | None]:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Check ONE switch
+#  Check ONE router
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def check_switch(
+def check_router(
     host: str,
     username: str = "admin",
     password: str = "",
@@ -298,17 +298,17 @@ def check_switch(
 ) -> dict:
     queried_at = datetime.now(timezone.utc).isoformat()
     result: dict = {
-        "host":              host,
-        "username":          username,
-        "port":              port,
-        "query_timestamp":   queried_at,
-        "status":            "error",
-        "firmware_version":  None,
-        "cpu_temp":          None,
-        "cpu_temp_value":    None,
-        "poe_consumed":      None,
+        "host":               host,
+        "username":           username,
+        "port":               port,
+        "query_timestamp":    queried_at,
+        "status":             "error",
+        "firmware_version":   None,
+        "cpu_temp":           None,
+        "cpu_temp_value":     None,
+        "poe_consumed":       None,
         "poe_consumed_value": None,
-        "error":             None,
+        "error":              None,
     }
 
     client = paramiko.SSHClient()
@@ -339,7 +339,7 @@ def check_switch(
             result["raw_environment"] = raw_env
             result["raw_poe"]         = raw_poe
 
-        firmware          = parse_firmware_version(raw_ver)
+        firmware           = parse_firmware_version(raw_ver)
         temp_str, temp_val = parse_cpu_temp(raw_env)
         poe_str,  poe_val  = parse_poe_power(raw_poe)
 
@@ -423,7 +423,7 @@ def print_results_table(
     # All-matched shortcut
     if firmware_filter and not display_results:
         print(f"{WHITE}")
-        print(f"  {GREEN}\u2713 All reachable switches are running firmware {firmware_filter}{RESET}")
+        print(f"  {GREEN}\u2713 All reachable routers are running firmware {firmware_filter}{RESET}")
     else:
         table = tabulate(
             rows,
@@ -495,17 +495,17 @@ def print_results_table(
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Check ALL switches with progress bar
+#  Check ALL routers with progress bar
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def check_all_switches(
-    switches: list[dict],
+def check_all_routers(
+    routers: list[dict],
     output_path: Path,
     include_raw: bool = False,
     max_workers: int = 5,
     timeout: int = 20,
     firmware_filter: str | None = None,
 ) -> None:
-    all_results: list[dict] = [None] * len(switches)  # preserve order
+    all_results: list[dict] = [None] * len(routers)  # preserve order
 
     active_lock = threading.Lock()
     latest_host = {"value": ""}
@@ -522,7 +522,7 @@ def check_all_switches(
     )
 
     with tqdm(
-        total=len(switches),
+        total=len(routers),
         bar_format=bar_fmt,
         ncols=term_width,
         dynamic_ncols=True,
@@ -531,13 +531,13 @@ def check_all_switches(
     ) as pbar:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_index: dict = {}
-            for i, sw in enumerate(switches):
+            for i, router in enumerate(routers):
                 fut = executor.submit(
-                    check_switch,
-                    host=sw["host"],
-                    username=sw["username"],
-                    password=sw["password"],
-                    port=sw["port"],
+                    check_router,
+                    host=router["host"],
+                    username=router["username"],
+                    password=router["password"],
+                    port=router["port"],
                     timeout=timeout,
                     include_raw=include_raw,
                 )
@@ -580,7 +580,7 @@ def check_all_switches(
             "errors":          errors,
             "elapsed_seconds": round(elapsed, 2),
         },
-        "switches": all_results,
+        "routers": all_results,
     }
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=2, ensure_ascii=False)
@@ -596,20 +596,22 @@ def check_all_switches(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def main() -> None:  # noqa: C901
+def main() -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
     p = argparse.ArgumentParser(
         description=(
-            "Check Netgear M4250 switch firmware versions and CPU temps via SSH.\n"
-            "Defaults: reads switches.csv, writes results.json\n\n"
+            "Check Netgear M4250 router firmware versions and CPU temps via SSH.\n"
+            "Defaults: reads secrets/netgear_firmware.csv, writes to netgear_firmware/files/\n\n"
             "CSV columns: host, username, password, port"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument(
-        "--csv", type=Path, default=Path("secrets/netgear_firmware.csv"),
+        "--csv", type=Path,
+        default=Path("secrets/netgear_firmware.csv"),
         help="Input CSV file (default: secrets/netgear_firmware.csv)",
     )
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     p.add_argument(
         "--output", type=Path,
         default=Path(f"netgear_firmware/files/results_{timestamp}.json"),
@@ -621,11 +623,11 @@ def main() -> None:  # noqa: C901
     )
     p.add_argument(
         "--timeout", type=int, default=20,
-        help="Per-switch SSH timeout in seconds (default: 20)",
+        help="Per-router SSH timeout in seconds (default: 20)",
     )
     p.add_argument(
         "--firmware", type=str, default=None,
-        help="Only show switches whose firmware does not match this version (e.g. 12.0.20.7)",
+        help="Only show routers whose firmware does not match this version (e.g. 12.0.20.7)",
     )
     p.add_argument(
         "--verbose", action="store_true",
@@ -642,7 +644,7 @@ def main() -> None:  # noqa: C901
 
     print(f"{WHITE}")
     print(f"  {BOLD}Netgear M4250 Firmware & CPU Temp Checker{RESET}{WHITE}")
-    print(f"  Query switch firmware version and CPU temperature via SSH")
+    print(f"  Query router firmware version and CPU temperature via SSH")
     print(f"  Input:   {args.csv}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
@@ -651,15 +653,15 @@ def main() -> None:  # noqa: C901
         print(f"  Filter:  firmware != {args.firmware}")
     print(f"{RESET}")
 
-    switches = load_csv(args.csv)
-    if not switches:
-        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} No switches found in {args.csv}{RESET}")
+    routers = load_csv(args.csv)
+    if not routers:
+        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} No routers found in {args.csv}{RESET}")
         sys.exit(1)
 
-    print(f"  {WHITE}Loaded {BOLD}{len(switches)}{RESET}{WHITE} switch(es){RESET}\n")
+    print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} router(s){RESET}\n")
 
-    check_all_switches(
-        switches,
+    check_all_routers(
+        routers,
         args.output,
         include_raw=args.include_raw,
         max_workers=args.workers,
