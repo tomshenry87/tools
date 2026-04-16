@@ -39,25 +39,25 @@ function norm(raw){
   return d;
 }
 
-function Badge({children,color,bg,style:s}){return <span style={{display:"inline-block",fontSize:13,fontWeight:600,fontFamily:S,padding:"3px 10px",borderRadius:4,background:bg,color,lineHeight:"20px",whiteSpace:"nowrap",...s}}>{children}</span>;}
+function Badge({children,color,bg,style:s}){return <span style={{display:"inline-block",fontSize:15,fontWeight:600,fontFamily:S,padding:"3px 10px",borderRadius:4,background:bg,color,lineHeight:"20px",whiteSpace:"nowrap",...s}}>{children}</span>;}
 function DBadge({type}){const c=DTYPES[type]||DTYPES.unknown;return <Badge color={c.color} bg={c.bg}>{c.icon} {c.label}</Badge>;}
 const stColor=s=>s==="success"?T.green:s==="auth_error"?T.amber:T.red;
 const tmpColor=t=>{const v=parseFloat(t);return isNaN(v)?T.textDim:v>=50?T.red:v>=45?T.amber:T.green;};
 const lampColor=h=>h>=10000?T.red:h>=5000?T.amber:T.green;
 
-function TBar({value,max=65,label="C"}){const v=parseFloat(value);if(isNaN(v))return <span style={{color:T.textDim,fontSize:13,fontFamily:S}}>—</span>;const pct=Math.min((v/max)*100,100);const c=tmpColor(v);
-  return <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:56,height:6,borderRadius:3,background:T.surfaceHi,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",borderRadius:3,background:c}}/></div><span style={{fontFamily:S,fontSize:13,fontWeight:600,color:c}}>{v.toFixed(1)}°{label}</span></div>;}
+function TBar({value,max=65,label="C"}){const v=parseFloat(value);if(isNaN(v))return <span style={{color:T.textDim,fontSize:15,fontFamily:S}}>—</span>;const pct=Math.min((v/max)*100,100);const c=tmpColor(v);
+  return <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:56,height:6,borderRadius:3,background:T.surfaceHi,overflow:"hidden"}}><div style={{width:`${pct}%`,height:"100%",borderRadius:3,background:c}}/></div><span style={{fontFamily:S,fontSize:15,fontWeight:600,color:c}}>{v.toFixed(1)}°{label}</span></div>;}
 
 function DDetail({d}){
-  const common=<span style={{color:T.textMuted,fontSize:13,fontFamily:M}}>{d.model!=="N/A"?d.model:""}</span>;
-  const fw=d.firmware!=="N/A"?<span style={{color:T.green,fontSize:13,fontFamily:M}}>fw {d.firmware}</span>:null;
+  const common=<span style={{color:T.textMuted,fontSize:15,fontFamily:M}}>{d.model!=="N/A"?d.model:""}</span>;
+  const fw=d.firmware!=="N/A"?<span style={{color:T.green,fontSize:15,fontFamily:M}}>fw {d.firmware}</span>:null;
   switch(d._type){
     case"camera":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{d.temp_c&&<TBar value={d.temp_c}/>}</div>;
-    case"projector":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:13,fontFamily:M}}>{d.manufacturer} {d.model}</span><Badge color={d.power_status==="Standby"?T.amber:T.textMuted} bg={d.power_status==="Standby"?T.amberDim:"rgba(55,72,96,0.2)"}>{d.power_status||"?"}</Badge>{d.lamp_hours!=null&&<span style={{fontFamily:M,fontSize:13,fontWeight:600,color:lampColor(d.lamp_hours)}}>{d.lamp_hours.toLocaleString()}h</span>}</div>;
+    case"projector":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:15,fontFamily:M}}>{d.manufacturer} {d.model}</span><Badge color={d.power_status==="Standby"?T.amber:T.textMuted} bg={d.power_status==="Standby"?T.amberDim:"rgba(55,72,96,0.2)"}>{d.power_status||"?"}</Badge>{d.lamp_hours!=null&&<span style={{fontFamily:M,fontSize:15,fontWeight:600,color:lampColor(d.lamp_hours)}}>{d.lamp_hours.toLocaleString()}h</span>}</div>;
     case"display":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}</div>;
-    case"router":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}<span style={{color:T.green,fontSize:13,fontFamily:M}}>ROS {d.routeros}</span>{d.poe_w!=null&&<span style={{fontFamily:M,fontSize:13,color:T.orange}}>⚡{d.poe_w}W</span>}{d.board_temp_c!=null&&<TBar value={d.board_temp_c}/>}</div>;
-    case"switch":{const isMT=d.cpu_temp!=null;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{isMT&&d.cpu_temp_value&&<TBar value={((d.cpu_temp_value-32)*5/9).toFixed(1)}/>}{isMT&&d.poe_consumed&&<span style={{fontFamily:M,fontSize:13,color:T.orange}}>⚡{d.poe_consumed}</span>}</div>;}
-    case"pdu":{const on=(d.outlets||[]).filter(o=>o.status==="on").length;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:13,fontFamily:M}}>{d.manufacturer} {d.model}</span>{fw}<Badge color={T.green} bg={T.greenDim}>{on}/{d.outlets.length} on</Badge></div>;}
+    case"router":return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}<span style={{color:T.green,fontSize:15,fontFamily:M}}>ROS {d.routeros}</span>{d.poe_w!=null&&<span style={{fontFamily:M,fontSize:15,color:T.orange}}>⚡{d.poe_w}W</span>}{d.board_temp_c!=null&&<TBar value={d.board_temp_c}/>}</div>;
+    case"switch":{const isMT=d.cpu_temp!=null;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{isMT&&d.cpu_temp_value&&<TBar value={((d.cpu_temp_value-32)*5/9).toFixed(1)}/>}{isMT&&d.poe_consumed&&<span style={{fontFamily:M,fontSize:15,color:T.orange}}>⚡{d.poe_consumed}</span>}</div>;}
+    case"pdu":{const on=(d.outlets||[]).filter(o=>o.status==="on").length;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:15,fontFamily:M}}>{d.manufacturer} {d.model}</span>{fw}<Badge color={T.green} bg={T.greenDim}>{on}/{d.outlets.length} on</Badge></div>;}
     default:return <div style={{display:"flex",gap:10,alignItems:"center"}}>{common}{fw}</div>;
   }
 }
@@ -65,7 +65,7 @@ function HBarChart({data,width=600,barHeight=18,gap=4}){const maxVal=Math.max(..
   return <svg width="100%" viewBox={`0 0 ${width} ${h}`} style={{fontFamily:S}}>{data.map((d,i)=>{const y=i*(barHeight+gap)+5;const onW=(d.online/maxVal)*chartW;const errW=(d.errors/maxVal)*chartW;
     return <g key={d.name}><text x={labelW-6} y={y+barHeight/2+4} textAnchor="end" fill={T.textMuted} fontSize={10}>{d.name}</text><rect x={labelW} y={y} width={onW} height={barHeight} rx={2} fill={T.green} fillOpacity={0.7}/><rect x={labelW+onW} y={y} width={errW} height={barHeight} rx={errW>0?2:0} fill={T.red} fillOpacity={0.7}/><text x={labelW+onW+errW+6} y={y+barHeight/2+4} fill={T.textDim} fontSize={10}>{d.total}</text></g>;})}</svg>;}
 function ProgBar({label,value,max,color,icon}){const pct=max>0?(value/max)*100:0;
-  return <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>{icon&&<span style={{fontSize:13,width:18}}>{icon}</span>}<span style={{fontFamily:M,fontSize:13,color,minWidth:70}}>{label}</span><div style={{flex:1,height:5,borderRadius:3,background:T.surfaceHi}}><div style={{width:`${pct}%`,height:"100%",borderRadius:3,background:color}}/></div><span style={{fontFamily:M,fontSize:13,color:T.textMuted,minWidth:25,textAlign:"right"}}>{value}</span></div>;}
+  return <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>{icon&&<span style={{fontSize:15,width:18}}>{icon}</span>}<span style={{fontFamily:M,fontSize:15,color,minWidth:70}}>{label}</span><div style={{flex:1,height:5,borderRadius:3,background:T.surfaceHi}}><div style={{width:`${pct}%`,height:"100%",borderRadius:3,background:color}}/></div><span style={{fontFamily:M,fontSize:15,color:T.textMuted,minWidth:25,textAlign:"right"}}>{value}</span></div>;}
 
 // Auto-refresh interval (ms)
 const REFRESH_INTERVAL = 60000;
@@ -175,14 +175,14 @@ function FleetConsole(){
     return sortDir==="asc"?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);});return l;},[filtered,sortCol,sortDir,targetFw]);
 
   const hSort=col=>{if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("asc");}};
-  const SA=({col})=>sortCol!==col?<span style={{opacity:0.25,fontSize:13}}> ↕</span>:<span style={{color:T.accent,fontSize:13}}> {sortDir==="asc"?"↑":"↓"}</span>;
+  const SA=({col})=>sortCol!==col?<span style={{opacity:0.25,fontSize:14}}> ↕</span>:<span style={{color:T.accent,fontSize:14}}> {sortDir==="asc"?"↑":"↓"}</span>;
   const tB=b=>setExpB(p=>{const n=new Set(p);n.has(b)?n.delete(b):n.add(b);return n;});
   const tR=k=>setExpR(p=>{const n=new Set(p);n.has(k)?n.delete(k):n.add(k);return n;});
   const expAll=()=>{const src=view==="attention"?attHierarchy:hierarchy;setExpB(new Set(src.map(h=>h.building)));setExpR(new Set(src.flatMap(h=>h.rooms.map(r=>`${h.building}::${r.room}`))));};
   const colAll=()=>{setExpB(new Set());setExpR(new Set());};
 
-  const selStyle={background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"5px 10px",color:T.text,fontFamily:M,fontSize:13};
-  const btnSm=(fn,lbl)=><button onClick={fn} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:3,padding:"4px 10px",color:T.textMuted,fontFamily:M,fontSize:13,cursor:"pointer"}}>{lbl}</button>;
+  const selStyle={background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"5px 10px",color:T.text,fontFamily:M,fontSize:14};
+  const btnSm=(fn,lbl)=><button onClick={fn} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:3,padding:"4px 10px",color:T.textMuted,fontFamily:M,fontSize:15,cursor:"pointer"}}>{lbl}</button>;
   const attReason=d=>{const r=[];if(d.status!=="success")r.push({label:d.error||d.status,color:stColor(d.status),bg:d.status==="auth_error"?T.amberDim:T.redDim});
     const t=targetFw[d._type];
     if(t&&Array.isArray(t)&&t.length>0&&!t.includes("*")&&d.firmware!=="N/A"&&d.firmware!=="N/A (Class 1)"&&!t.includes(d.firmware)&&d.status==="success")
@@ -196,38 +196,38 @@ function FleetConsole(){
   // Error state
   if(error&&allDevs.length===0)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
     <div style={{textAlign:"center",maxWidth:400}}><div style={{fontSize:36,marginBottom:16}}>⚠️</div><div style={{color:T.red,fontFamily:S,fontSize:18,marginBottom:8}}>{error}</div>
-      <div style={{color:T.textMuted,fontFamily:M,fontSize:13}}>Make sure the server is running and JSON files are in the data directory.</div>
-      <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:13,fontWeight:600,cursor:"pointer"}}>Retry</button></div></div>;
+      <div style={{color:T.textMuted,fontFamily:M,fontSize:14}}>Make sure the server is running and JSON files are in the data directory.</div>
+      <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:15,fontWeight:600,cursor:"pointer"}}>Retry</button></div></div>;
 
   // No data
   if(allDevs.length===0)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-    <div style={{textAlign:"center",maxWidth:420}}><div style={{fontSize:36,marginBottom:12,opacity:0.4}}>📂</div><div style={{color:T.textBright,fontFamily:S,fontSize:17,fontWeight:600,marginBottom:6}}>No scan files found</div>
-      <div style={{color:T.textMuted,fontFamily:S,fontSize:13,lineHeight:1.5}}>Copy your JSON scan outputs to the server's data directory. The dashboard will auto-detect and load them.</div>
-      <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:13,fontWeight:600,cursor:"pointer"}}>Refresh</button></div></div>;
+    <div style={{textAlign:"center",maxWidth:420}}><div style={{fontSize:36,marginBottom:12,opacity:0.4}}>📂</div><div style={{color:T.textBright,fontFamily:S,fontSize:18,fontWeight:600,marginBottom:6}}>No scan files found</div>
+      <div style={{color:T.textMuted,fontFamily:S,fontSize:15,lineHeight:1.5}}>Copy your JSON scan outputs to the server's data directory. The dashboard will auto-detect and load them.</div>
+      <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:15,fontWeight:600,cursor:"pointer"}}>Refresh</button></div></div>;
 
   return(
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:S,color:T.text}}>
       {/* HEADER */}
       <div style={{padding:"14px 24px",borderBottom:"1px solid #e2e2e2",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#00693e"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          {!logoErr?<img src="/static/d-pine.png" alt="D" style={{width:40,height:40,objectFit:"contain",filter:"brightness(0) invert(1)"}} onError={()=>setLogoErr(true)}/>
-          :<div style={{width:40,height:40,borderRadius:4,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff",fontWeight:700,fontFamily:"'EB Garamond',Georgia,serif"}}>D</div>}
+          {!logoErr?<img src="/static/d-pine.png" alt="D" style={{width:48,height:48,objectFit:"contain",filter:"brightness(0) invert(1)"}} onError={()=>setLogoErr(true)}/>
+          :<div style={{width:48,height:48,borderRadius:4,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,color:"#fff",fontWeight:700,fontFamily:"'EB Garamond',Georgia,serif"}}>D</div>}
           <div>
-            <div style={{fontWeight:700,fontSize:20,color:"#fff",fontFamily:"'EB Garamond',Georgia,serif",lineHeight:1.2}}>Firmware Dashboard</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.55)",fontFamily:S,letterSpacing:0.3}}>Design & Engineering · {stats.total} devices · {stats.buildings} buildings</div>
+            <div style={{fontWeight:700,fontSize:26,color:"#fff",fontFamily:"'EB Garamond',Georgia,serif",lineHeight:1.2}}>Firmware Dashboard</div>
+            <div style={{fontSize:15,color:"rgba(255,255,255,0.55)",fontFamily:S,letterSpacing:0.3}}>Design & Engineering · {stats.total} devices · {stats.buildings} buildings</div>
           </div>
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           <div style={{display:"flex",borderRadius:4,overflow:"hidden",border:"1px solid rgba(255,255,255,0.2)"}}>
             {[{id:"hierarchy",label:"Buildings"},{id:"attention",label:"Attention"+(attStats.total>0?` (${attStats.total})`:"")} ,{id:"table",label:"Table"},{id:"charts",label:"Charts"}].map(t=>
-              <button key={t.id} onClick={()=>setView(t.id)} style={{padding:"7px 14px",border:"none",cursor:"pointer",fontFamily:S,fontSize:13,fontWeight:600,background:view===t.id?"rgba(255,255,255,0.2)":"transparent",color:view===t.id?"#fff":"rgba(255,255,255,0.65)"}}>{t.label}</button>)}
+              <button key={t.id} onClick={()=>setView(t.id)} style={{padding:"7px 14px",border:"none",cursor:"pointer",fontFamily:S,fontSize:15,fontWeight:600,background:view===t.id?"rgba(255,255,255,0.2)":"transparent",color:view===t.id?"#fff":"rgba(255,255,255,0.65)"}}>{t.label}</button>)}
           </div>
-          <button onClick={fetchData} style={{padding:"7px 14px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontFamily:S,fontSize:13,fontWeight:600,cursor:"pointer"}} title="Refresh data">↻</button>
-          <button onClick={()=>setDark(d=>!d)} style={{padding:"5px 10px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:13,cursor:"pointer"}} title={dark?"Light mode":"Dark mode"}>{dark?"☀":"☾"}</button>
+          <button onClick={fetchData} style={{padding:"7px 14px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontFamily:S,fontSize:15,fontWeight:600,cursor:"pointer"}} title="Refresh data">↻</button>
+          <button onClick={()=>setDark(d=>!d)} style={{padding:"5px 10px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontSize:15,cursor:"pointer"}} title={dark?"Light mode":"Dark mode"}>{dark?"☀":"☾"}</button>
           <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:4,padding:"4px 10px",background:"rgba(255,255,255,0.1)",borderRadius:4}}>
-            <span style={{fontSize:13,color:"#fff",fontFamily:M,fontWeight:600}}>{userName}</span>
-            <span style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:M}}>{userRole}</span>
-            <a href="/logout" style={{fontSize:13,color:"rgba(255,255,255,0.6)",textDecoration:"none",marginLeft:4,fontFamily:M}}>logout</a>
+            <span style={{fontSize:15,color:"#fff",fontFamily:M,fontWeight:600}}>{userName}</span>
+            <span style={{fontSize:15,color:"rgba(255,255,255,0.5)",fontFamily:M}}>{userRole}</span>
+            <a href="/logout" style={{fontSize:15,color:"rgba(255,255,255,0.6)",textDecoration:"none",marginLeft:4,fontFamily:M}}>logout</a>
           </div>
         </div>
       </div>
@@ -235,9 +235,9 @@ function FleetConsole(){
       <div style={{padding:"14px 24px"}}>
         {/* SOURCE FILES */}
         <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
-          {fMeta.map((f,i)=>{const c=DTYPES[f.type]||DTYPES.unknown;return <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:T.surface,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 10px",fontSize:13,fontFamily:M}}>
+          {fMeta.map((f,i)=>{const c=DTYPES[f.type]||DTYPES.unknown;return <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:T.surface,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 10px",fontSize:15,fontFamily:M}}>
             <span>{c.icon}</span><span style={{color:T.text}}>{f.filename}</span><span style={{color:c.color}}>({f.count})</span></div>;})}
-          <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>auto-refreshes every 60s</span>
+          <span style={{fontSize:15,color:T.textDim,fontFamily:M}}>auto-refreshes every 60s</span>
         </div>
 
         {/* STATS */}
@@ -245,69 +245,69 @@ function FleetConsole(){
           {[{label:"Devices",value:stats.total,sub:`${stats.buildings} bldgs · ${stats.rooms} rooms`},{label:"Online",value:stats.online,color:T.green,sub:stats.total>0?((stats.online/stats.total)*100).toFixed(0)+"%":""},{label:"Issues",value:stats.errors,color:stats.errors>0?T.red:T.green},
             ...Object.entries(stats.types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>({label:DTYPES[t]?DTYPES[t].label:t,value:n,color:DTYPES[t]?DTYPES[t].color:T.textMuted,icon:DTYPES[t]?DTYPES[t].icon:""}))
           ].map((s,i)=><div key={i} style={{flex:"1 1 120px",minWidth:110,background:T.surface,border:`1px solid ${T.border}`,borderRadius:7,padding:"12px 16px"}}>
-            <div style={{fontSize:13,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:0.8}}>{s.icon?s.icon+" ":""}{s.label}</div>
-            <div style={{fontSize:26,fontWeight:700,color:s.color||T.textBright,fontFamily:S}}>{s.value}</div>
-            {s.sub&&<div style={{fontSize:13,color:T.textDim,fontFamily:M}}>{s.sub}</div>}</div>)}
+            <div style={{fontSize:15,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:0.8}}>{s.icon?s.icon+" ":""}{s.label}</div>
+            <div style={{fontSize:32,fontWeight:700,color:s.color||T.textBright,fontFamily:S}}>{s.value}</div>
+            {s.sub&&<div style={{fontSize:15,color:T.textDim,fontFamily:M}}>{s.sub}</div>}</div>)}
         </div>
 
         {/* FILTERS */}
         {view!=="attention"&&<div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:T.surface,borderRadius:6,border:`1px solid ${T.border}`}}>
-          <span style={{fontSize:13,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:1}}>Filter</span>
+          <span style={{fontSize:15,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:1}}>Filter</span>
           <select value={fType} onChange={e=>setFType(e.target.value)} style={selStyle}><option value="all">All Types</option>{typeOpts.map(t=><option key={t} value={t}>{DTYPES[t]?DTYPES[t].icon+" "+DTYPES[t].label:t}</option>)}</select>
           <select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={selStyle}><option value="all">All Status</option><option value="success">Online</option><option value="errors">Errors</option></select>
           <select value={fBldg} onChange={e=>setFBldg(e.target.value)} style={selStyle}><option value="all">All Buildings</option>{bldgOpts.map(b=><option key={b} value={b}>{b}</option>)}</select>
-          <div style={{flex:1}}/><input placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"5px 10px",color:T.text,fontFamily:M,fontSize:13,outline:"none",width:140}}/>
-          <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{filtered.length}/{allDevs.length}</span>
+          <div style={{flex:1}}/><input placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"5px 10px",color:T.text,fontFamily:M,fontSize:15,outline:"none",width:140}}/>
+          <span style={{fontSize:15,color:T.textDim,fontFamily:M}}>{filtered.length}/{allDevs.length}</span>
         </div>}
 
         {/* ATTENTION */}
         {view==="attention"&&<div>
           <div style={{background:T.surface,border:`1px solid ${T.borderHi}`,borderRadius:8,padding:14,marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-              <div style={{fontSize:13,fontWeight:600,color:T.textBright}}>Target Firmware per Device Type</div>
-              {fwSaving&&<span style={{fontSize:13,color:T.green,fontFamily:M}}>✓ saved</span>}
+              <div style={{fontSize:15,fontWeight:600,color:T.textBright}}>Target Firmware per Device Type</div>
+              {fwSaving&&<span style={{fontSize:15,color:T.green,fontFamily:M}}>✓ saved</span>}
               {!isAdmin&&<Badge color={T.textMuted} bg="rgba(92,110,136,0.1)">view only</Badge>}
               <div style={{flex:1}}/>
-              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=["*"]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.red}`,background:T.redDim,color:T.red,fontFamily:M,fontSize:13,fontWeight:600,cursor:"pointer"}}>All: Errors Only</button>}
-              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=[]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.border}`,background:"transparent",color:T.textMuted,fontFamily:M,fontSize:13,cursor:"pointer"}}>Clear All</button>}
+              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=["*"]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.red}`,background:T.redDim,color:T.red,fontFamily:M,fontSize:15,fontWeight:600,cursor:"pointer"}}>All: Errors Only</button>}
+              {isAdmin&&<button onClick={()=>{const t={};typeOpts.forEach(k=>t[k]=[]);saveTargetFw(t);}} style={{padding:"3px 10px",borderRadius:4,border:`1px solid ${T.border}`,background:"transparent",color:T.textMuted,fontFamily:M,fontSize:15,cursor:"pointer"}}>Clear All</button>}
             </div>
-            <div style={{fontSize:13,color:T.textMuted,marginBottom:16}}>Click firmware versions to accept them. Devices on unselected versions will be flagged.</div>
+            <div style={{fontSize:15,color:T.textMuted,marginBottom:16}}>Click firmware versions to accept them. Devices on unselected versions will be flagged.</div>
             <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
               {typeOpts.map(type=>{const cfg=DTYPES[type]||DTYPES.unknown;const versions=fwByType[type]||{};const vList=Object.entries(versions).sort((a,b)=>b[1]-a[1]);const selected=targetFw[type]||[];const isErrOnly=Array.isArray(selected)&&selected.includes("*");
                 const toggleVer=(v)=>{if(!isAdmin)return;let cur=Array.isArray(selected)?selected.filter(x=>x!=="*"):[];if(cur.includes(v))cur=cur.filter(x=>x!==v);else cur=[...cur,v];saveTargetFw({...targetFw,[type]:cur});};
                 const toggleErrOnly=()=>{if(!isAdmin)return;saveTargetFw({...targetFw,[type]:isErrOnly?[]:["*"]});};
                 const selectAll=()=>{if(!isAdmin)return;saveTargetFw({...targetFw,[type]:vList.map(([v])=>v)});};
                 return <div key={type} style={{flex:"1 1 200px",minWidth:180,background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:6,padding:10}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}><span style={{fontSize:14}}>{cfg.icon}</span><span style={{fontWeight:600,fontSize:13,color:cfg.color}}>{cfg.label}</span><span style={{fontSize:13,color:T.textDim,fontFamily:M,marginLeft:"auto"}}>{allDevs.filter(d=>d._type===type).length}</span></div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}><span style={{fontSize:14}}>{cfg.icon}</span><span style={{fontWeight:600,fontSize:15,color:cfg.color}}>{cfg.label}</span><span style={{fontSize:15,color:T.textDim,fontFamily:M,marginLeft:"auto"}}>{allDevs.filter(d=>d._type===type).length}</span></div>
                   <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                    {isAdmin&&<span onClick={toggleErrOnly} style={{fontSize:13,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:"pointer",background:isErrOnly?T.redDim:"transparent",border:`1px solid ${isErrOnly?T.red:T.border}`,color:isErrOnly?T.red:T.textMuted,transition:"all 0.15s"}}>Errors only</span>}
-                    {isAdmin&&!isErrOnly&&vList.length>1&&<span onClick={selectAll} style={{fontSize:13,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:"pointer",background:"transparent",border:`1px solid ${T.border}`,color:T.textMuted,transition:"all 0.15s"}}>Select all</span>}
+                    {isAdmin&&<span onClick={toggleErrOnly} style={{fontSize:15,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:"pointer",background:isErrOnly?T.redDim:"transparent",border:`1px solid ${isErrOnly?T.red:T.border}`,color:isErrOnly?T.red:T.textMuted,transition:"all 0.15s"}}>Errors only</span>}
+                    {isAdmin&&!isErrOnly&&vList.length>1&&<span onClick={selectAll} style={{fontSize:15,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:"pointer",background:"transparent",border:`1px solid ${T.border}`,color:T.textMuted,transition:"all 0.15s"}}>Select all</span>}
                     {!isAdmin&&isErrOnly&&<Badge color={T.red} bg={T.redDim}>Errors only</Badge>}
                     {vList.map(([v,n])=>{const isSelected=!isErrOnly&&Array.isArray(selected)&&selected.includes(v);
-                      return <span key={v} onClick={()=>{if(!isErrOnly)toggleVer(v);}} style={{fontSize:13,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:isAdmin&&!isErrOnly?"pointer":"default",background:isSelected?cfg.bg:isErrOnly?"transparent":"transparent",border:`1px solid ${isSelected?cfg.color:T.border}`,color:isSelected?cfg.color:T.textMuted,opacity:isErrOnly?0.4:1,transition:"all 0.15s"}}>{v} ({n})</span>;})}
+                      return <span key={v} onClick={()=>{if(!isErrOnly)toggleVer(v);}} style={{fontSize:15,fontFamily:M,padding:"2px 7px",borderRadius:3,cursor:isAdmin&&!isErrOnly?"pointer":"default",background:isSelected?cfg.bg:isErrOnly?"transparent":"transparent",border:`1px solid ${isSelected?cfg.color:T.border}`,color:isSelected?cfg.color:T.textMuted,opacity:isErrOnly?0.4:1,transition:"all 0.15s"}}>{v} ({n})</span>;})}
                   </div>
-                  {!isErrOnly&&Array.isArray(selected)&&selected.length>0&&<div style={{marginTop:6,fontSize:13,color:T.green,fontFamily:M}}>✓ {selected.length} version{selected.length!==1?"s":""} accepted</div>}
+                  {!isErrOnly&&Array.isArray(selected)&&selected.length>0&&<div style={{marginTop:6,fontSize:15,color:T.green,fontFamily:M}}>✓ {selected.length} version{selected.length!==1?"s":""} accepted</div>}
                 </div>;})}
             </div>
           </div>
           <div style={{display:"flex",gap:10,marginBottom:12,flexWrap:"wrap"}}>
-            <div style={{background:T.redDim,border:"1px solid rgba(239,68,68,0.25)",borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.red}}>{attStats.offline}</span><span style={{fontSize:13,color:T.red,fontWeight:600}}>Offline / Error</span></div>
-            <div style={{background:T.amberDim,border:"1px solid rgba(245,158,11,0.25)",borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.amber}}>{attStats.outdated}</span><span style={{fontSize:13,color:T.amber,fontWeight:600}}>Outdated Firmware</span></div>
-            <div style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.textBright}}>{attStats.total}</span><span style={{fontSize:13,color:T.textMuted,fontWeight:600}}>Total Attention</span></div>
+            <div style={{background:T.redDim,border:"1px solid rgba(239,68,68,0.25)",borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.red}}>{attStats.offline}</span><span style={{fontSize:15,color:T.red,fontWeight:600}}>Offline / Error</span></div>
+            <div style={{background:T.amberDim,border:"1px solid rgba(245,158,11,0.25)",borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.amber}}>{attStats.outdated}</span><span style={{fontSize:15,color:T.amber,fontWeight:600}}>Outdated Firmware</span></div>
+            <div style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:7,padding:"8px 14px",display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:700,color:T.textBright}}>{attStats.total}</span><span style={{fontSize:15,color:T.textMuted,fontWeight:600}}>Total Attention</span></div>
           </div>
-          {attStats.total===0?<div style={{textAlign:"center",padding:"40px 20px",color:T.green}}><div style={{fontSize:32,marginBottom:8}}>✅</div><div style={{fontSize:17,fontWeight:600}}>All clear!</div><div style={{fontSize:13,color:T.textMuted,marginTop:4}}>{Object.values(targetFw).some(v=>Array.isArray(v)&&v.length>0)?"All devices online and on accepted firmware.":"Select accepted firmware versions above to check."}</div></div>
+          {attStats.total===0?<div style={{textAlign:"center",padding:"40px 20px",color:T.green}}><div style={{fontSize:32,marginBottom:8}}>✅</div><div style={{fontSize:18,fontWeight:600}}>All clear!</div><div style={{fontSize:15,color:T.textMuted,marginTop:4}}>{Object.values(targetFw).some(v=>Array.isArray(v)&&v.length>0)?"All devices online and on accepted firmware.":"Select accepted firmware versions above to check."}</div></div>
           :<div>
             <div style={{display:"flex",gap:10,marginBottom:8}}>{btnSm(expAll,"Expand All")}{btnSm(colAll,"Collapse All")}</div>
             {attHierarchy.map(b=>{const open=expB.has(b.building);return <div key={b.building} style={{marginBottom:4}}>
               <div onClick={()=>tB(b.building)} style={{display:"flex",alignItems:"center",gap:8,padding:"12px 16px",background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",borderLeft:`3px solid ${T.red}`}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background=T.surface}>
-                <span style={{color:T.textDim,fontSize:13,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
-                <span style={{fontWeight:700,fontSize:13,color:T.textBright,minWidth:100}}>{b.building}</span><Badge color={T.red} bg={T.redDim}>{b.total} device{b.total!==1?"s":""}</Badge></div>
+                <span style={{color:T.textDim,fontSize:15,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                <span style={{fontWeight:700,fontSize:15,color:T.textBright,minWidth:100}}>{b.building}</span><Badge color={T.red} bg={T.redDim}>{b.total} device{b.total!==1?"s":""}</Badge></div>
               {open&&<div style={{marginLeft:18,borderLeft:`1px solid ${T.border}`}}>{b.rooms.map(r=>{const rk=b.building+"::"+r.room;const ro=expR.has(rk);return <div key={rk}>
                 <div onClick={()=>tR(rk)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",cursor:"pointer",borderRadius:3}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                  <span style={{color:T.textDim,fontSize:8,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
-                  <span style={{fontWeight:600,fontSize:12.5,color:T.text}}>{r.room}</span><span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{r.devices.length} issue{r.devices.length!==1?"s":""}</span></div>
-                {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=>{const reasons=attReason(d);return <div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"12px 14px",borderBottom:`1px solid ${T.border}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                  <DBadge type={d._type}/>{reasons.map((r,ri)=><Badge key={ri} color={r.color} bg={r.bg}>{r.label}</Badge>)}<DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:13,color:T.textDim,fontFamily:M,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</span></div>;})}</div>}
+                  <span style={{color:T.textDim,fontSize:13,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                  <span style={{fontWeight:600,fontSize:12.5,color:T.text}}>{r.room}</span><span style={{fontSize:15,color:T.textDim,fontFamily:M}}>{r.devices.length} issue{r.devices.length!==1?"s":""}</span></div>
+                {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=>{const reasons=attReason(d);return <div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"12px 14px",borderBottom:`1px solid ${T.border}`,fontSize:14}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                  <DBadge type={d._type}/>{reasons.map((r,ri)=><Badge key={ri} color={r.color} bg={r.bg}>{r.label}</Badge>)}<DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:15,color:T.textDim,fontFamily:M,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</span></div>;})}</div>}
               </div>;})}</div>}</div>;})}
           </div>}
         </div>}
@@ -317,30 +317,30 @@ function FleetConsole(){
           <div style={{display:"flex",gap:10,marginBottom:8}}>{btnSm(expAll,"Expand All")}{btnSm(colAll,"Collapse All")}</div>
           {hierarchy.map(b=>{const open=expB.has(b.building);const issues=b.total-b.online;return <div key={b.building} style={{marginBottom:4}}>
             <div onClick={()=>tB(b.building)} style={{display:"flex",alignItems:"center",gap:8,padding:"12px 16px",background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",borderLeft:`3px solid ${issues>0?T.amber:T.green}`}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background=T.surface}>
-              <span style={{color:T.textDim,fontSize:13,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
-              <span style={{fontWeight:700,fontSize:13,color:T.textBright,minWidth:100}}>{b.building}</span>
-              <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{b.rooms.length} rm{b.rooms.length!==1?"s":""}</span>
-              <span style={{fontSize:13,color:T.textMuted,fontFamily:M}}>{b.online}/{b.total}</span>
-              <div style={{display:"flex",gap:3}}>{b.types.map(t=><span key={t} style={{fontSize:12}} title={DTYPES[t]?DTYPES[t].label:""}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
+              <span style={{color:T.textDim,fontSize:15,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+              <span style={{fontWeight:700,fontSize:15,color:T.textBright,minWidth:100}}>{b.building}</span>
+              <span style={{fontSize:15,color:T.textDim,fontFamily:M}}>{b.rooms.length} rm{b.rooms.length!==1?"s":""}</span>
+              <span style={{fontSize:15,color:T.textMuted,fontFamily:M}}>{b.online}/{b.total}</span>
+              <div style={{display:"flex",gap:3}}>{b.types.map(t=><span key={t} style={{fontSize:13}} title={DTYPES[t]?DTYPES[t].label:""}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
               {issues>0&&<Badge color={T.amber} bg={T.amberDim}>{issues} issue{issues!==1?"s":""}</Badge>}</div>
             {open&&<div style={{marginLeft:18,borderLeft:`1px solid ${T.border}`}}>{b.rooms.map(r=>{const rk=b.building+"::"+r.room;const ro=expR.has(rk);const ri=r.devices.length-r.online;return <div key={rk}>
               <div onClick={()=>tR(rk)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",cursor:"pointer",borderRadius:3}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <span style={{color:T.textDim,fontSize:8,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                <span style={{color:T.textDim,fontSize:13,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
                 <span style={{fontWeight:600,fontSize:12.5,color:T.text}}>{r.room}</span>
-                <div style={{display:"flex",gap:2}}>{r.types.map(t=><span key={t} style={{fontSize:13}}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
-                <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{r.online}/{r.devices.length}</span>
-                {ri>0&&<Badge color={T.red} bg={T.redDim} style={{fontSize:13}}>{ri} err</Badge>}</div>
-              {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=><div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderBottom:`1px solid ${T.border}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <DBadge type={d._type}/><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim} style={{fontSize:13}}>{d.status==="success"?"OK":d.error||d.status}</Badge>
-                <DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:13,color:T.textDim,fontFamily:M,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</span></div>)}</div>}
+                <div style={{display:"flex",gap:2}}>{r.types.map(t=><span key={t} style={{fontSize:14}}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
+                <span style={{fontSize:15,color:T.textDim,fontFamily:M}}>{r.online}/{r.devices.length}</span>
+                {ri>0&&<Badge color={T.red} bg={T.redDim} style={{fontSize:14}}>{ri} err</Badge>}</div>
+              {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=><div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderBottom:`1px solid ${T.border}`,fontSize:14}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <DBadge type={d._type}/><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim} style={{fontSize:14}}>{d.status==="success"?"OK":d.error||d.status}</Badge>
+                <DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:15,color:T.textDim,fontFamily:M,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.host.split(".")[0]}</span></div>)}</div>}
             </div>;})}</div>}</div>;})}
         </div>}
 
         {/* TABLE */}
         {view==="table"&&<div style={{overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`,maxHeight:"calc(100vh - 260px)"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:S,fontSize:13}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:S,fontSize:14}}>
             <thead><tr>{[{key:"building",label:"Building"},{key:"room",label:"Room"},{key:"_type",label:"Type"},{key:"host",label:"Host"},{key:"model",label:"Model"},{key:"firmware",label:"Firmware"},{key:"_fwStatus",label:"FW Status"},{key:"status",label:"Status"},{key:"serial",label:"Serial"}].map(col=>
-              <th key={col.key} onClick={()=>hSort(col.key)} style={{position:"sticky",top:0,zIndex:2,background:T.surfaceAlt,color:T.textMuted,textAlign:"left",padding:"12px 14px",borderBottom:`2px solid ${T.border}`,cursor:"pointer",userSelect:"none",fontSize:11,textTransform:"uppercase",letterSpacing:1,fontWeight:700,whiteSpace:"nowrap"}}>{col.label}<SA col={col.key}/></th>)}</tr></thead>
+              <th key={col.key} onClick={()=>hSort(col.key)} style={{position:"sticky",top:0,zIndex:2,background:T.surfaceAlt,color:T.textMuted,textAlign:"left",padding:"12px 14px",borderBottom:`2px solid ${T.border}`,cursor:"pointer",userSelect:"none",fontSize:13,textTransform:"uppercase",letterSpacing:1,fontWeight:700,whiteSpace:"nowrap"}}>{col.label}<SA col={col.key}/></th>)}</tr></thead>
             <tbody>{sorted.map((d,i)=>{
               const t=targetFw[d._type];const hasTarget=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
               const naClass="N/A (Class 1)";
@@ -356,7 +356,7 @@ function FleetConsole(){
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:d.firmware!=="N/A"?T.green:T.textDim}}>{d.firmware!=="N/A"?d.firmware:"—"}</td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,fontWeight:600,color:fwColor}}>{fwStatus}</td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`}}><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim}>{d.status==="success"?"OK":d.error||d.status}</Badge></td>
-              <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:T.textDim,fontSize:12}}>{d.serial!=="N/A"?d.serial:"—"}</td></tr>})}</tbody>
+              <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:T.textDim,fontSize:13}}>{d.serial!=="N/A"?d.serial:"—"}</td></tr>})}</tbody>
           </table>
         </div>}
 
@@ -399,7 +399,7 @@ function FleetConsole(){
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
                 <span style={{fontSize:16}}>{cfg.icon}</span>
                 <span style={{fontSize:18,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
-                <span style={{fontSize:13,color:T.textMuted,fontFamily:M}}>{total}</span>
+                <span style={{fontSize:15,color:T.textMuted,fontFamily:M}}>{total}</span>
               </div>
               <div style={{display:"flex",gap:16,alignItems:"center"}}>
                 <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -411,10 +411,10 @@ function FleetConsole(){
                 <div style={{flex:1,display:"flex",flexDirection:"column",gap:3}}>
                   {slices.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
                     <div style={{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}}/>
-                    <span style={{fontFamily:M,fontSize:13,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
-                    <span style={{fontFamily:M,fontSize:13,color:T.textMuted}}>{s.count}</span>
-                    <span style={{fontFamily:M,fontSize:13,color:T.textDim,minWidth:28,textAlign:"right"}}>{s.pct}%</span>
-                    {hasTarget&&<span style={{fontSize:13,width:12,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"✓":s.isOutdated?"⚠":""}</span>}
+                    <span style={{fontFamily:M,fontSize:15,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
+                    <span style={{fontFamily:M,fontSize:15,color:T.textMuted}}>{s.count}</span>
+                    <span style={{fontFamily:M,fontSize:15,color:T.textDim,minWidth:28,textAlign:"right"}}>{s.pct}%</span>
+                    {hasTarget&&<span style={{fontSize:15,width:12,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"✓":s.isOutdated?"⚠":""}</span>}
                   </div>)}
                 </div>
               </div>
