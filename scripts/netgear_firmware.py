@@ -1,537 +1,698 @@
-# Netgear M4250 Firmware & CPU Temp Checker
-
-A command-line tool that connects to one or more Netgear M4250 routers over SSH, retrieves firmware version, CPU temperature, and total PoE power consumed, and outputs a formatted terminal table and a structured JSON report.
-
-> **Note:** All examples use `python3`. On some systems Python 3 may also be invoked as `python` — verify with `python --version` before substituting.
-
----
-
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Directory Structure](#directory-structure)
-- [CSV Input Format](#csv-input-format)
-- [Command-Line Arguments](#command-line-arguments)
-- [Terminal Output](#terminal-output)
-- [JSON Output](#json-output)
-- [Functions Reference](#functions-reference)
-- [Troubleshooting](#troubleshooting)
-
----
-
-## Requirements
-
-- Python 3.10+
-- Netgear M4250 routers accessible over SSH
-- The following Python packages:
-
-```
-paramiko
-tabulate
-tqdm
-```
-
----
-
-## Installation
-
-```bash
-pip install paramiko tabulate tqdm
-```
-
-Place `netgear_firmware.py` in your scripts directory and create the required input/output folders alongside it.
-
----
-
-## Quick Start
-
-```bash
-# Run with all defaults
-python3 netgear_firmware.py
-
-# Specify a different CSV and output file
-python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --output netgear_firmware/files/results.json
-
-# Increase concurrency and enable verbose logging
-python3 netgear_firmware.py --workers 10 --verbose
-
-# Only show routers not running the expected firmware version
-python3 netgear_firmware.py --firmware 13.0.4.9
-
-# Combine firmware filter with a custom CSV for an audit run
-python3 netgear_firmware.py --firmware 13.0.4.9 --csv secrets/netgear_firmware.csv --output netgear_firmware/files/audit.json
-
-# Include raw SSH output in the JSON for debugging
-python3 netgear_firmware.py --include-raw
-```
-
----
-
-## Directory Structure
-
-```
-scripts/
-├── netgear_firmware.py
-├── secrets/
-│   └── netgear_firmware.csv       # Router credentials (input)
-└── netgear_firmware/
-    └── files/
-        └── results_2024-01-15_09-30-00.json   # Timestamped output
-```
-
-The `netgear_firmware/files/` directory is created automatically on first run if it does not exist.
-
----
-
-## CSV Input Format
-
-The script reads router credentials from `secrets/netgear_firmware.csv` by default. The file must have at minimum a `host` column. All other columns are optional and fall back to defaults if omitted.
-
-### Supported Columns
-
-| Column     | Required | Default | Description                         |
-|------------|----------|---------|-------------------------------------|
-| `host`     | Yes      | —       | IP address or hostname of the router |
-| `username` | No       | `admin` | SSH login username                  |
-| `password` | No       | `""`    | SSH login password                  |
-| `port`     | No       | `22`    | SSH port number                     |
-
-### Example CSV
-
-```csv
-host,username,password,port
-192.168.1.10,admin,mypassword,22
-192.168.1.11,admin,mypassword,22
-192.168.1.12,admin,otherpassword,22
-# This line is a comment and will be skipped
-192.168.1.13,admin,mypassword,22
-```
-
-### CSV Format Notes
-
-- The loader auto-detects delimiters — commas, semicolons, tabs, and pipes are all supported
-- Files with a UTF-8 BOM (common when exported from Excel) are handled automatically
-- Lines where the host field starts with `#` are treated as comments and skipped
-- Column names are case-insensitive and leading/trailing whitespace is stripped
-
----
-
-## Command-Line Arguments
-
-```
-usage: netgear_firmware.py [-h] [--csv CSV] [--output OUTPUT]
-                            [--workers WORKERS] [--timeout TIMEOUT]
-                            [--firmware FIRMWARE]
-                            [--verbose] [--include-raw]
-```
-
-| Argument        | Default                                                   | Description                                                                      |
-|-----------------|-----------------------------------------------------------|----------------------------------------------------------------------------------|
-| `--csv`         | `secrets/netgear_firmware.csv`                            | Path to the input CSV file                                                       |
-| `--output`      | `netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json` | Path to write the JSON results file                                              |
-| `--workers`     | `5`                                                       | Number of concurrent SSH connections                                             |
-| `--timeout`     | `20`                                                      | Per-router SSH connection timeout in seconds                                     |
-| `--firmware`    | off                                                       | Only show routers whose firmware does not match this version (e.g. `13.0.4.9`)  |
-| `--verbose`     | off                                                       | Enable DEBUG-level logging to stderr                                             |
-| `--include-raw` | off                                                       | Append raw SSH command output to each router entry in the JSON                  |
-
-### Examples
-
-```bash
-# Use 10 parallel workers with a 30-second timeout
-python3 netgear_firmware.py --workers 10 --timeout 30
-
-# Only show routers not running 13.0.4.9
-python3 netgear_firmware.py --firmware 13.0.4.9
-
-# Debug a single router by including raw output and enabling verbose logging
-python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --include-raw --verbose
-
-# Write results to a custom filename
-python3 netgear_firmware.py --output netgear_firmware/files/audit_2024-01-15.json
-```
-
----
-
-## Terminal Output
-
-### Header Block
-
-On launch, the script prints a confirmation header before any scanning begins:
-
-```
-  Netgear M4250 Firmware & CPU Temp Checker
-  Query router firmware version and CPU temperature via SSH
-  Input:   secrets/netgear_firmware.csv
-  Output:  netgear_firmware/files/results_2024-01-15_09-30-00.json
-  Workers: 5
-  Timeout: 20s
-```
-
-When `--firmware` is active, a Filter line is appended:
-
-```
-  Filter:  firmware != 13.0.4.9
-```
-
-### Progress Bar
-
-A live progress bar tracks scanning progress, showing the most recently completed host in the postfix. On finish it shows total elapsed time.
-
-```
-  Scanning ████████████████████ 12/12 [00:18<00:00]  Complete in 18.3s
-```
-
-- Written to `stderr` so it does not interfere with piped or redirected output
-- Remains visible after scanning completes
-- Width scales dynamically to the terminal width
-
-### Results Table
-
-After scanning, a formatted table is printed to `stdout`:
-
-```
-  ============================================================
-      Netgear M4250 Query Results — Firmware & CPU Temp
-  ============================================================
-  +------------+---------------+-----------+----------+---------------+----------+
-  | Status     | Host          | Firmware  | CPU Temp | Total PoE (W) | Error    |
-  +------------+---------------+-----------+----------+---------------+----------+
-  | ✓ OK       | 192.168.1.10  | M4250-10G2F-PoE+ | 13.0.4.9  | 109 °F   | 82.4 W        |          |
-  | ✓ OK       | 192.168.1.11  | M4250-10G2F-PoE+ | 13.0.4.9  | 113 °F   | 91.0 W        |          |
-  | ✗ ERROR    | 192.168.1.12  | N/A              | N/A       | N/A      | N/A           | Timed out|
-  | ✗ AUTH ERR | 192.168.1.13  | N/A              | N/A       | N/A      | N/A           | Auth failed|
-  +------------+---------------+-----------+----------+---------------+----------+
-
-  Total: 4  |  ✓ Success: 2  |  ✗ Auth Errors: 1  |  ✗ Failed: 1
-  CPU Temp (°F) — Avg: 111  |  Min: 109  |  Max: 113  |  Reported: 2/4
-  Total PoE (W) — Avg: 86.7  |  Min: 82.4  |  Max: 91.0  |  Reported: 2/4
-
-  Results saved: netgear_firmware/files/results_2024-01-15_09-30-00.json
-  Elapsed: 18.3s (5 workers)
-```
-
-### Status Icons
-
-| Status      | Display       | Meaning                              |
-|-------------|---------------|--------------------------------------|
-| `success`   | `✓ OK`        | Firmware and/or temp retrieved       |
-| `auth_error`| `✗ AUTH ERR`  | SSH credentials were rejected        |
-| `error`     | `✗ ERROR`     | Connection failed or parse error     |
-
-### Firmware Filter
-
-When `--firmware` is passed, only routers with a version mismatch appear in the table. Routers that failed to connect are excluded from the filtered view since they have no version to compare.
-
-The banner title changes to reflect the expected version:
-
-```
-  ============================================================
-       Netgear M4250 — Firmware Mismatch: expected 13.0.4.9
-  ============================================================
-```
-
-A firmware summary line is added to the footer:
-
-```
-  Firmware Filter: 13.0.4.9  |  ✓ Matched: 10  |  ✗ Mismatched: 2
-```
-
-If every reachable router matches the expected version, the table is skipped and a single confirmation line is printed instead:
-
-```
-  ✓ All reachable routers are running firmware 13.0.4.9
-```
-
-> **Note:** The JSON output always contains all results regardless of the filter. The filter only affects what is shown in the terminal table.
-
----
-
-## JSON Output
-
-Results are written to a timestamped file under `netgear_firmware/files/` with a `query_info` metadata block and a `routers` array.
-
-### Structure
-
-```json
-{
-  "query_info": {
-    "csv_file": "/path/to/netgear_firmware/files",
-    "timestamp": "2024-01-15T14:32:00.123456+00:00",
-    "protocol": "SSH / Netgear M4250 CLI",
-    "mode": "firmware+temp",
-    "workers": 5,
-    "total": 4,
-    "success": 2,
-    "errors": 2,
-    "elapsed_seconds": 18.3
-  },
-  "routers": [
-    {
-      "host": "192.168.1.10",
-      "username": "admin",
-      "port": 22,
-      "query_timestamp": "2024-01-15T14:31:52.001234+00:00",
-      "status": "success",
-      "model": "M4250-10G2F-PoE+",
-      "firmware_version": "13.0.4.9",
-      "cpu_temp": "109 °F",
-      "cpu_temp_value": 109.4,
-      "poe_consumed": "82.4 W",
-      "poe_consumed_value": 82.4,
-      "error": null
-    },
-    {
-      "host": "192.168.1.12",
-      "username": "admin",
-      "port": 22,
-      "query_timestamp": "2024-01-15T14:31:58.004321+00:00",
-      "status": "error",
-      "model": null,
-      "firmware_version": null,
-      "cpu_temp": null,
-      "cpu_temp_value": null,
-      "poe_consumed": null,
-      "poe_consumed_value": null,
-      "error": "SSH/network error: Connection timed out"
+#!/usr/bin/env python3
+"""
+Netgear M4250 Router Version & CPU Temp Checker
+=================================================
+Reads router credentials from secrets/netgear_firmware.csv (default), connects via SSH,
+runs `show hardware` and `show environment | include Temp`,
+extracts firmware version and CPU temperature, writes results to
+netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json (default), and prints a summary table.
+
+Usage:
+    python3 netgear_firmware.py
+    python3 netgear_firmware.py --verbose
+    python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --output netgear_firmware/files/results.json
+    python3 netgear_firmware.py --include-raw --verbose
+    python3 netgear_firmware.py --firmware 12.0.20.7
+
+CSV columns: host, username, password, port (port defaults to 22)
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import logging
+import re
+import shutil
+import socket
+import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
+from pathlib import Path
+
+try:
+    import paramiko
+except ImportError:
+    sys.exit("ERROR: pip install paramiko")
+
+try:
+    from tabulate import tabulate
+except ImportError:
+    sys.exit("ERROR: pip install tabulate")
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    sys.exit("ERROR: pip install tqdm")
+
+
+# ──────────────────────────────────────────────
+#  ANSI color palette
+# ──────────────────────────────────────────────
+CYAN   = "\033[96m"
+GREEN  = "\033[92m"
+RED    = "\033[91m"
+YELLOW = "\033[93m"
+WHITE  = "\033[97m"
+BOLD   = "\033[1m"
+RESET  = "\033[0m"
+
+# ──────────────────────────────────────────────
+#  Logging — plain text, no colors
+# ──────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s  %(levelname)-8s  %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger("netgear_m4250_checker")
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  CSV loader
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def load_csv(csv_path: Path) -> list[dict]:
+    if not csv_path.exists():
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
+        sys.exit(1)
+
+    routers: list[dict] = []
+    with csv_path.open("r", encoding="utf-8-sig") as fh:
+        sample = fh.read(4096)
+        fh.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        except csv.Error:
+            dialect = csv.excel
+
+        reader = csv.DictReader(fh, dialect=dialect)
+        if not reader.fieldnames:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
+            sys.exit(1)
+
+        col_map = {n.strip().lower(): n for n in reader.fieldnames}
+        if "host" not in col_map:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
+            sys.exit(1)
+
+        for row in reader:
+            host = row.get(col_map["host"], "").strip()
+            if not host or host.startswith("#"):
+                continue
+            username = row.get(col_map.get("username", ""), "").strip() or "admin"
+            password = row.get(col_map.get("password", ""), "").strip()
+            try:
+                port = int(row.get(col_map.get("port", ""), "") or 22)
+            except ValueError:
+                port = 22
+            routers.append({
+                "host":     host,
+                "username": username,
+                "password": password,
+                "port":     port,
+            })
+
+    return routers
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Table helpers
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def status_icon(r: dict) -> str:
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    if s == "auth_error":
+        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+
+
+def clean(val) -> str:
+    s = str(val) if val is not None else "N/A"
+    if s in ("None", "-1", ""):
+        return "N/A"
+    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
+        return "N/A"
+    return s
+
+
+def truncate_error(err, max_len: int = 30) -> str:
+    if not err:
+        return ""
+    s = str(err)
+    for pat, label in [
+        # SSH-specific patterns first
+        (r"[Aa]uthentication failed",     "Auth failed"),
+        (r"[Aa]uthentication required",   "Auth required"),
+        (r"[Nn]o existing session",       "No session"),
+        (r"[Ss]SH.*[Ee]rror",            "SSH error"),
+        (r"[Cc]ould not parse firmware",  "Parse error"),
+        # Generic network patterns
+        (r"[Cc]onnection timed out",      "Timed out"),
+        (r"[Cc]onnection refused",        "Conn refused"),
+        (r"[Nn]o response .* timeout",    "No response"),
+        (r"[Nn]o route to host",          "No route"),
+        (r"[Nn]etwork is unreachable",    "Net unreachable"),
+        (r"[Nn]ame or service not known", "DNS failed"),
+        (r"[Nn]etwork error",             "Network error"),
+        (r"[Mm]alformed",                 "Bad response"),
+    ]:
+        if re.search(pat, s):
+            return label
+    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
+    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
+    s = re.sub(r'\s+', ' ', s).strip(': ')
+    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Strip ANSI escape codes
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def strip_ansi(text: str) -> str:
+    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
+    text = re.sub(r"\x1b\].*?\x07", "", text)
+    text = re.sub(r"\x1b[()][AB012]", "", text)
+    text = re.sub(r"\x1b.", "", text)
+    text = re.sub(r"[\x00-\x08\x0e-\x1f\x7f]", "", text)
+    return text
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  SSH shell helpers
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def _read_until_prompt(channel: paramiko.Channel, timeout: float = 15.0) -> str:
+    """
+    Read from an interactive SSH channel until a CLI prompt is detected
+    or the timeout expires.  Netgear M4250 prompts end with '>' or '#'.
+    """
+    raw = b""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if channel.recv_ready():
+            chunk = channel.recv(65535)
+            raw += chunk
+            decoded = raw.decode("utf-8", errors="replace")
+            if re.search(r"[>#]\s*$", decoded.rstrip()):
+                break
+        else:
+            time.sleep(0.3)
+    return raw.decode("utf-8", errors="replace")
+
+
+def open_shell(client: paramiko.SSHClient) -> paramiko.Channel:
+    """Open an interactive shell and wait for the first prompt."""
+    channel = client.invoke_shell(term="vt100", width=220, height=50)
+    time.sleep(2)
+    _read_until_prompt(channel, timeout=10)  # discard banner / MOTD
+    return channel
+
+
+def run_command(channel: paramiko.Channel, command: str, timeout: float = 20.0) -> str:
+    """Send a command and return the output up to the next prompt."""
+    channel.send(command + "\n")
+    time.sleep(0.5)
+    return _read_until_prompt(channel, timeout=timeout)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse machine model from `show hardware`
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_machine_model(raw: str) -> str | None:
+    """
+    Parses the output of `show hardware` for a line like:
+        Machine Model.................. M4250-10G2F-PoE+
+    Returns the model string or None if not found.
+    """
+    clean_text = strip_ansi(raw)
+    m = re.search(
+        r"Machine\s+Model[.\s]+(\S+)",
+        clean_text,
+        re.IGNORECASE,
+    )
+    if m:
+        return m.group(1).strip().rstrip(".,;")
+    return None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse firmware version from `show hardware`
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_firmware_version(raw: str) -> str | None:
+    """
+    `show hardware` on an M4250 typically includes lines like:
+        Software Version...................  12.0.20.7
+        Firmware Version:               12.0.20.7
+    Also handles "Build" and "Image" variants seen on some firmware trains.
+    """
+    clean_text = strip_ansi(raw)
+    patterns = [
+        r"software\s+version[\s.:]+(\S+)",
+        r"firmware\s+version[\s.:]+(\S+)",
+        r"build\s+number[\s.:]+(\S+)",
+        r"\bversion[\s.:]+(\d+\.\d+[\d.]*)",
+    ]
+    for pat in patterns:
+        m = re.search(pat, clean_text, re.IGNORECASE)
+        if m:
+            v = m.group(1).strip().rstrip(".,;")
+            if v.lower() not in ("is", "the", "a", "not"):
+                return v
+    return None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse total PoE power from `show poe`
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_poe_power(raw: str) -> tuple[str | None, float | None]:
+    """
+    Parses the output of `show poe` for a line like:
+        Total Power Consumed...........  82.4 Watts
+    Returns (display_string, numeric_value) or (None, None) if not found.
+    """
+    clean_text = strip_ansi(raw)
+    m = re.search(
+        r"Total\s+Power\s+Consumed[.\s]+(\d+(?:\.\d+)?)",
+        clean_text,
+        re.IGNORECASE,
+    )
+    if m:
+        val = float(m.group(1))
+        return f"{val:.1f} W", val
+    return None, None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Parse CPU temperature from `show environment`
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def parse_cpu_temp(raw: str) -> tuple[str | None, float | None]:
+    """
+    Returns (display_string, numeric_value) or (None, None) if not found.
+    Matches lines like:  Temp (C)........ 40
+    """
+    clean_text = strip_ansi(raw)
+    m = re.search(
+        r"^Temp\s*\(C\)[.\s]+(\d+(?:\.\d+)?)\s*$",
+        clean_text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    if m:
+        val_c = float(m.group(1).strip())
+        val_f = val_c * 9 / 5 + 32
+        return f"{val_f:.0f} \u00b0F", val_f
+    return None, None
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Check ONE router
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def check_router(
+    host: str,
+    username: str = "admin",
+    password: str = "",
+    port: int = 22,
+    timeout: int = 20,
+    include_raw: bool = False,
+) -> dict:
+    queried_at = datetime.now(timezone.utc).isoformat()
+    result: dict = {
+        "host":               host,
+        "username":           username,
+        "port":               port,
+        "query_timestamp":    queried_at,
+        "status":             "error",
+        "model":              None,
+        "firmware_version":   None,
+        "cpu_temp":           None,
+        "cpu_temp_value":     None,
+        "poe_consumed":       None,
+        "poe_consumed_value": None,
+        "error":              None,
     }
-  ]
-}
-```
-
-### Field Reference
-
-#### `query_info`
-
-| Field             | Type    | Description                                  |
-|-------------------|---------|----------------------------------------------|
-| `csv_file`        | string  | Path to the output directory                 |
-| `timestamp`       | string  | UTC ISO 8601 time the run completed          |
-| `protocol`        | string  | Always `"SSH / Netgear M4250 CLI"`           |
-| `mode`            | string  | Always `"firmware+temp"`                     |
-| `workers`         | integer | Number of concurrent workers used            |
-| `total`           | integer | Total routers queried                        |
-| `success`         | integer | Number of successful queries                 |
-| `errors`          | integer | Number of failed queries                     |
-| `elapsed_seconds` | float   | Total wall-clock runtime in seconds          |
-
-#### Per-router entry (`routers[]`)
-
-| Field               | Type           | Description                                               |
-|---------------------|----------------|-----------------------------------------------------------|
-| `host`              | string         | IP or hostname from the CSV                               |
-| `username`          | string         | SSH username used                                         |
-| `port`              | integer        | SSH port used                                             |
-| `query_timestamp`   | string         | UTC ISO 8601 time this router was queried                 |
-| `status`            | string         | `"success"`, `"auth_error"`, or `"error"`                 |
-| `model`             | string or null | Parsed model string, e.g. `"M4250-10G2F-PoE+"`            |
-| `firmware_version`  | string or null | Parsed firmware version string, e.g. `"13.0.4.9"`        |
-| `cpu_temp`          | string or null | Formatted temperature string, e.g. `"109 °F"`            |
-| `cpu_temp_value`    | float or null  | Raw numeric temperature in °F                            |
-| `poe_consumed`      | string or null | Formatted PoE string, e.g. `"82.4 W"`                    |
-| `poe_consumed_value`| float or null  | Raw numeric PoE watts                                     |
-| `error`             | string or null | Error message on failure, `null` on success               |
-| `raw_version`       | string         | Raw `show hardware` output — only with `--include-raw`    |
-| `raw_environment`   | string         | Raw `show environment` output — only with `--include-raw` |
-| `raw_poe`           | string         | Raw `show poe` output — only with `--include-raw`         |
 
----
-
-## Functions Reference
-
-### `load_csv(csv_path)`
-
-Reads router credentials from a CSV file. Handles BOM encoding, auto-detects delimiters, and skips comment lines.
-
-```python
-routers = load_csv(Path("secrets/netgear_firmware.csv"))
-# Returns:
-# [{"host": "192.168.1.10", "username": "admin", "password": "pass", "port": 22}, ...]
-```
-
----
-
-### `check_router(host, username, password, port, timeout, include_raw)`
-
-Connects to a single router via SSH and retrieves firmware version, CPU temperature, and total PoE power consumed. Returns a result dict.
-
-```python
-result = check_router(
-    host="192.168.1.10",
-    username="admin",
-    password="mypassword",
-    port=22,
-    timeout=20,
-    include_raw=False,
-)
-# Returns:
-# {
-#   "host": "192.168.1.10",
-#   "status": "success",
-#   "firmware_version": "13.0.4.9",
-#   "cpu_temp": "109 °F",
-#   "cpu_temp_value": 109.4,
-#   "poe_consumed": "82.4 W",
-#   "poe_consumed_value": 82.4,
-#   "error": null
-# }
-```
-
----
-
-### `parse_machine_model(raw)`
-
-Extracts the machine model string from the raw output of `show hardware`. Since `show hardware` is already called to retrieve firmware version, no additional SSH command is required.
-
-```python
-raw = "Machine Model.................. M4250-10G2F-PoE+"
-model = parse_machine_model(raw)
-# Returns: "M4250-10G2F-PoE+"
-```
-
----
-
-### `parse_firmware_version(raw)`
-
-Extracts the firmware version string from the raw output of `show hardware`. Tries multiple regex patterns to handle variation across firmware builds.
-
-```python
-raw = "Software Version...................  13.0.4.9"
-version = parse_firmware_version(raw)
-# Returns: "13.0.4.9"
-```
-
-Patterns tried in order: `Software Version`, `Firmware Version`, `Build Number`, then a generic `Version X.Y.Z` anywhere in the output.
-
----
-
-### `parse_cpu_temp(raw)`
-
-Extracts the CPU temperature from the raw output of `show environment | include Temp`. Returns a `(display_string, numeric_value)` tuple. The raw router value is in Celsius and is converted to Fahrenheit using `°F = °C × 9/5 + 32`.
-
-```python
-raw = "Temp (C)....................................... 40"
-display, value = parse_cpu_temp(raw)
-# Returns: ("104 °F", 104.0)
-```
-
----
-
-### `parse_poe_power(raw)`
-
-Extracts the total PoE power consumed from the raw output of `show poe`. Returns a `(display_string, numeric_value)` tuple in watts.
-
-```python
-raw = "Total Power Consumed...........................  82.4 Watts"
-display, value = parse_poe_power(raw)
-# Returns: ("82.4 W", 82.4)
-```
-
-The display string is always formatted to one decimal place (e.g. `"82.4 W"`, `"120.0 W"`).
-
----
-
-### `check_all_routers(routers, output_path, include_raw, max_workers, timeout, firmware_filter)`
-
-Runs `check_router` concurrently across all routers using a `ThreadPoolExecutor`. Results are stored in CSV order regardless of completion order. Displays the progress bar during execution, writes the JSON file, then calls `print_results_table`.
-
-```python
-routers = load_csv(Path("secrets/netgear_firmware.csv"))
-check_all_routers(
-    routers=routers,
-    output_path=Path("netgear_firmware/files/results_2024-01-15_09-30-00.json"),
-    include_raw=False,
-    max_workers=5,
-    timeout=20,
-    firmware_filter="13.0.4.9",
-)
-```
-
----
-
-### `print_results_table(results, elapsed, firmware_filter)`
-
-Renders the terminal results table, summary footer, and metrics lines. When `firmware_filter` is provided, only mismatched routers are shown. If all routers match, a single confirmation line is printed instead of the table.
-
-```python
-print_results_table(all_results, elapsed=18.3, firmware_filter="13.0.4.9")
-```
-
----
-
-### `status_icon(r)`
-
-Returns a color-coded status string for the table's Status column.
-
-```python
-status_icon({"status": "success"})    # "✓ OK"       (green)
-status_icon({"status": "auth_error"}) # "✗ AUTH ERR" (yellow)
-status_icon({"status": "error"})      # "✗ ERROR"    (red)
-```
-
----
-
-### `clean(val)`
-
-Normalizes a value for table display. Converts `None`, `"-1"`, empty strings, and known error strings to `"N/A"`.
-
-```python
-clean(None)         # "N/A"
-clean("13.0.4.9")   # "13.0.4.9"
-clean("")           # "N/A"
-clean(-1)           # "N/A"
-```
-
----
-
-### `truncate_error(err, max_len=30)`
-
-Maps verbose exception messages to short human-readable labels for the Error column. SSH-specific patterns are checked first, followed by generic network error patterns.
-
-```python
-truncate_error("Authentication failed")          # "Auth failed"
-truncate_error("Connection timed out")           # "Timed out"
-truncate_error("No route to host")               # "No route"
-truncate_error("Could not parse firmware version from output")  # "Parse error"
-truncate_error(None)                             # ""
-```
-
----
-
-### `strip_ansi(text)`
-
-Strips all ANSI escape sequences and non-printable control characters from a string. Used to clean raw SSH terminal output before regex parsing.
-
-```python
-raw = "\033[96mSoftware Version....... 13.0.4.9\033[0m"
-clean_text = strip_ansi(raw)
-# Returns: "Software Version....... 13.0.4.9"
-```
-
----
-
-## Troubleshooting
-
-**`Authentication failed` on all routers**
-Verify the username and password columns in your CSV. If the router has an enable password configured, the `en` command will hang waiting for a prompt that is not currently handled.
-
-**`Timed out` on reachable routers**
-Try increasing `--timeout`. The default is 20 seconds; routers under load or on slow links may need 30–60 seconds.
-
-**`Parse error` — firmware version not found**
-Run with `--include-raw` and inspect the `raw_version` field in the JSON to see the actual `show hardware` output. The firmware may use a format not yet covered by `parse_firmware_version`.
-
-**Total PoE shows `N/A` for all routers**
-Run with `--include-raw` and check `raw_poe` in the JSON. The label on the router should read `Total Power Consumed...` with dots separating the label from the value. If the format differs, the regex in `parse_poe_power` may need adjusting.
-
-**CPU Temp shows `N/A` for all routers**
-Some M4250 firmware versions do not support the `| include` pipe filter. Run with `--include-raw` and check `raw_environment` in the JSON to see what the router is actually returning.
-
-**Progress bar and table output are interleaved**
-The progress bar writes to `stderr` and the table writes to `stdout`. If both are redirected to the same destination they will interleave. Redirect them separately:
-
-```bash
-python3 netgear_firmware.py > results.txt 2> progress.txt
-```
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        client.connect(
+            hostname=host,
+            port=port,
+            username=username,
+            password=password,
+            timeout=timeout,
+            look_for_keys=False,
+            allow_agent=False,
+        )
+
+        channel = open_shell(client)
+
+        run_command(channel, "en",                timeout=10)
+        run_command(channel, "terminal length 0", timeout=5)
+
+        raw_ver = run_command(channel, "show hardware",                   timeout=20)
+        raw_env = run_command(channel, "show environment | include Temp", timeout=20)
+        raw_poe = run_command(channel, "show poe",                        timeout=20)
+
+        if include_raw:
+            result["raw_version"]     = raw_ver
+            result["raw_environment"] = raw_env
+            result["raw_poe"]         = raw_poe
+
+        firmware           = parse_firmware_version(raw_ver)
+        model              = parse_machine_model(raw_ver)
+        temp_str, temp_val = parse_cpu_temp(raw_env)
+        poe_str,  poe_val  = parse_poe_power(raw_poe)
+
+        result["model"]              = model
+        result["firmware_version"]   = firmware
+        result["cpu_temp"]           = temp_str
+        result["cpu_temp_value"]     = temp_val
+        result["poe_consumed"]       = poe_str
+        result["poe_consumed_value"] = poe_val
+
+        if firmware is not None:
+            result["status"] = "success"
+            result["error"]  = None
+        else:
+            result["status"] = "error"
+            result["error"]  = "Could not parse firmware version from output"
+
+        run_command(channel, "exit", timeout=5)
+        run_command(channel, "exit", timeout=5)
+        channel.close()
+
+    except paramiko.AuthenticationException:
+        result["status"] = "auth_error"
+        result["error"]  = "Authentication failed"
+    except (paramiko.SSHException, socket.error) as exc:
+        result["status"] = "error"
+        result["error"]  = f"SSH/network error: {exc}"
+    except Exception as exc:
+        result["status"] = "error"
+        result["error"]  = f"Unexpected error: {exc}"
+    finally:
+        client.close()
+
+    return result
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Print results table
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def print_results_table(
+    results: list[dict],
+    elapsed: float,
+    firmware_filter: str | None = None,
+) -> None:
+    headers = ["Status", "Host", "Model", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
+    rows: list[list[str]] = []
+
+    temp_vals: list[float] = []
+    poe_vals:  list[float] = []
+
+    # Apply firmware filter if provided
+    if firmware_filter:
+        display_results = [
+            r for r in results
+            if r.get("firmware_version") is not None
+            and r.get("firmware_version") != firmware_filter
+        ]
+    else:
+        display_results = results
+
+    for r in display_results:
+        rows.append([
+            status_icon(r),
+            clean(r.get("host")),
+            clean(r.get("model")),
+            clean(r.get("firmware_version")),
+            clean(r.get("cpu_temp")),
+            clean(r.get("poe_consumed")),
+            truncate_error(r.get("error")),
+        ])
+        tv = r.get("cpu_temp_value")
+        if tv is not None:
+            temp_vals.append(tv)
+        pv = r.get("poe_consumed_value")
+        if pv is not None:
+            poe_vals.append(pv)
+
+    total = len(results)
+    ok    = sum(1 for r in results if r["status"] == "success")
+    auth  = sum(1 for r in results if r["status"] == "auth_error")
+    err   = sum(1 for r in results if r["status"] == "error")
+
+    # All-matched shortcut
+    if firmware_filter and not display_results:
+        print(f"{WHITE}")
+        print(f"  {GREEN}\u2713 All reachable routers are running firmware {firmware_filter}{RESET}")
+    else:
+        table = tabulate(
+            rows,
+            headers=headers,
+            tablefmt="pretty",
+            stralign="left",
+            numalign="right",
+        )
+
+        first_line = table.split("\n")[0]
+        raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
+        bw         = max(raw_width, 60)
+
+        if firmware_filter:
+            title = f"Netgear M4250 \u2014 Firmware Mismatch: expected {firmware_filter}"
+        else:
+            title = "Netgear M4250 Query Results \u2014 Firmware & CPU Temp"
+        pad = max(0, (bw - len(title)) // 2)
+
+        print(f"{WHITE}")
+        print(f"  {'=' * bw}")
+        print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
+        print(f"  {'=' * bw}")
+        for line in table.split("\n"):
+            print(f"  {line}")
+
+    print()
+    print(
+        f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
+        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+    )
+
+    if firmware_filter:
+        mismatches = len(display_results)
+        matched    = sum(1 for r in results if r.get("firmware_version") == firmware_filter)
+        print(
+            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
+            f"{RED}\u2717{RESET}{WHITE} {BOLD}Mismatched:{RESET}{WHITE} {mismatches}"
+        )
+
+    if temp_vals:
+        avg = sum(temp_vals) / len(temp_vals)
+        print(
+            f"  {BOLD}CPU Temp (\u00b0F){RESET}{WHITE} \u2014 "
+            f"Avg: {avg:.0f}  |  "
+            f"Min: {min(temp_vals):.0f}  |  "
+            f"Max: {max(temp_vals):.0f}  |  "
+            f"Reported: {len(temp_vals)}/{total}"
+        )
+    else:
+        print(f"  {BOLD}CPU Temp (\u00b0F){RESET}{WHITE} \u2014 No data available")
+
+    if poe_vals:
+        avg_p = sum(poe_vals) / len(poe_vals)
+        print(
+            f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 "
+            f"Avg: {avg_p:.1f}  |  "
+            f"Min: {min(poe_vals):.1f}  |  "
+            f"Max: {max(poe_vals):.1f}  |  "
+            f"Reported: {len(poe_vals)}/{total}"
+        )
+    else:
+        print(f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 No data available")
+
+    print(f"{RESET}")
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Check ALL routers with progress bar
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def check_all_routers(
+    routers: list[dict],
+    output_path: Path,
+    include_raw: bool = False,
+    max_workers: int = 5,
+    timeout: int = 20,
+    firmware_filter: str | None = None,
+) -> None:
+    all_results: list[dict] = [None] * len(routers)  # preserve order
+
+    active_lock = threading.Lock()
+    latest_host = {"value": ""}
+    t_start     = time.time()
+
+    term_width = shutil.get_terminal_size((120, 24)).columns
+
+    bar_fmt = (
+        f"  {WHITE}Scanning{RESET} "
+        f"{CYAN}{{bar}}{RESET}"
+        f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
+        f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
+        f"  {WHITE}{{postfix}}{RESET}"
+    )
+
+    with tqdm(
+        total=len(routers),
+        bar_format=bar_fmt,
+        ncols=term_width,
+        dynamic_ncols=True,
+        file=sys.stderr,
+        leave=True,
+    ) as pbar:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_index: dict = {}
+            for i, router in enumerate(routers):
+                fut = executor.submit(
+                    check_router,
+                    host=router["host"],
+                    username=router["username"],
+                    password=router["password"],
+                    port=router["port"],
+                    timeout=timeout,
+                    include_raw=include_raw,
+                )
+                future_to_index[fut] = i
+
+            for future in as_completed(future_to_index):
+                idx    = future_to_index[future]
+                result = future.result()
+                all_results[idx] = result
+
+                with active_lock:
+                    latest_host["value"] = result["host"]
+                    host_display = latest_host["value"]
+                pbar.set_postfix_str(host_display, refresh=False)
+                pbar.update(1)
+
+        elapsed = time.time() - t_start
+        pbar.set_postfix_str(
+            f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
+            refresh=True,
+        )
+
+    elapsed = time.time() - t_start
+
+    # ── Write JSON ────────────────────────────────────────────────────────
+    total  = len(all_results)
+    ok     = sum(1 for r in all_results if r["status"] == "success")
+    errors = total - ok
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "query_info": {
+            "csv_file":        str(output_path.parent),
+            "timestamp":       datetime.now(timezone.utc).isoformat(),
+            "protocol":        "SSH / Netgear M4250 CLI",
+            "mode":            "firmware+temp",
+            "workers":         max_workers,
+            "total":           total,
+            "success":         ok,
+            "errors":          errors,
+            "elapsed_seconds": round(elapsed, 2),
+        },
+        "routers": all_results,
+    }
+    with output_path.open("w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2, ensure_ascii=False)
+
+    # ── Print table ───────────────────────────────────────────────────────
+    print_results_table(all_results, elapsed, firmware_filter=firmware_filter)
+
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_path}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({max_workers} workers){RESET}")
+    print()
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  CLI
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def main() -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    p = argparse.ArgumentParser(
+        description=(
+            "Check Netgear M4250 router firmware versions and CPU temps via SSH.\n"
+            "Defaults: reads secrets/netgear_firmware.csv, writes to netgear_firmware/files/\n\n"
+            "CSV columns: host, username, password, port"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument(
+        "--csv", type=Path,
+        default=Path("secrets/netgear_firmware.csv"),
+        help="Input CSV file (default: secrets/netgear_firmware.csv)",
+    )
+    p.add_argument(
+        "--output", type=Path,
+        default=Path(f"netgear_firmware/files/results_{timestamp}.json"),
+        help="Output JSON file (default: netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json)",
+    )
+    p.add_argument(
+        "--workers", type=int, default=5,
+        help="Number of concurrent SSH connections (default: 5)",
+    )
+    p.add_argument(
+        "--timeout", type=int, default=20,
+        help="Per-router SSH timeout in seconds (default: 20)",
+    )
+    p.add_argument(
+        "--firmware", type=str, default=None,
+        help="Only show routers whose firmware does not match this version (e.g. 12.0.20.7)",
+    )
+    p.add_argument(
+        "--verbose", action="store_true",
+        help="Enable DEBUG logging",
+    )
+    p.add_argument(
+        "--include-raw", action="store_true",
+        help="Include raw SSH output in results.json for debugging",
+    )
+    args = p.parse_args()
+
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    print(f"{WHITE}")
+    print(f"  {BOLD}Netgear M4250 Firmware & CPU Temp Checker{RESET}{WHITE}")
+    print(f"  Query router firmware version and CPU temperature via SSH")
+    print(f"  Input:   {args.csv}")
+    print(f"  Output:  {args.output}")
+    print(f"  Workers: {args.workers}")
+    print(f"  Timeout: {args.timeout}s")
+    if args.firmware:
+        print(f"  Filter:  firmware != {args.firmware}")
+    print(f"{RESET}")
+
+    routers = load_csv(args.csv)
+    if not routers:
+        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} No routers found in {args.csv}{RESET}")
+        sys.exit(1)
+
+    print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} router(s){RESET}\n")
+
+    check_all_routers(
+        routers,
+        args.output,
+        include_raw=args.include_raw,
+        max_workers=args.workers,
+        timeout=args.timeout,
+        firmware_filter=args.firmware,
+    )
+
+
+if __name__ == "__main__":
+    main()
