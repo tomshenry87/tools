@@ -25,7 +25,7 @@ const S="'Inter','Helvetica Neue',sans-serif";
 var T=LIGHT;
 var DTYPES=DTYPES_LIGHT;
 
-function extractBR(host){if(!host)return{building:"Unknown",room:"?"};const p=host.split(".")[0].split("-");if(p[0]==="cts")return{building:(p[1]||"CTS").charAt(0).toUpperCase()+(p[1]||"").slice(1),room:p[2]||"?"};if(/^\d+$/.test(p[0]))return{building:(p[1]||"?").charAt(0).toUpperCase()+(p[1]||"").slice(1),room:p[2]||"?"};return{building:p[0].charAt(0).toUpperCase()+p[0].slice(1),room:p[1]||"?"};}
+function extractBR(host){if(!host)return{building:"Unknown",room:"?"};const p=host.split(".")[0].split("-");if(p[0]==="cts")return{building:(p[1]||"CTS").charAt(0).toUpperCase()+(p[1]||"").slice(1),room:p[2]||"?"};if(/^\d+$/.test(p[0])&&p.length>=3)return{building:p[0]+"-"+p[1].charAt(0).toUpperCase()+p[1].slice(1),room:p[2]||"?"};if(/^\d+$/.test(p[0]))return{building:(p[1]||"?").charAt(0).toUpperCase()+(p[1]||"").slice(1),room:p[2]||"?"};return{building:p[0].charAt(0).toUpperCase()+p[0].slice(1),room:p[1]||"?"};}
 
 function norm(raw){
   const host=raw.host||"";const{building,room}=extractBR(host);const type=raw._type||"unknown";
