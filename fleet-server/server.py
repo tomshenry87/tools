@@ -37,6 +37,17 @@ SOURCES_FILE = os.path.join(BASE_DIR, "sources.json")
 TARGET_FW_FILE = os.path.join(BASE_DIR, "target_firmware.json")
 USERS_FILE = os.path.join(BASE_DIR, "users.json")
 
+# ─── Secret key (must be set at import time for Gunicorn) ───
+_secret_file = os.path.join(BASE_DIR, ".secret_key")
+if os.path.exists(_secret_file):
+    with open(_secret_file, "r") as _f:
+        app.secret_key = _f.read().strip()
+else:
+    app.secret_key = secrets.token_hex(32)
+    with open(_secret_file, "w") as _f:
+        _f.write(app.secret_key)
+    os.chmod(_secret_file, 0o600)
+
 ARRAY_KEY_TO_TYPE = {
     "cameras": "camera",
     "switches": "switch",
@@ -440,17 +451,6 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true", help="Debug mode")
     parser.add_argument("--setup", action="store_true", help="Re-run user setup")
     args = parser.parse_args()
-
-    # Secret key for sessions
-    secret_file = os.path.join(BASE_DIR, ".secret_key")
-    if os.path.exists(secret_file):
-        with open(secret_file, "r") as f:
-            app.secret_key = f.read().strip()
-    else:
-        app.secret_key = secrets.token_hex(32)
-        with open(secret_file, "w") as f:
-            f.write(app.secret_key)
-        os.chmod(secret_file, 0o600)
 
     # User setup
     if args.setup or not os.path.exists(USERS_FILE):
