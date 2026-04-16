@@ -338,7 +338,7 @@ function FleetConsole(){
 
         {/* TABLE */}
         {view==="table"&&<div>
-          {(()=>{
+          {sorted.length>0&&(()=>{
             const naC="N/A (Class 1)";
             let okCount=0,outdatedCount=0,offlineCount=0,noTargetCount=0;
             sorted.forEach(d=>{
@@ -349,6 +349,7 @@ function FleetConsole(){
               else outdatedCount++;
             });
             const total=sorted.length;
+            if(total===0)return null;
             const segments=[
               {label:"OK",count:okCount,color:T.green},
               {label:"Outdated",count:outdatedCount,color:T.amber},
@@ -357,35 +358,35 @@ function FleetConsole(){
             ].filter(s=>s.count>0);
             const sz=130;const scx=sz/2;const scy=sz/2;const sr=52;
             let sa=-90;
-            const arcs=segments.map((seg,i)=>{
-              const ang=total>0?(seg.count/total)*360:0;
+            const arcs=segments.map(function(seg){
+              const ang=(seg.count/total)*360;
               const ea=sa+ang;const la=ang>180?1:0;
-              const rd=a=>a*Math.PI/180;
+              const rd=function(a){return a*Math.PI/180;};
               const x1=scx+sr*Math.cos(rd(sa));const y1=scy+sr*Math.sin(rd(sa));
               const x2=scx+sr*Math.cos(rd(ea));const y2=scy+sr*Math.sin(rd(ea));
               const p=ang>=359.9
-                ?`M${scx-sr},${scy}A${sr},${sr},0,1,1,${scx+sr},${scy}A${sr},${sr},0,1,1,${scx-sr},${scy}`
-                :`M${scx},${scy}L${x1},${y1}A${sr},${sr},0,${la},1,${x2},${y2}Z`;
+                ?("M"+(scx-sr)+","+scy+"A"+sr+","+sr+",0,1,1,"+(scx+sr)+","+scy+"A"+sr+","+sr+",0,1,1,"+(scx-sr)+","+scy)
+                :("M"+scx+","+scy+"L"+x1+","+y1+"A"+sr+","+sr+",0,"+la+",1,"+x2+","+y2+"Z");
               sa=ea;
-              return {...seg,path:p,pct:total>0?((seg.count/total)*100).toFixed(0):"0"};
+              return {label:seg.label,count:seg.count,color:seg.color,path:p,pct:((seg.count/total)*100).toFixed(0)};
             });
-            return <div style={{display:"flex",gap:16,alignItems:"center",background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:18,marginBottom:14}}>
-              <svg width={sz} height={sz} viewBox={`0 0 ${sz} ${sz}`}>
-                {arcs.map((a,i)=><path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>)}
+            return <div style={{display:"flex",gap:20,alignItems:"center",background:T.surface,border:"1px solid "+T.border,borderRadius:8,padding:20,marginBottom:14}}>
+              <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
+                {arcs.map(function(a,i){return <path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>;})};
                 <circle cx={scx} cy={scy} r={28} fill={T.surface}/>
                 <text x={scx} y={scy-2} textAnchor="middle" fill={T.textBright} fontSize={20} fontWeight={700} fontFamily={S}>{total}</text>
                 <text x={scx} y={scy+13} textAnchor="middle" fill={T.textMuted} fontSize={10} fontFamily={S}>shown</text>
               </svg>
               <div style={{display:"flex",gap:24,flexWrap:"wrap",flex:1}}>
-                {arcs.map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                {arcs.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:12,height:12,borderRadius:3,background:a.color}}/>
                   <div>
                     <div style={{fontSize:22,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
                     <div style={{fontSize:12,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
                   </div>
-                </div>)}
+                </div>;})}
               </div>
-              <div style={{fontSize:13,color:T.textMuted,fontStyle:"italic"}}>Firmware Status</div>
+              <div style={{fontSize:14,color:T.textMuted,fontStyle:"italic"}}>Firmware Status</div>
             </div>;
           })()}
           <div style={{overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`,maxHeight:"calc(100vh - 380px)"}}>
