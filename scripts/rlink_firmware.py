@@ -157,10 +157,10 @@ def load_csv(csv_path: str) -> list:
             host = row.get(col_map["host"], "").strip()
             if not host or host.startswith("#"):
                 continue
-            port_raw = row.get(col_map.get("port", ""), "").strip()
+            port_raw = (row.get(col_map.get("port", ""), "") or "").strip()
             port = int(port_raw) if port_raw.isdigit() else 80
-            username = row.get(col_map.get("user_name", ""), "admin").strip() or "admin"
-            password = row.get(col_map.get("pw", ""), "admin").strip() or "admin"
+            username = (row.get(col_map.get("user_name", ""), "") or "").strip() or "admin"
+            password = (row.get(col_map.get("pw", ""), "") or "").strip() or "admin"
             devices.append({
                 "host": host,
                 "port": port,
@@ -288,7 +288,11 @@ def main():
                         help="Password for single host (default: admin)")
     parser.add_argument("--firmware", metavar="VERSION",
                         help="Current firmware version — hides matching devices from table")
-    parser.add_argument("-i", "--input", default="secrets/rlink_firmware.csv",
+    # ── Resolve paths relative to script location ──────────────────
+    script_dir = Path(__file__).resolve().parent
+
+    parser.add_argument("-i", "--input",
+                        default=str(script_dir / "secrets" / "rlink_firmware.csv"),
                         help="Input CSV file (default: secrets/rlink_firmware.csv)")
     parser.add_argument("-o", "--output", default=None,
                         help="Output JSON file (default: rlink_firmware/files/results_YYYYMMDD_HHMMSS.json)")
@@ -300,7 +304,6 @@ def main():
     if args.output:
         output_file = str(Path(args.output).resolve())
     else:
-        script_dir = Path(__file__).resolve().parent
         out_dir = script_dir / "rlink_firmware" / "files"
         out_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
