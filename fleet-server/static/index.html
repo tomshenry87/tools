@@ -337,7 +337,58 @@ function FleetConsole(){
         </div>}
 
         {/* TABLE */}
-        {view==="table"&&<div style={{overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`,maxHeight:"calc(100vh - 260px)"}}>
+        {view==="table"&&<div>
+          {(()=>{
+            const naC="N/A (Class 1)";
+            let okCount=0,outdatedCount=0,offlineCount=0,noTargetCount=0;
+            sorted.forEach(d=>{
+              if(d.status!=="success"){offlineCount++;return;}
+              const t=targetFw[d._type];const hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
+              if(!hasT){noTargetCount++;return;}
+              if(d.firmware==="N/A"||d.firmware===naC||t.includes(d.firmware))okCount++;
+              else outdatedCount++;
+            });
+            const total=sorted.length;
+            const segments=[
+              {label:"OK",count:okCount,color:T.green},
+              {label:"Outdated",count:outdatedCount,color:T.amber},
+              {label:"Offline",count:offlineCount,color:T.red},
+              {label:"No Target",count:noTargetCount,color:T.textDim},
+            ].filter(s=>s.count>0);
+            const sz=130;const scx=sz/2;const scy=sz/2;const sr=52;
+            let sa=-90;
+            const arcs=segments.map((seg,i)=>{
+              const ang=total>0?(seg.count/total)*360:0;
+              const ea=sa+ang;const la=ang>180?1:0;
+              const rd=a=>a*Math.PI/180;
+              const x1=scx+sr*Math.cos(rd(sa));const y1=scy+sr*Math.sin(rd(sa));
+              const x2=scx+sr*Math.cos(rd(ea));const y2=scy+sr*Math.sin(rd(ea));
+              const p=ang>=359.9
+                ?`M${scx-sr},${scy}A${sr},${sr},0,1,1,${scx+sr},${scy}A${sr},${sr},0,1,1,${scx-sr},${scy}`
+                :`M${scx},${scy}L${x1},${y1}A${sr},${sr},0,${la},1,${x2},${y2}Z`;
+              sa=ea;
+              return {...seg,path:p,pct:total>0?((seg.count/total)*100).toFixed(0):"0"};
+            });
+            return <div style={{display:"flex",gap:16,alignItems:"center",background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:18,marginBottom:14}}>
+              <svg width={sz} height={sz} viewBox={`0 0 ${sz} ${sz}`}>
+                {arcs.map((a,i)=><path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>)}
+                <circle cx={scx} cy={scy} r={28} fill={T.surface}/>
+                <text x={scx} y={scy-2} textAnchor="middle" fill={T.textBright} fontSize={20} fontWeight={700} fontFamily={S}>{total}</text>
+                <text x={scx} y={scy+13} textAnchor="middle" fill={T.textMuted} fontSize={10} fontFamily={S}>shown</text>
+              </svg>
+              <div style={{display:"flex",gap:24,flexWrap:"wrap",flex:1}}>
+                {arcs.map((a,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:12,height:12,borderRadius:3,background:a.color}}/>
+                  <div>
+                    <div style={{fontSize:22,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
+                    <div style={{fontSize:12,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
+                  </div>
+                </div>)}
+              </div>
+              <div style={{fontSize:13,color:T.textMuted,fontStyle:"italic"}}>Firmware Status</div>
+            </div>;
+          })()}
+          <div style={{overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`,maxHeight:"calc(100vh - 380px)"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontFamily:S,fontSize:13}}>
             <thead><tr>{[{key:"building",label:"Building"},{key:"room",label:"Room"},{key:"_type",label:"Type"},{key:"host",label:"Host"},{key:"model",label:"Model"},{key:"firmware",label:"Firmware"},{key:"_fwStatus",label:"FW Status"},{key:"status",label:"Status"},{key:"serial",label:"Serial"}].map(col=>
               <th key={col.key} onClick={()=>hSort(col.key)} style={{position:"sticky",top:0,zIndex:2,background:T.surfaceAlt,color:T.textMuted,textAlign:"left",padding:"12px 14px",borderBottom:`2px solid ${T.border}`,cursor:"pointer",userSelect:"none",fontSize:11,textTransform:"uppercase",letterSpacing:1,fontWeight:700,whiteSpace:"nowrap"}}>{col.label}<SA col={col.key}/></th>)}</tr></thead>
@@ -358,10 +409,11 @@ function FleetConsole(){
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`}}><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim}>{d.status==="success"?"OK":d.error||d.status}</Badge></td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:T.textDim,fontSize:12}}>{d.serial!=="N/A"?d.serial:"—"}</td></tr>})}</tbody>
           </table>
+        </div>
         </div>}
 
         {/* CHARTS */}
-        {view==="charts"&&<div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+        {view==="charts"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(460px,1fr))",gap:16}}>
           {typeOpts.map(type=>{
             const cfg=DTYPES[type];
             const devsOfType=allDevs.filter(d=>d._type===type);
@@ -373,7 +425,7 @@ function FleetConsole(){
             const hasTarget=Array.isArray(selected)&&selected.length>0&&!selected.includes("*");
 
             // Build pie slices
-            const size=170;const cx=size/2;const cy=size/2;const r=68;
+            const size=200;const cx=size/2;const cy=size/2;const r=82;
             let startAngle=-90;
             const slices=fwList.map(([fw,count],i)=>{
               const angle=(count/total)*360;
@@ -395,26 +447,26 @@ function FleetConsole(){
               return {fw,count,color,path,isAccepted,isOutdated,pct:((count/total)*100).toFixed(0)};
             });
 
-            return <div key={type} style={{flex:"1 1 300px",minWidth:280,background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:20}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-                <span style={{fontSize:16}}>{cfg.icon}</span>
-                <span style={{fontSize:18,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
-                <span style={{fontSize:13,color:T.textMuted,fontFamily:M}}>{total}</span>
+            return <div key={type} style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:24}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
+                <span style={{fontSize:22}}>{cfg.icon}</span>
+                <span style={{fontSize:20,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
+                <span style={{fontSize:15,color:T.textMuted,fontFamily:S}}>{total} devices</span>
               </div>
-              <div style={{display:"flex",gap:16,alignItems:"center"}}>
+              <div style={{display:"flex",gap:20,alignItems:"center"}}>
                 <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                   {slices.map((s,i)=><path key={i} d={s.path} fill={s.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>)}
-                  <circle cx={cx} cy={cy} r={34} fill={T.surface}/>
-                  <text x={cx} y={cy-4} textAnchor="middle" fill={T.textBright} fontSize={22} fontWeight={700} fontFamily={S}>{total}</text>
-                  <text x={cx} y={cy+12} textAnchor="middle" fill={T.textMuted} fontSize={11} fontFamily={S}>devices</text>
+                  <circle cx={cx} cy={cy} r={42} fill={T.surface}/>
+                  <text x={cx} y={cy-4} textAnchor="middle" fill={T.textBright} fontSize={28} fontWeight={700} fontFamily={S}>{total}</text>
+                  <text x={cx} y={cy+14} textAnchor="middle" fill={T.textMuted} fontSize={12} fontFamily={S}>devices</text>
                 </svg>
-                <div style={{flex:1,display:"flex",flexDirection:"column",gap:3}}>
-                  {slices.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
-                    <div style={{width:10,height:10,borderRadius:2,background:s.color,flexShrink:0}}/>
-                    <span style={{fontFamily:M,fontSize:13,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
-                    <span style={{fontFamily:M,fontSize:13,color:T.textMuted}}>{s.count}</span>
-                    <span style={{fontFamily:M,fontSize:13,color:T.textDim,minWidth:28,textAlign:"right"}}>{s.pct}%</span>
-                    {hasTarget&&<span style={{fontSize:13,width:12,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"✓":s.isOutdated?"⚠":""}</span>}
+                <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
+                  {slices.map((s,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:12,height:12,borderRadius:3,background:s.color,flexShrink:0}}/>
+                    <span style={{fontFamily:S,fontSize:14,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
+                    <span style={{fontFamily:S,fontSize:14,color:T.textMuted,fontWeight:600}}>{s.count}</span>
+                    <span style={{fontFamily:S,fontSize:13,color:T.textDim,minWidth:36,textAlign:"right"}}>{s.pct}%</span>
+                    {hasTarget&&<span style={{fontSize:14,width:16,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"\u2713":s.isOutdated?"\u26A0":""}</span>}
                   </div>)}
                 </div>
               </div>
