@@ -1,0 +1,31 @@
+{
+  "query_info": {
+    "csv_file": "(single host)",
+    "timestamp": "2026-04-17T05:06:01.905569+00:00",
+    "protocol": "Shure Command Strings (TCP port 2202)",
+    "mode": "single-host",
+    "workers": 5,
+    "total": 1,
+    "success": 1,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 4.54
+  },
+  "microphones": [
+    {
+      "host": "carson-l01-ceiling-microphones-2.openav.dartmouth.edu",
+      "port": 2202,
+      "status": "success",
+      "device_id": "MXA920-S-63d59e",
+      "model": "MXA920-S",
+      "serial_number": "6DG05274723",
+      "mac_address": "00:0E:DD:63:D5:9E",
+      "firmware_version": "6.0.39",
+      "ip_address": "10.8.133.215",
+      "dante_name": "MXA920-S-63d59f",
+      "encryption": "OFF",
+      "error": null,
+      "query_timestamp": "2026-04-17T05:05:57.363343+00:00"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "query_info": {
+    "csv_file": "/home/tom/tools/scripts/secrets/shuremxa_firmware.csv",
+    "timestamp": "2026-04-17T02:42:11.835686+00:00",
+    "protocol": "Shure Command Strings (TCP port 2202)",
+    "mode": "csv",
+    "workers": 5,
+    "total": 1,
+    "success": 1,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 1.41
+  },
+  "microphones": [
+    {
+      "host": "berry-180-ceiling-mic-1.openav.dartmouth.edu",
+      "port": 2202,
+      "status": "success",
+      "device_name": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "firmware_version": "N/A",
+      "internal_temp": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-17T02:42:10.425787+00:00"
+    }
+  ]
+}

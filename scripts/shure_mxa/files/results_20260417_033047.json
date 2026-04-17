@@ -1,0 +1,260 @@
+{
+  "query_info": {
+    "csv_file": "/home/tom/tools/scripts/secrets/shuremxa_firmware.csv",
+    "timestamp": "2026-04-17T03:31:00.331172+00:00",
+    "protocol": "Shure Command Strings (TCP port 2202)",
+    "mode": "csv",
+    "workers": 5,
+    "total": 4,
+    "success": 4,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 13.08
+  },
+  "devices": [
+    {
+      "host": "berry-180-ceiling-mic-1.openav.dartmouth.edu",
+      "port": 2202,
+      "device_type": "MXA",
+      "status": "success",
+      "device_id": "BER-180-MIC2",
+      "model": "MXA920-S",
+      "serial_number": "2CE02800769",
+      "mac_address": "00:0E:DD:62:5F:78",
+      "firmware_version": "1.5.22",
+      "ip_address": "10.8.145.201",
+      "dante_name": "BER-180-MIC2-d",
+      "encryption": "OFF",
+      "error": null,
+      "query_timestamp": "2026-04-17T03:30:48.302038+00:00"
+    },
+    {
+      "host": "berry-180-ceiling-mic-2.openav.dartmouth.edu",
+      "port": 2202,
+      "device_type": "MXA",
+      "status": "success",
+      "device_id": "BER-180-MIC1",
+      "model": "MXA920-S",
+      "serial_number": "2CE02810533",
+      "mac_address": "00:0E:DD:62:63:9A",
+      "firmware_version": "1.5.22",
+      "ip_address": "10.8.145.202",
+      "dante_name": "BER-180-MIC1-d",
+      "encryption": "OFF",
+      "error": null,
+      "query_timestamp": "2026-04-17T03:30:48.301859+00:00"
+    },
+    {
+      "host": "berry-180-mic-charger.openav.dartmouth.edu",
+      "port": 2202,
+      "device_type": "MXW APT",
+      "status": "success",
+      "device_id": "BER-180-NCS1",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "firmware_version": "N/A",
+      "ip_address": "N/A",
+      "dante_name": "N/A",
+      "encryption": "N/A",
+      "channels": [
+        {
+          "channel": 1,
+          "tx_available": "YES",
+          "tx_type": "MXW2",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "100",
+          "batt_run_time": "N/A",
+          "batt_health": "091"
+        },
+        {
+          "channel": 2,
+          "tx_available": "YES",
+          "tx_type": "MXW1",
+          "tx_status": "N/A",
+          "tx_device_id": "Bpak1",
+          "chan_name": "N/A",
+          "batt_charge": "100",
+          "batt_run_time": "N/A",
+          "batt_health": "088"
+        },
+        {
+          "channel": 3,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 4,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 5,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 6,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 7,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 8,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-04-17T03:30:48.809634+00:00"
+    },
+    {
+      "host": "berry-180-wap.openav.dartmouth.edu",
+      "port": 2202,
+      "device_type": "MXW APT",
+      "status": "success",
+      "device_id": "BER-180-WAP1",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "firmware_version": "N/A",
+      "ip_address": "N/A",
+      "dante_name": "N/A",
+      "encryption": "N/A",
+      "channels": [
+        {
+          "channel": 1,
+          "tx_available": "YES",
+          "tx_type": "MXW2",
+          "tx_status": "ON_CHARGER",
+          "tx_device_id": "N/A",
+          "chan_name": "Channel 1",
+          "batt_charge": "100",
+          "batt_run_time": "65533",
+          "batt_health": "091"
+        },
+        {
+          "channel": 2,
+          "tx_available": "YES",
+          "tx_type": "MXW1",
+          "tx_status": "ON_CHARGER",
+          "tx_device_id": "Bpak1",
+          "chan_name": "Channel 2",
+          "batt_charge": "100",
+          "batt_run_time": "65533",
+          "batt_health": "088"
+        },
+        {
+          "channel": 3,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 4,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 5,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 6,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 7,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        },
+        {
+          "channel": 8,
+          "tx_available": "ERR",
+          "tx_type": "N/A",
+          "tx_status": "N/A",
+          "tx_device_id": "N/A",
+          "chan_name": "N/A",
+          "batt_charge": "N/A",
+          "batt_run_time": "N/A",
+          "batt_health": "N/A"
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-04-17T03:30:48.804697+00:00"
+    }
+  ]
+}
