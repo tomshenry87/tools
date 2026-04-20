@@ -88,7 +88,7 @@ RESET  = "\033[0m"
 # Defaults & constants
 # ---------------------------------------------------------------------------
 DEFAULT_CSV       = "secrets/ups_firmware.csv"
-OUTPUT_DIR        = "cyberpower_ups/files"
+OUTPUT_DIR        = "ups_firmware/files"
 DEFAULT_OUTPUT    = os.path.join(
     OUTPUT_DIR,
     f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
