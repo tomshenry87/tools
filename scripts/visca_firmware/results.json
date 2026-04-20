@@ -1,88 +1,25 @@
 {
-  "query_timestamp": "2026-03-24T09:31:38.802747",
-  "csv_source": "cameras.csv",
-  "total_cameras": 4,
+  "query_timestamp": "2026-04-17T15:33:43.061681",
+  "csv_source": "visca_firmware.csv",
+  "total_cameras": 1,
   "timeout_seconds": 5,
-  "supported_models": {
-    "srg-a40": "Sony SRG-A40",
-    "srg-x400": "Sony SRG-X400",
-    "tem-20n": "Prisual TEM-20N"
-  },
   "results": [
     {
-      "host": "10.8.129.78",
+      "host": "lsc-201-ceiling-camera-1.openav.dartmouth.edu",
       "port": 52381,
-      "camera_name": "SANDBOX",
+      "camera_name": "LSC-201 REAR",
       "camera_type": "srg-x400",
       "camera_profile": "Sony SRG-X400",
       "manufacturer": "Sony",
-      "timestamp": "2026-03-24T09:31:32.811432",
-      "transport": "TCP 52381",
-      "visca_mode": "sony_ip",
-      "status": "connection_timeout",
-      "version_info": {},
-      "software_version_info": {},
-      "http_info": {},
+      "timestamp": "2026-04-17T15:33:27.986297",
       "camera_generation": "Gen 3 / 4K PTZ",
-      "errors": [
-        "Connection timed out (5s)"
-      ]
-    },
-    {
-      "host": "lsc-100-ceiling-camera-2.openav.dartmouth.edu",
-      "port": 52381,
-      "camera_name": "LSC CAMERA 2",
-      "camera_type": "srg-x400",
-      "camera_profile": "Sony SRG-X400",
-      "manufacturer": "Sony",
-      "timestamp": "2026-03-24T09:31:38.117541",
-      "transport": "TCP 52381",
-      "visca_mode": "sony_ip",
-      "status": "connection_refused",
+      "status": "connection_failed",
+      "transport_used": null,
       "version_info": {},
       "software_version_info": {},
       "http_info": {},
-      "camera_generation": "Gen 3 / 4K PTZ",
       "errors": [
-        "TCP 52381 refused \u2014 check that VISCA over IP is enabled and port is correct"
-      ]
-    },
-    {
-      "host": "lsc-100-ceiling-camera-3.openav.dartmouth.edu",
-      "port": 52381,
-      "camera_name": "LSC CAMERA 3",
-      "camera_type": "srg-a40",
-      "camera_profile": "Sony SRG-A40",
-      "manufacturer": "Sony",
-      "timestamp": "2026-03-24T09:31:38.447443",
-      "transport": "TCP 52381",
-      "visca_mode": "sony_ip",
-      "status": "connection_refused",
-      "version_info": {},
-      "software_version_info": {},
-      "http_info": {},
-      "camera_generation": "Gen 4 / AI-based PTZ",
-      "errors": [
-        "TCP 52381 refused \u2014 check that VISCA over IP is enabled and port is correct"
-      ]
-    },
-    {
-      "host": "lsc-100-ceiling-camera-4.openav.dartmouth.edu",
-      "port": 52381,
-      "camera_name": "LSC CAMERA 4",
-      "camera_type": "srg-x400",
-      "camera_profile": "Sony SRG-X400",
-      "manufacturer": "Sony",
-      "timestamp": "2026-03-24T09:31:38.775298",
-      "transport": "TCP 52381",
-      "visca_mode": "sony_ip",
-      "status": "connection_refused",
-      "version_info": {},
-      "software_version_info": {},
-      "http_info": {},
-      "camera_generation": "Gen 3 / 4K PTZ",
-      "errors": [
-        "TCP 52381 refused \u2014 check that VISCA over IP is enabled and port is correct"
+        "Both UDP and TCP failed for lsc-201-ceiling-camera-1.openav.dartmouth.edu"
       ]
     }
   ]
