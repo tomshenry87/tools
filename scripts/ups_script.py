@@ -19,11 +19,11 @@ Data collected per device:
   - Runtime remaining  (CPS-MIB upsAdvanceBatteryRunTimeRemaining)
   - Battery status     (CPS-MIB upsBaseBatteryStatus)
   - Calibration status (CPS-MIB upsAdvanceBatteryRunTimeCalibration)
-  - Last calibration   (derived from calibration result OID)
+  - Last calibration   (CPS-MIB upsAdvanceBatteryRunTimeCalibrationDate)
 
 CSV input columns:
   host        - IP address or hostname (required)
-  community   - SNMP v1/v2c community string (optional, default: public)
+  community   - SNMP v2c community string (optional, default: public)
   port        - UDP port (optional, default: 161)
 
 Output:
@@ -33,9 +33,15 @@ Calibration note:
   The OR700LCDRM1U uses a runtime calibration (NOT a battery self-test) to
   accurately calculate remaining runtime. CyberPower recommends running this
   once per year or after battery replacement. The script reports:
-    - calibration_status: "running" | "done" | "failed" | "unknown"
-    - calibration_needed: true/false  (true if last result was >365 days ago
+    - calibration_status: "running" | "passed" | "failed" | "never_run"
+    - calibration_needed: true/false  (true if last result was >= 365 days ago
                                        or if calibration has never been run)
+
+Dependencies:
+  sudo apt install libsnmp-dev snmp-mibs-downloader python3-dev
+  pip3 install easysnmp tabulate tqdm
+  -- or --
+  sudo apt install python3-easysnmp python3-tabulate python3-tqdm
 """
 
 import csv
@@ -52,25 +58,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 try:
-    from pysnmp.hlapi import (
-        getCmd, SnmpEngine, CommunityData, UdpTransportTarget,
-        ContextData, ObjectType, ObjectIdentity
-    )
-    from pysnmp.proto.errind import RequestTimedOut, NetworkError
+    from easysnmp import Session, EasySNMPTimeoutError, EasySNMPError
 except ImportError:
-    print("ERROR: 'pysnmp' library is required. Install with: pip install pysnmp")
+    print("ERROR: 'easysnmp' is required.")
+    print("       sudo apt install libsnmp-dev snmp-mibs-downloader python3-dev")
+    print("       pip3 install easysnmp")
     sys.exit(1)
 
 try:
     from tabulate import tabulate
 except ImportError:
-    print("ERROR: 'tabulate' library is required. Install with: pip install tabulate")
+    print("ERROR: 'tabulate' is required.  pip3 install tabulate")
     sys.exit(1)
 
 try:
     from tqdm import tqdm
 except ImportError:
-    print("ERROR: 'tqdm' library is required. Install with: pip install tqdm")
+    print("ERROR: 'tqdm' is required.  pip3 install tqdm")
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
@@ -103,47 +107,30 @@ DEFAULT_WORKERS   = 5
 # ---------------------------------------------------------------------------
 OID = {
     # Identity
-    "model":              "1.3.6.1.4.1.3808.1.1.1.1.1.1.0",   # upsBaseIdentModel
-    "serial":             "1.3.6.1.4.1.3808.1.1.1.1.2.3.0",   # upsAdvanceIdentSerialNumber
-    "ups_firmware":       "1.3.6.1.4.1.3808.1.1.1.1.2.1.0",   # upsBaseIdentFirmwareVersion
-    "agent_firmware":     "1.3.6.1.4.1.3808.1.1.1.1.1.4.0",   # upsAdvanceIdentAgentFirmwareVersion
+    "model":              "1.3.6.1.4.1.3808.1.1.1.1.1.1.0",
+    "serial":             "1.3.6.1.4.1.3808.1.1.1.1.2.3.0",
+    "ups_firmware":       "1.3.6.1.4.1.3808.1.1.1.1.2.1.0",
+    "agent_firmware":     "1.3.6.1.4.1.3808.1.1.1.1.1.4.0",
 
     # Battery
-    "battery_status":     "1.3.6.1.4.1.3808.1.1.1.2.1.1.0",   # upsBaseBatteryStatus (1=unknown,2=normal,3=low)
-    "battery_capacity":   "1.3.6.1.4.1.3808.1.1.1.2.2.1.0",   # upsAdvanceBatteryCapacity (%)
-    "runtime_remaining":  "1.3.6.1.4.1.3808.1.1.1.2.2.4.0",   # upsAdvanceBatteryRunTimeRemaining (timeticks)
-    "replace_indicator":  "1.3.6.1.4.1.3808.1.1.1.2.2.5.0",   # upsAdvanceBatteryReplaceIndicator (1=ok,2=replace)
+    "battery_status":     "1.3.6.1.4.1.3808.1.1.1.2.1.1.0",   # 1=unknown 2=normal 3=low
+    "battery_capacity":   "1.3.6.1.4.1.3808.1.1.1.2.2.1.0",   # percent
+    "runtime_remaining":  "1.3.6.1.4.1.3808.1.1.1.2.2.4.0",   # centiseconds
+    "replace_indicator":  "1.3.6.1.4.1.3808.1.1.1.2.2.5.0",   # 1=ok 2=replace
 
     # Runtime calibration
-    # 1=noCalibration  2=performCalibration  3=calibrationCancelled
-    "calibration_cmd":    "1.3.6.1.4.1.3808.1.1.1.7.2.6.0",   # upsAdvanceBatteryRunTimeCalibration
-    # 1=noTestsInitiated 2=calibrationSucceeded 3=calibrationFailed
-    "calibration_result": "1.3.6.1.4.1.3808.1.1.1.7.2.3.0",   # upsAdvanceBatteryRunTimeCalibrationResult
-    # Date of last calibration  mm/dd/yyyy
-    "calibration_date":   "1.3.6.1.4.1.3808.1.1.1.7.2.4.0",   # upsAdvanceBatteryRunTimeCalibrationDate
+    "calibration_cmd":    "1.3.6.1.4.1.3808.1.1.1.7.2.6.0",   # 1=none 2=running 3=cancelled
+    "calibration_result": "1.3.6.1.4.1.3808.1.1.1.7.2.3.0",   # 1=never 2=passed 3=failed
+    "calibration_date":   "1.3.6.1.4.1.3808.1.1.1.7.2.4.0",   # mm/dd/yyyy
 
-    # MIB-II — MAC address
+    # MIB-II
     "mac_address":        "1.3.6.1.2.1.2.2.1.6.1",             # ifPhysAddress.1
 }
 
-BATTERY_STATUS_MAP = {
-    1: "unknown",
-    2: "normal",
-    3: "low",
-}
+BATTERY_STATUS_MAP = {1: "unknown", 2: "normal", 3: "low"}
+CALIBRATION_RESULT_MAP = {1: "never_run", 2: "passed", 3: "failed"}
+REPLACE_MAP = {1: "ok", 2: "replace_battery"}
 
-CALIBRATION_RESULT_MAP = {
-    1: "never_run",
-    2: "passed",
-    3: "failed",
-}
-
-REPLACE_MAP = {
-    1: "ok",
-    2: "replace_battery",
-}
-
-# Days threshold — flag calibration_needed if last run was more than this long ago
 CALIBRATION_INTERVAL_DAYS = 365
 
 
@@ -171,16 +158,13 @@ def truncate_error(err, max_len: int = 30) -> str:
         return ""
     s = str(err)
     for pat, label in [
-        (r"[Cc]onnection timed out",          "Timed out"),
         (r"[Tt]imed.?[Oo]ut|timed out",       "Timed out"),
         (r"[Cc]onnection refused",             "Conn refused"),
         (r"[Nn]o response",                    "No response"),
         (r"[Nn]o route to host",               "No route"),
         (r"[Nn]etwork is unreachable",         "Net unreachable"),
         (r"[Nn]ame or service not known",      "DNS failed"),
-        (r"[Nn]etwork error",                  "Network error"),
         (r"[Uu]DP.*timeout|SNMP.*timeout",     "SNMP timeout"),
-        (r"[Nn]o SNMP response",               "No SNMP response"),
         (r"[Ww]rong community",                "Bad community"),
         (r"[Nn]o such (object|variable)",      "OID not found"),
         (r"[Nn]ot a.*device",                  "Not supported"),
@@ -203,38 +187,37 @@ def status_icon(r: dict) -> str:
     return f"{RED}\u2717 ERROR{RESET}{WHITE}"
 
 
-def format_mac(raw_bytes) -> str:
-    """Convert pysnmp OctetString bytes to XX:XX:XX:XX:XX:XX notation."""
+def format_mac(raw: str) -> str:
+    """
+    easysnmp returns MAC as a raw byte string like '\\x00\\x0cXY...'
+    or sometimes as a hex string. Normalise to XX:XX:XX:XX:XX:XX.
+    """
     try:
-        if hasattr(raw_bytes, 'asOctets'):
-            octets = raw_bytes.asOctets()
-        else:
-            octets = bytes(raw_bytes)
-        if len(octets) == 6:
-            return ":".join(f"{b:02X}" for b in octets)
+        b = raw.encode("latin-1")
+        if len(b) == 6:
+            return ":".join(f"{x:02X}" for x in b)
     except Exception:
         pass
+    # Try treating it as already hex-ish
+    hex_only = re.sub(r'[^0-9a-fA-F]', '', raw)
+    if len(hex_only) == 12:
+        return ":".join(hex_only[i:i+2].upper() for i in range(0, 12, 2))
     return "N/A"
 
 
-def format_runtime(timeticks) -> str:
-    """Convert centiseconds (SNMP TimeTicks) to human-readable HH:MM."""
+def format_runtime(centiseconds: str) -> str:
+    """Convert centiseconds string to HH:MM."""
     try:
-        secs = int(timeticks) // 100
-        mins = secs // 60
-        hrs  = mins // 60
-        mins = mins % 60
+        secs = int(centiseconds) // 100
+        hrs  = secs // 3600
+        mins = (secs % 3600) // 60
         return f"{hrs}h {mins:02d}m"
     except Exception:
         return "N/A"
 
 
 def parse_calibration_date(date_str: str):
-    """
-    Parse mm/dd/yyyy calibration date.
-    Returns (datetime, str_display) or (None, "N/A").
-    """
-    if not date_str or date_str in ("N/A", "01/01/0001", "00/00/0000"):
+    if not date_str or date_str in ("N/A", "01/01/0001", "00/00/0000", ""):
         return None, "N/A"
     for fmt in ("%m/%d/%Y", "%Y-%m-%d"):
         try:
@@ -246,64 +229,64 @@ def parse_calibration_date(date_str: str):
 
 
 def calibration_needed(result_code: int, date_str: str) -> bool:
-    """
-    Returns True if annual calibration is overdue or has never been run.
-    """
-    if result_code == 1:   # never run
+    if result_code == 1:       # never run
         return True
     dt, _ = parse_calibration_date(date_str)
     if dt is None:
-        return True        # no date recorded — treat as needed
-    age_days = (datetime.now() - dt).days
-    return age_days >= CALIBRATION_INTERVAL_DAYS
+        return True
+    return (datetime.now() - dt).days >= CALIBRATION_INTERVAL_DAYS
 
 
 # ---------------------------------------------------------------------------
-# SNMP helpers
+# SNMP helpers  (easysnmp)
 # ---------------------------------------------------------------------------
-def snmp_get(host: str, port: int, community: str,
-             oid: str, timeout: int) -> tuple:
+def make_session(host: str, port: int, community: str,
+                 timeout: int) -> Session:
+    return Session(
+        hostname=host,
+        remote_port=port,
+        community=community,
+        version=2,
+        timeout=timeout,
+        retries=1,
+        use_numeric=True,       # return raw OID strings, not MIB names
+    )
+
+
+def snmp_get_value(session: Session, oid: str) -> tuple:
     """
-    Single SNMP GET.  Returns (value, error_string).
-    value is the pysnmp object on success, None on failure.
+    Returns (value_string, error_string).
+    value_string is None on failure.
     """
     try:
-        error_indication, error_status, error_index, var_binds = next(
-            getCmd(
-                SnmpEngine(),
-                CommunityData(community, mpModel=1),   # mpModel=1 => SNMPv2c
-                UdpTransportTarget((host, port), timeout=timeout, retries=1),
-                ContextData(),
-                ObjectType(ObjectIdentity(oid)),
-            )
-        )
-        if error_indication:
-            return None, str(error_indication)
-        if error_status:
-            return None, f"{error_status.prettyPrint()} at {error_index}"
-        for _, val in var_binds:
-            return val, None
-        return None, "No value returned"
+        result = session.get(oid)
+        val = result.value
+        if val in (None, "NOSUCHOBJECT", "NOSUCHINSTANCE", "ENDOFMIBVIEW"):
+            return None, f"No such object: {oid}"
+        return str(val).strip(), None
+    except EasySNMPTimeoutError:
+        return None, "Timed out"
+    except EasySNMPError as e:
+        return None, str(e)
     except Exception as e:
         return None, str(e)
 
 
-def snmp_get_str(host, port, community, oid, timeout) -> str:
-    val, err = snmp_get(host, port, community, oid, timeout)
-    if err or val is None:
-        return "N/A"
-    s = str(val).strip()
-    return s if s not in ("", "None") else "N/A"
-
-
-def snmp_get_int(host, port, community, oid, timeout) -> int:
-    val, err = snmp_get(host, port, community, oid, timeout)
+def snmp_get_int(session: Session, oid: str) -> int:
+    val, err = snmp_get_value(session, oid)
     if err or val is None:
         return -1
     try:
         return int(val)
-    except Exception:
+    except ValueError:
         return -1
+
+
+def snmp_get_str(session: Session, oid: str) -> str:
+    val, err = snmp_get_value(session, oid)
+    if err or val is None:
+        return "N/A"
+    return val if val not in ("", "None") else "N/A"
 
 
 # ---------------------------------------------------------------------------
@@ -344,13 +327,13 @@ def load_csv(csv_path: str) -> list:
             ).strip()
             devices.append({"host": host, "port": port, "community": community})
     if not devices:
-        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries in CSV.{RESET}")
         sys.exit(1)
     return devices
 
 
 # ---------------------------------------------------------------------------
-# Main query function
+# Main per-device query
 # ---------------------------------------------------------------------------
 def query_ups(host: str, port: int, community: str,
               timeout: int = DEFAULT_TIMEOUT) -> dict:
@@ -376,60 +359,63 @@ def query_ups(host: str, port: int, community: str,
         "query_timestamp":       datetime.now(timezone.utc).isoformat(),
     }
 
-    # ---- Model (also acts as a connectivity probe) ----
-    model_val, model_err = snmp_get(host, port, community,
-                                    OID["model"], timeout)
-    if model_err:
-        result["error"] = model_err
-        return result
+    try:
+        session = make_session(host, port, community, timeout)
 
-    result["model"] = str(model_val).strip() or "N/A"
+        # ---- Model (connectivity probe) ----
+        model_val, model_err = snmp_get_value(session, OID["model"])
+        if model_err:
+            result["error"] = model_err
+            return result
+        result["model"] = model_val or "N/A"
 
-    # ---- Identity ----
-    result["serial"]        = snmp_get_str(host, port, community, OID["serial"],       timeout)
-    result["ups_firmware"]  = snmp_get_str(host, port, community, OID["ups_firmware"], timeout)
-    result["agent_firmware"]= snmp_get_str(host, port, community, OID["agent_firmware"],timeout)
+        # ---- Identity ----
+        result["serial"]         = snmp_get_str(session, OID["serial"])
+        result["ups_firmware"]   = snmp_get_str(session, OID["ups_firmware"])
+        result["agent_firmware"] = snmp_get_str(session, OID["agent_firmware"])
 
-    # ---- MAC address (MIB-II ifPhysAddress.1) ----
-    mac_val, _ = snmp_get(host, port, community, OID["mac_address"], timeout)
-    if mac_val is not None:
-        result["mac_address"] = format_mac(mac_val)
+        # ---- MAC address ----
+        mac_raw, _ = snmp_get_value(session, OID["mac_address"])
+        if mac_raw:
+            result["mac_address"] = format_mac(mac_raw)
 
-    # ---- Battery ----
-    batt_status_int = snmp_get_int(host, port, community, OID["battery_status"],  timeout)
-    batt_cap_int    = snmp_get_int(host, port, community, OID["battery_capacity"], timeout)
-    runtime_raw     = snmp_get_int(host, port, community, OID["runtime_remaining"],timeout)
-    replace_int     = snmp_get_int(host, port, community, OID["replace_indicator"],timeout)
+        # ---- Battery ----
+        batt_status_int = snmp_get_int(session, OID["battery_status"])
+        batt_cap_int    = snmp_get_int(session, OID["battery_capacity"])
+        runtime_raw     = snmp_get_int(session, OID["runtime_remaining"])
+        replace_int     = snmp_get_int(session, OID["replace_indicator"])
 
-    result["battery_status"]       = BATTERY_STATUS_MAP.get(batt_status_int, "unknown")
-    result["battery_capacity_pct"] = batt_cap_int if batt_cap_int >= 0 else None
-    result["runtime_remaining_raw"]= runtime_raw  if runtime_raw  >= 0 else None
-    result["runtime_remaining"]    = format_runtime(runtime_raw) if runtime_raw >= 0 else "N/A"
-    result["replace_indicator"]    = REPLACE_MAP.get(replace_int, "N/A")
+        result["battery_status"]        = BATTERY_STATUS_MAP.get(batt_status_int, "unknown")
+        result["battery_capacity_pct"]  = batt_cap_int if batt_cap_int >= 0 else None
+        result["runtime_remaining_raw"] = runtime_raw  if runtime_raw  >= 0 else None
+        result["runtime_remaining"]     = (
+            format_runtime(str(runtime_raw)) if runtime_raw >= 0 else "N/A"
+        )
+        result["replace_indicator"] = REPLACE_MAP.get(replace_int, "N/A")
 
-    # ---- Calibration ----
-    cal_result_int = snmp_get_int(host, port, community, OID["calibration_result"], timeout)
-    cal_date_str   = snmp_get_str(host, port, community, OID["calibration_date"],   timeout)
-    cal_cmd_int    = snmp_get_int(host, port, community, OID["calibration_cmd"],     timeout)
+        # ---- Calibration ----
+        cal_result_int = snmp_get_int(session, OID["calibration_result"])
+        cal_date_str   = snmp_get_str(session, OID["calibration_date"])
+        cal_cmd_int    = snmp_get_int(session, OID["calibration_cmd"])
 
-    result["calibration_status"] = CALIBRATION_RESULT_MAP.get(cal_result_int, "unknown")
+        result["calibration_status"] = CALIBRATION_RESULT_MAP.get(cal_result_int, "unknown")
+        if cal_cmd_int == 2:
+            result["calibration_status"] = "running"
 
-    # If a calibration is currently running, override
-    if cal_cmd_int == 2:
-        result["calibration_status"] = "running"
+        _, cal_date_display = parse_calibration_date(cal_date_str)
+        result["calibration_date"]   = cal_date_display
+        result["calibration_needed"] = calibration_needed(cal_result_int, cal_date_str)
 
-    _, cal_date_display = parse_calibration_date(cal_date_str)
-    result["calibration_date"]   = cal_date_display
-    result["calibration_needed"] = calibration_needed(cal_result_int, cal_date_str)
+        # ---- Final status ----
+        if (result["replace_indicator"] == "replace_battery"
+                or result["calibration_needed"]
+                or result["battery_status"] == "low"):
+            result["status"] = "warn"
+        else:
+            result["status"] = "success"
 
-    # ---- Final status ----
-    # Warn if battery needs replacing or calibration is overdue
-    if (result["replace_indicator"] == "replace_battery"
-            or result["calibration_needed"]
-            or result["battery_status"] == "low"):
-        result["status"] = "warn"
-    else:
-        result["status"] = "success"
+    except Exception as e:
+        result["error"] = str(e)
 
     return result
 
@@ -446,7 +432,7 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
         "query_info": {
             "csv_file":        str(Path(args.input).resolve()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "protocol":        "SNMP v2c — CPS-MIB (CyberPower) + MIB-II (RFC 1213)",
+            "protocol":        "SNMPv2c — CPS-MIB (CyberPower) + MIB-II (RFC 1213)",
             "community":       args.community,
             "workers":         args.workers,
             "total":           len(results),
@@ -542,7 +528,6 @@ def print_results_table(results: list, output_file: str,
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
-    # Battery capacity metrics
     cap_vals = [r["battery_capacity_pct"] for r in results
                 if r.get("battery_capacity_pct") is not None]
     if cap_vals:
@@ -556,9 +541,8 @@ def print_results_table(results: list, output_file: str,
     else:
         print(f"  {BOLD}Battery Capacity \u2014{RESET}{WHITE} No data available")
 
-    # Calibration summary
-    cal_due   = sum(1 for r in results if r.get("calibration_needed") is True)
-    cal_ok    = sum(1 for r in results if r.get("calibration_needed") is False)
+    cal_due = sum(1 for r in results if r.get("calibration_needed") is True)
+    cal_ok  = sum(1 for r in results if r.get("calibration_needed") is False)
     if cal_due:
         print(
             f"  {BOLD}Calibration \u2014{RESET}{WHITE} "
@@ -586,13 +570,13 @@ def main():
         ),
         epilog="""
 Examples:
-  python cyberpower_ups_query.py
-  python cyberpower_ups_query.py -i secrets/ups_firmware.csv
-  python cyberpower_ups_query.py -i ups_firmware.csv -c mySecret -w 10
-  python cyberpower_ups_query.py --host 192.168.1.50
-  python cyberpower_ups_query.py --host 192.168.1.50 --raw
+  python3 ups_script.py
+  python3 ups_script.py -i secrets/ups_firmware.csv
+  python3 ups_script.py -i ups_firmware.csv -c mySecret -w 10
+  python3 ups_script.py --host 192.168.1.50
+  python3 ups_script.py --host 192.168.1.50 --raw
 
-CSV format (ups_firmware.csv):
+CSV format (secrets/ups_firmware.csv):
   host,community,port
   192.168.1.50,public,161
   192.168.1.51,mySecret,161
@@ -600,9 +584,9 @@ CSV format (ups_firmware.csv):
 
 Calibration:
   CyberPower recommends a runtime calibration once per year or after battery
-  replacement. The script flags 'calibration_needed: true' if the last
-  recorded calibration date is >= 365 days ago, or if it has never been run.
-  To trigger a calibration from the RMCARD205 web UI:
+  replacement. The script flags calibration_needed=true if the last recorded
+  calibration date is >= 365 days ago, or if it has never been run.
+  To trigger from the RMCARD205 web UI:
     UPS -> Diagnostics -> Runtime Calibration -> Start
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -613,7 +597,7 @@ Calibration:
     parser.add_argument("--host",            default=None,
         help="Query a single host instead of reading a CSV")
     parser.add_argument("-o", "--output",    default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: timestamped file in {OUTPUT_DIR})")
+        help=f"Output JSON file (default: timestamped in {OUTPUT_DIR})")
     parser.add_argument("-c", "--community", default=DEFAULT_COMMUNITY,
         help=f"SNMP community string override (default: {DEFAULT_COMMUNITY})")
     parser.add_argument("-t", "--timeout",   type=int, default=DEFAULT_TIMEOUT,
@@ -635,7 +619,7 @@ Calibration:
     input_display = args.host if args.host else args.input
     print(f"{WHITE}")
     print(f"  {BOLD}CyberPower OR700LCDRM1U — UPS SNMP Query Tool{RESET}{WHITE}")
-    print(f"  Queries UPS status via SNMP using CPS-MIB and MIB-II.")
+    print(f"  Queries UPS status via SNMPv2c using CPS-MIB and MIB-II.")
     print(f"  Input:     {input_display}")
     print(f"  Output:    {args.output}")
     print(f"  Workers:   {args.workers}")
@@ -648,10 +632,10 @@ Calibration:
     # --host --raw dump
     # -----------------------------------------------------------------------
     if args.host and args.raw:
-        print(f"{WHITE}Raw SNMP OID values for {args.host}:{args.port}{RESET}\n")
-        community = args.community
+        print(f"{WHITE}Raw SNMP OID dump for {args.host}:{args.port}{RESET}\n")
+        session = make_session(args.host, args.port, args.community, args.timeout)
         for name, oid in OID.items():
-            val, err = snmp_get(args.host, args.port, community, oid, args.timeout)
+            val, err = snmp_get_value(session, oid)
             if err:
                 print(f"  {RED}{name:<25}{RESET} {oid}  =>  ERROR: {err}")
             else:
@@ -665,7 +649,6 @@ Calibration:
         devices = [{"host": args.host, "port": args.port, "community": args.community}]
     else:
         devices = load_csv(args.input)
-        # CLI --community overrides CSV community when explicitly passed
         if args.community != DEFAULT_COMMUNITY:
             for d in devices:
                 d["community"] = args.community
@@ -709,7 +692,6 @@ Calibration:
         f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True
     )
 
-    # Re-sort to match original input order
     host_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
