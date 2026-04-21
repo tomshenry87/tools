@@ -1,0 +1,37 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/ups_firmware.csv",
+    "timestamp": "2026-04-20T14:16:49.248489+00:00",
+    "protocol": "SNMPv2c — CPS-MIB (CyberPower) + MIB-II (RFC 1213)",
+    "community": "public",
+    "workers": 5,
+    "total": 1,
+    "success": 0,
+    "warnings": 1,
+    "errors": 0,
+    "elapsed_seconds": 0.05
+  },
+  "ups": [
+    {
+      "host": "fairchild-101-ups.openav.dartmouth.edu",
+      "port": 161,
+      "community": "public",
+      "status": "warn",
+      "model": "OR700LCDRM1Ua",
+      "serial": "GCCNX7000835",
+      "mac_address": "00:0C:15:07:3E:59",
+      "ups_firmware": "BF02114C4E13",
+      "agent_firmware": "N/A",
+      "battery_status": "normal",
+      "battery_capacity_pct": 100,
+      "runtime_remaining_raw": 48000,
+      "runtime_remaining": "0h 08m",
+      "replace_indicator": "ok",
+      "calibration_status": "unknown",
+      "calibration_date": "N/A",
+      "calibration_needed": true,
+      "error": null,
+      "query_timestamp": "2026-04-20T14:16:49.232414+00:00"
+    }
+  ]
+}
