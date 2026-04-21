@@ -1,0 +1,68 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/biamp_firmware.csv",
+    "timestamp": "2026-04-21T04:10:27.982017+00:00",
+    "protocol": "Biamp Tesira Text Protocol (TTP) on port 23",
+    "mode": "No authentication",
+    "workers": 5,
+    "total": 4,
+    "success": 4,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 0.58
+  },
+  "dsp": [
+    {
+      "host": "baker-102-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "5.5.0.2",
+      "device_name": "TesiraForte06317684",
+      "mac_address": "78:45:01:43:3e:b7",
+      "fault_status": "OK",
+      "fault_details": [],
+      "serial": "06317684",
+      "error": null,
+      "query_timestamp": "2026-04-21T04:10:27.440105+00:00"
+    },
+    {
+      "host": "baker-219-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "5.5.0.2",
+      "device_name": "2E-219-PROC1",
+      "mac_address": "78:45:01:1d:25:ae",
+      "fault_status": "OK",
+      "fault_details": [],
+      "serial": "05703163",
+      "error": null,
+      "query_timestamp": "2026-04-21T04:10:27.440711+00:00"
+    },
+    {
+      "host": "baker-227-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "5.5.0.2",
+      "device_name": "BAKER-227-DSP1",
+      "mac_address": "78:45:01:1e:a4:a4",
+      "fault_status": "OK",
+      "fault_details": [],
+      "serial": "05803964",
+      "error": null,
+      "query_timestamp": "2026-04-21T04:10:27.441234+00:00"
+    },
+    {
+      "host": "baker-234-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "5.5.0.2",
+      "device_name": "TesiraForte06265181",
+      "mac_address": "78:45:01:42:70:38",
+      "fault_status": "OK",
+      "fault_details": [],
+      "serial": "06265181",
+      "error": null,
+      "query_timestamp": "2026-04-21T04:10:27.441654+00:00"
+    }
+  ]
+}

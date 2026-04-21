@@ -1,0 +1,68 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/biamp_firmware.csv",
+    "timestamp": "2026-04-21T03:27:44.230983+00:00",
+    "protocol": "Biamp Tesira Text Protocol (TTP) on port 23",
+    "mode": "No authentication",
+    "workers": 5,
+    "total": 4,
+    "success": 4,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 42.09
+  },
+  "dsp": [
+    {
+      "host": "baker-102-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "N/A",
+      "device_name": "N/A",
+      "serial": "N/A",
+      "mac_address": "N/A",
+      "uptime_seconds": null,
+      "uptime_formatted": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-21T03:27:02.164525+00:00"
+    },
+    {
+      "host": "baker-219-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "N/A",
+      "device_name": "N/A",
+      "serial": "N/A",
+      "mac_address": "N/A",
+      "uptime_seconds": null,
+      "uptime_formatted": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-21T03:27:02.165121+00:00"
+    },
+    {
+      "host": "baker-227-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "N/A",
+      "device_name": "N/A",
+      "serial": "N/A",
+      "mac_address": "N/A",
+      "uptime_seconds": null,
+      "uptime_formatted": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-21T03:27:02.165632+00:00"
+    },
+    {
+      "host": "baker-234-dsp.openav.dartmouth.edu",
+      "port": 23,
+      "status": "success",
+      "firmware_version": "N/A",
+      "device_name": "N/A",
+      "serial": "N/A",
+      "mac_address": "N/A",
+      "uptime_seconds": null,
+      "uptime_formatted": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-21T03:27:02.169215+00:00"
+    }
+  ]
+}
