@@ -7,6 +7,9 @@
   "/home/admin/tools/scripts/shure_mxa/files",
   "/home/admin/tools/scripts/projector_version_check/files",
   "/home/admin/tools/scripts/rlink_firmware/files",
-  "/home/admin/tools/scripts/shure_mxa/files"
+  "/home/admin/tools/scripts/shure_mxa/files",
+  "/home/admin/tools/scripts/biamp_firmware/files",
+  "/home/admin/tools/scripts/relay_firmware/files",
+  "/home/admin/tools/scripts/ups_firmware/files"
   
 ]

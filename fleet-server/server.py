@@ -55,6 +55,10 @@ ARRAY_KEY_TO_TYPE = {
     "displays": "display",
     "routers": "router",
     "pdus": "pdu",
+    "microphones": "microphone",
+    "ups": "ups",
+    "relays": "relay",
+    "dsp": "dsp",
 }
 
 
