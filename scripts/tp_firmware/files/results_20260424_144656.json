@@ -1,0 +1,36 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/tp_firmware.csv",
+    "timestamp": "2026-04-24T14:46:56.384372+00:00",
+    "protocol": "Android Debug Bridge (ADB) over TCP/IP",
+    "mode": "connect + getprop + disconnect",
+    "workers": 5,
+    "total": 1,
+    "success": 0,
+    "auth_errors": 1,
+    "errors": 0,
+    "elapsed_seconds": 0.11
+  },
+  "panels": [
+    {
+      "host": "dewey-003-touch-panel.openav.dartmouth.edu",
+      "port": 5555,
+      "status": "auth_error",
+      "model": "N/A",
+      "manufacturer": "N/A",
+      "brand": "N/A",
+      "device": "N/A",
+      "serial": "N/A",
+      "android_version": "N/A",
+      "sdk": "N/A",
+      "build_id": "N/A",
+      "build_display_id": "N/A",
+      "build_date": "N/A",
+      "build_fingerprint": "N/A",
+      "firmware_version": "N/A",
+      "adb_state": "unauthorized",
+      "error": "device unauthorized — approve RSA fingerprint on panel",
+      "query_timestamp": "2026-04-24T14:46:56.316475+00:00"
+    }
+  ]
+}

@@ -97,7 +97,7 @@ function FwStatusPie({devices,targetFw,large}){
     {label:"Offline",count:offlineCount,color:T.red},
     {label:"No Target",count:noTargetCount,color:T.textDim}
   ].filter(function(s){return s.count>0;});
-  var sz=large?280:140,scx=sz/2,scy=sz/2,sr=large?115:56,sa=-90;
+  var sz=large?280:180,scx=sz/2,scy=sz/2,sr=large?115:72,sa=-90;
   var arcs=segments.map(function(seg){
     var ang=(seg.count/total)*360;
     var ea=sa+ang,la=ang>180?1:0;
@@ -110,10 +110,10 @@ function FwStatusPie({devices,targetFw,large}){
     sa=ea;
     return {label:seg.label,count:seg.count,color:seg.color,path:p,pct:Math.round(seg.count/total*100)};
   });
-  var innerR=large?58:30;
-  var titleFs=large?36:22;
-  var subFs=large?14:10;
-  var subY=large?18:13;
+  var innerR=large?58:38;
+  var titleFs=large?36:26;
+  var subFs=large?14:12;
+  var subY=large?18:15;
   return <div style={{background:T.surface,border:"1px solid "+T.border,borderRadius:8,padding:large?24:20,marginBottom:large?0:14}}>
     {large&&<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
       <span style={{fontSize:22}}>📊</span>
@@ -127,17 +127,17 @@ function FwStatusPie({devices,targetFw,large}){
         <text x={scx} y={scy-4} textAnchor="middle" fill={T.textBright} fontSize={titleFs} fontWeight={700} fontFamily={S}>{total}</text>
         <text x={scx} y={scy+subY} textAnchor="middle" fill={T.textMuted} fontSize={subFs} fontFamily={S}>{large?"total devices":"shown"}</text>
       </svg>
-      <div style={{display:"flex",gap:large?20:24,flexWrap:"wrap",flex:1,flexDirection:large?"column":"row"}}>
+      <div style={{display:"flex",gap:large?20:28,flexWrap:"wrap",flex:1,flexDirection:large?"column":"row"}}>
         {arcs.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:large?12:10}}>
           <div style={{width:large?16:14,height:large?16:14,borderRadius:large?4:3,background:a.color}}/>
           <div>
-            <div style={{fontSize:large?30:24,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
-            <div style={{fontSize:large?15:13,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
+            <div style={{fontSize:large?30:28,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
+            <div style={{fontSize:large?15:14,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
           </div>
         </div>;})}
       </div>
     </div>
-    {!large&&<div style={{marginTop:10,fontSize:15,color:T.textMuted,fontWeight:500,textAlign:"right"}}>Firmware Status</div>}
+    {!large&&<div style={{marginTop:10,fontSize:16,color:T.textMuted,fontWeight:500,textAlign:"right"}}>Firmware Status</div>}
   </div>;
 }
 

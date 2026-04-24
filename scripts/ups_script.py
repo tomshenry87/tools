@@ -110,7 +110,7 @@ OID = {
     "model":              "1.3.6.1.4.1.3808.1.1.1.1.1.1.0",
     "serial":             "1.3.6.1.4.1.3808.1.1.1.1.2.3.0",
     "ups_firmware":       "1.3.6.1.4.1.3808.1.1.1.1.2.1.0",
-    "agent_firmware":     "1.3.6.1.4.1.3808.1.1.1.1.1.4.0",
+    "agent_firmware":     "1.3.6.1.4.1.3808.1.1.1.1.2.4.0",   # upsAdvanceIdentAgentFirmwareRevision
 
     # Battery
     "battery_status":     "1.3.6.1.4.1.3808.1.1.1.2.1.1.0",   # 1=unknown 2=normal 3=low
@@ -407,8 +407,8 @@ def query_ups(host: str, port: int, community: str,
         result["calibration_needed"] = calibration_needed(cal_result_int, cal_date_str)
 
         # ---- Final status ----
+        # calibration_needed is informational only — does not affect status
         if (result["replace_indicator"] == "replace_battery"
-                or result["calibration_needed"]
                 or result["battery_status"] == "low"):
             result["status"] = "warn"
         else:
@@ -483,8 +483,6 @@ def print_results_table(results: list, output_file: str,
             cap_str,
             clean(r["runtime_remaining"]),
             replace_str,
-            clean(r["calibration_status"]),
-            clean(r["calibration_date"]),
             cal_flag,
             truncate_error(r.get("error")),
         ]
@@ -494,7 +492,7 @@ def print_results_table(results: list, output_file: str,
         "Status", "Host", "Model", "Serial", "MAC Address",
         "UPS FW", "Card FW",
         "Batt Status", "Capacity", "Runtime",
-        "Replace?", "Cal Status", "Last Cal", "Cal Due?",
+        "Replace?", "Cal Due?",
         "Error",
     ]
 

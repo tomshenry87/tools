@@ -69,6 +69,7 @@ DEFAULT_TIMEOUT  = 10
 DEFAULT_PORT     = 5555
 DEFAULT_WORKERS  = 5
 DEFAULT_ADB      = "adb"
+DEFAULT_PUBKEY   = os.path.expanduser("~/.android/adbkey.pub")
 
 # getprop keys we want to query. Kept as a list so we can issue them in a
 # single shell call per device and parse the output line-by-line.
@@ -261,36 +262,117 @@ def adb_get_state(adb_bin: str, target: str, timeout: int) -> str:
 
 def adb_getprops(adb_bin: str, target: str, keys: list, timeout: int) -> dict:
     """
-    Issue one shell call that runs `getprop <key>` for every key, separated
-    by a sentinel so we can split the output back into (key -> value) pairs.
+    Run `getprop <key>` once per key. Simpler and more portable than batching
+    with shell separators — ELO's production Android 14 shell rejects the
+    chained form with a syntax error, so we pay the per-call cost for reliability.
 
-    Using a sentinel beats shelling out once per property (11x fewer round
-    trips) and beats plain `getprop` (which dumps hundreds of unrelated props).
+    getprop prints just the value (or an empty string if the prop is unset),
+    so no parsing is needed beyond strip().
     """
-    sentinel = "<<<ELO_ADB_SEP>>>"
-    # Build: getprop ro.product.model; echo SEP; getprop ro.serialno; echo SEP; ...
-    cmd_parts = []
+    values = {}
     for k in keys:
-        cmd_parts.append(f"getprop {k}")
-        cmd_parts.append(f"echo {sentinel}")
-    shell_cmd = "; ".join(cmd_parts)
+        try:
+            rc, out, err = run_adb(
+                adb_bin,
+                ["-s", target, "shell", "getprop", k],
+                timeout=timeout,
+            )
+            if rc == 0:
+                values[k] = (out or "").strip()
+            else:
+                # A single missing prop shouldn't torpedo the whole device query
+                values[k] = ""
+        except Exception:
+            values[k] = ""
+    return values
 
-    rc, out, err = run_adb(
-        adb_bin,
-        ["-s", target, "shell", shell_cmd],
-        timeout=timeout,
-    )
-    if rc != 0:
-        blob = (out + err).strip()
-        raise Exception(blob or f"adb shell rc={rc}")
 
-    # Split by sentinel, strip trailing sentinel if present
-    chunks = out.split(sentinel)
-    # The last chunk is the tail after the final echo — discard if empty-ish
-    values = [c.strip() for c in chunks[:len(keys)]]
-    while len(values) < len(keys):
-        values.append("")
-    return dict(zip(keys, values))
+def push_pubkey(host: str, port: int, adb_bin: str, pubkey_text: str,
+                timeout: int = DEFAULT_TIMEOUT) -> dict:
+    """
+    Attempt to append pubkey_text to /data/misc/adb/adb_keys on the panel.
+
+    Requires an authorized ADB session AND a build that allows `adb root`
+    (userdebug/eng, or vendor builds that expose it). On production `user`
+    builds this will fail at the `adb root` step — that's reported cleanly.
+    Idempotent: if the key is already present, the append is a no-op.
+    """
+    target = f"{host}:{port}"
+    result = {
+        "host":    host,
+        "port":    port,
+        "status":  "error",
+        "message": "",
+    }
+
+    try:
+        ok, msg = adb_connect(adb_bin, target, timeout=timeout)
+        if not ok:
+            result["message"] = msg
+            return result
+
+        state = adb_get_state(adb_bin, target, timeout=timeout)
+        if state == "unauthorized":
+            result["status"]  = "auth_error"
+            result["message"] = "device unauthorized — tap Allow on panel first"
+            return result
+        if state != "device":
+            result["message"] = f"device {state}"
+            return result
+
+        # Try to escalate to root. On user builds this prints
+        # "adbd cannot run as root in production builds" and fails.
+        rc, out, err = run_adb(adb_bin, ["-s", target, "root"], timeout=timeout)
+        blob = (out + err).lower()
+        if "cannot run as root" in blob or "production" in blob:
+            result["message"] = "root not available (production build)"
+            return result
+        if rc != 0 and "already running as root" not in blob:
+            result["message"] = f"adb root failed: {(out + err).strip()[:80]}"
+            return result
+
+        # adb root restarts adbd — reconnect before the next command
+        import time as _time
+        _time.sleep(1.5)
+        adb_connect(adb_bin, target, timeout=timeout)
+
+        # Check if the key is already there before writing — keeps runs idempotent
+        # and avoids duplicate lines piling up across re-runs.
+        key_marker = pubkey_text.strip().split()[0][:40]  # first 40 chars of the base64 blob
+        rc, out, err = run_adb(
+            adb_bin,
+            ["-s", target, "shell",
+             f"grep -q '{key_marker}' /data/misc/adb/adb_keys 2>/dev/null && echo PRESENT || echo MISSING"],
+            timeout=timeout,
+        )
+        if "PRESENT" in (out or ""):
+            result["status"]  = "success"
+            result["message"] = "key already present (no change)"
+            return result
+
+        # Append key using a heredoc-style echo. Using single quotes around the
+        # whole key avoids issues with special characters in the comment field.
+        escaped = pubkey_text.strip().replace("'", "'\\''")
+        shell_cmd = (
+            f"mkdir -p /data/misc/adb && "
+            f"echo '{escaped}' >> /data/misc/adb/adb_keys && "
+            f"chmod 640 /data/misc/adb/adb_keys && "
+            f"chown system:shell /data/misc/adb/adb_keys 2>/dev/null; "
+            f"echo DONE"
+        )
+        rc, out, err = run_adb(adb_bin, ["-s", target, "shell", shell_cmd], timeout=timeout)
+        if "DONE" in (out or ""):
+            result["status"]  = "success"
+            result["message"] = "key appended to adb_keys"
+        else:
+            result["message"] = f"write failed: {(out + err).strip()[:80]}"
+
+    except Exception as e:
+        result["message"] = str(e)
+    finally:
+        adb_disconnect(adb_bin, target)
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -539,6 +621,12 @@ Firmware Version:
         help="With --host: dump the full getprop output for the device.")
     parser.add_argument("--firmware",           default=None, metavar="VERSION",
         help="Only show panels whose firmware does NOT match VERSION in the terminal table. JSON output always contains all results.")
+    parser.add_argument("--show-key",           action="store_true", default=False,
+        help=f"Print the ADB public key at {DEFAULT_PUBKEY} and exit. Useful for pasting into each panel's 'ADB authorized keys' developer setting.")
+    parser.add_argument("--push-key",           action="store_true", default=False,
+        help="For each panel in the CSV, try to append the local adbkey.pub to /data/misc/adb/adb_keys. Requires adb root (userdebug builds only). Will report per-panel success/failure.")
+    parser.add_argument("--pubkey",             default=DEFAULT_PUBKEY, metavar="PATH",
+        help=f"Path to the adb public key file (default: {DEFAULT_PUBKEY})")
 
     args = parser.parse_args()
 
@@ -546,6 +634,40 @@ Firmware Version:
 
     import time
     start_time = time.monotonic()
+
+    # -----------------------------------------------------------------------
+    # --show-key mode (no adb / no network needed)
+    # -----------------------------------------------------------------------
+    if args.show_key:
+        pubkey_path = Path(args.pubkey)
+        if not pubkey_path.exists():
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Public key not found at {pubkey_path}")
+            print(f"  Generate one by running any adb command, or pass --pubkey <path>.{RESET}")
+            sys.exit(1)
+        key_text = pubkey_path.read_text().strip()
+        bw = max(len(key_text) + 4, 60)
+
+        print(f"{WHITE}")
+        print(f"  {'=' * bw}")
+        title = "ADB Public Key \u2014 Paste into panel developer settings"
+        pad = (bw - len(title)) // 2
+        print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
+        print(f"  {'=' * bw}")
+        print()
+        print(f"  {BOLD}Source:{RESET}{WHITE} {pubkey_path}")
+        print(f"  {BOLD}Length:{RESET}{WHITE} {len(key_text)} chars")
+        print()
+        print(f"  {BOLD}Key \u2014 copy the entire line below:{RESET}{WHITE}")
+        print()
+        print(key_text)
+        print()
+        print(f"  {BOLD}Instructions:{RESET}{WHITE}")
+        print(f"    1. On each panel, open Settings \u2192 Developer options")
+        print(f"    2. Find 'ADB authorized keys' (or similar \u2014 naming varies by build)")
+        print(f"    3. Paste the key above and save")
+        print(f"    4. Re-run this script without --show-key to verify")
+        print(f"{RESET}")
+        return
 
     # Ensure adb server is running before we fan out worker threads — avoids
     # a thundering-herd where every worker tries to spawn the daemon at once.
@@ -567,6 +689,97 @@ Firmware Version:
     if args.firmware:
         print(f"  Filter:  Showing panels not on firmware {args.firmware}")
     print(f"{RESET}")
+
+    # -----------------------------------------------------------------------
+    # --push-key mode
+    # -----------------------------------------------------------------------
+    if args.push_key:
+        pubkey_path = Path(args.pubkey)
+        if not pubkey_path.exists():
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Public key not found at {pubkey_path}{RESET}")
+            sys.exit(1)
+        pubkey_text = pubkey_path.read_text().strip()
+
+        panels = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+
+        print(f"{WHITE}")
+        print(f"  {BOLD}Push-Key Mode{RESET}{WHITE}")
+        print(f"  Appending {pubkey_path} to /data/misc/adb/adb_keys on each panel.")
+        print(f"  Requires `adb root` (userdebug/eng builds). Will skip user builds.")
+        print(f"{RESET}")
+
+        bar_fmt = (
+            f"  {WHITE}Pushing{RESET} "
+            f"{CYAN}{{bar}}{RESET}"
+            f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
+            f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
+            f"  {WHITE}{{postfix}}{RESET}"
+        )
+
+        push_results = []
+        results_lock = threading.Lock()
+        active_lock  = threading.Lock()
+        latest_host  = {"value": ""}
+
+        def do_push(d):
+            with active_lock:
+                latest_host["value"] = d["host"]
+            return push_pubkey(d["host"], d["port"], adb_bin=args.adb,
+                               pubkey_text=pubkey_text, timeout=args.timeout)
+
+        with tqdm(total=len(panels), bar_format=bar_fmt, ncols=term_width,
+                  dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
+            with ThreadPoolExecutor(max_workers=args.workers) as ex:
+                futures = {ex.submit(do_push, d): d for d in panels}
+                for fut in as_completed(futures):
+                    with results_lock:
+                        push_results.append(fut.result())
+                    with active_lock:
+                        pbar.set_postfix_str(latest_host["value"], refresh=False)
+                    pbar.update(1)
+
+        elapsed = time.monotonic() - start_time
+        pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
+
+        host_order = {d["host"]: i for i, d in enumerate(panels)}
+        push_results.sort(key=lambda r: host_order.get(r["host"], 0))
+
+        def push_icon(r):
+            s = r.get("status", "error")
+            if s == "success":     return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+            if s == "auth_error":  return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+            return f"{RED}\u2717 FAIL{RESET}{WHITE}"
+
+        table = tabulate(
+            [[push_icon(r), clean(r["host"]), truncate_error(r["message"], max_len=50)]
+             for r in push_results],
+            headers=["Status", "Host", "Message"],
+            tablefmt="pretty", stralign="left"
+        )
+        first_line = table.split("\n")[0]
+        bw = max(len(re.sub(r'\033\[[0-9;]*m', '', first_line)), 60)
+        title = "ADB Push-Key \u2014 Results"
+
+        print(f"{WHITE}")
+        print(f"  {'=' * bw}")
+        print(f"  {' ' * ((bw - len(title)) // 2)}{BOLD}{title}{RESET}{WHITE}")
+        print(f"  {'=' * bw}")
+        for line in table.split("\n"):
+            print(f"  {line}")
+
+        ok   = sum(1 for r in push_results if r["status"] == "success")
+        auth = sum(1 for r in push_results if r["status"] == "auth_error")
+        err  = sum(1 for r in push_results if r["status"] == "error")
+        print()
+        print(
+            f"  {BOLD}Total:{RESET}{WHITE} {len(push_results)}  |  "
+            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+            f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+            f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        )
+        print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({args.workers} workers)")
+        print(f"{RESET}")
+        return
 
     # -----------------------------------------------------------------------
     # Single-host --raw dump
