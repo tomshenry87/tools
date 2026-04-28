@@ -25,7 +25,7 @@ const S="'Inter','Helvetica Neue',sans-serif";
 var T=LIGHT;
 var DTYPES=DTYPES_LIGHT;
 
-function extractBR(host){if(!host)return{building:"Unknown",room:"?"};var p=host.split(".")[0].split("-");if(p[0]==="cts")p=p.slice(1);if(p.length<2)return{building:(p[0]||"?").charAt(0).toUpperCase()+(p[0]||"").slice(1),room:"?"};var bldg,rm;if(/^\d+$/.test(p[0])&&p.length>=3){bldg=p[0]+"-"+p[1].charAt(0).toUpperCase()+p[1].slice(1);rm=p[2]||"?";}else{bldg=p[0].charAt(0).toUpperCase()+p[0].slice(1);rm=p[1]||"?";}var renames={"4-Currier":"Currier04"};if(renames[bldg])bldg=renames[bldg];return{building:bldg,room:rm};}
+function extractBR(host){if(!host)return{building:"Unknown",room:"?"};var p=host.split(".")[0].split("-");if(p[0]==="cts")p=p.slice(1);if(p.length<2)return{building:(p[0]||"?").charAt(0).toUpperCase()+(p[0]||"").slice(1),room:"?"};var bldg,rm;if(/^\d+$/.test(p[0])&&p.length>=3){bldg=p[0]+"-"+p[1].charAt(0).toUpperCase()+p[1].slice(1);rm=p[2]||"?";}else{bldg=p[0].charAt(0).toUpperCase()+p[0].slice(1);rm=p[1]||"?";}var renames={"4-Currier":"Currier04","Osher":"Court01"};if(renames[bldg])bldg=renames[bldg];return{building:bldg,room:rm};}
 function hostShort(h){var s=h.split(".")[0];return s.replace(/^cts-/,"");}
 
 function norm(raw){
