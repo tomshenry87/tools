@@ -1,0 +1,36 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/tp_firmware.csv",
+    "timestamp": "2026-04-24T20:08:53.308783+00:00",
+    "protocol": "Android Debug Bridge (ADB) over TCP/IP",
+    "mode": "connect + getprop + disconnect",
+    "workers": 5,
+    "total": 1,
+    "success": 1,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 0.56
+  },
+  "panels": [
+    {
+      "host": "dewey-003-touch-panel.openav.dartmouth.edu",
+      "port": 5555,
+      "status": "success",
+      "model": "10in-I-Series-5",
+      "manufacturer": "Elo Touch Solutions",
+      "brand": "Elo",
+      "device": "10in-I-Series-5",
+      "serial": "E255EA1416",
+      "android_version": "14",
+      "sdk": "34",
+      "build_id": "UKQ1.230924.001",
+      "build_display_id": "7.000.001.5045+gen5p",
+      "build_date": "Sun Feb  9 23:20:47 PST 2025",
+      "build_fingerprint": "Elo/10in-I-Series-5/10in-I-Series-5:14/UKQ1.230924.001/7.000.001.5045+gen5p:user/release-keys",
+      "firmware_version": "7.000.001.5045+gen5p",
+      "adb_state": "device",
+      "error": null,
+      "query_timestamp": "2026-04-24T20:08:52.792300+00:00"
+    }
+  ]
+}
