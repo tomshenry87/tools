@@ -313,6 +313,42 @@ button:hover{opacity:0.9}
 
 # ─── Routes ───
 
+@app.route("/display")
+def display_page():
+    """Public charts display for digital signage - no auth required."""
+    return send_file(os.path.join(BASE_DIR, "static", "display.html"))
+
+@app.route("/api/display-data")
+def api_display_data():
+    """Public data endpoint for digital signage - no auth required."""
+    results = scan_all_sources()
+    result = {
+        "sources": [],
+        "devices": [],
+        "target_firmware": load_target_firmware(),
+        "scanned_at": datetime.now().isoformat(),
+    }
+    for dtype, filepath in results:
+        try:
+            with open(filepath, "r") as f:
+                data = json.load(f)
+            filename = os.path.basename(filepath)
+            arr = None
+            for key in ARRAY_KEY_TO_TYPE:
+                if key in data and isinstance(data[key], list):
+                    arr = data[key]
+                    break
+            if arr is None:
+                continue
+            result["sources"].append({"type": dtype, "filename": filename, "count": len(arr)})
+            for device in arr:
+                device["_type"] = dtype
+                device["_source"] = filename
+                result["devices"].append(device)
+        except (json.JSONDecodeError, IOError):
+            pass
+    return jsonify(result)
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":

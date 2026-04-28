@@ -161,6 +161,7 @@ function FleetConsole(){
   const[fType,setFType]=useState("all");
   const[fStatus,setFStatus]=useState("all");
   const[fBldg,setFBldg]=useState("all");
+  const[fFwStatus,setFFwStatus]=useState("all");
   const[sortCol,setSortCol]=useState("building");
   const[sortDir,setSortDir]=useState("asc");
   const[selectedBldg,setSelectedBldg]=useState(null);
@@ -235,7 +236,7 @@ function FleetConsole(){
   }).length;return{total:attentionDevs.length,offline:off,outdated};},[attentionDevs,targetFw]);
   const attHierarchy=useMemo(()=>{const map={};attentionDevs.forEach(d=>{if(!map[d.building])map[d.building]={};if(!map[d.building][d.room])map[d.building][d.room]=[];map[d.building][d.room].push(d);});return Object.entries(map).map(([building,rooms])=>({building,rooms:Object.entries(rooms).map(([room,devices])=>({room,devices})).sort((a,b)=>a.room.localeCompare(b.room,undefined,{numeric:true})),total:Object.values(rooms).flat().length})).sort((a,b)=>a.building.localeCompare(b.building));},[attentionDevs]);
 
-  const filtered=useMemo(()=>{let l=allDevs;if(fType!=="all")l=l.filter(d=>d._type===fType);if(fStatus==="success")l=l.filter(d=>d.status==="success");else if(fStatus==="errors")l=l.filter(d=>d.status!=="success");if(fBldg!=="all")l=l.filter(d=>d.building===fBldg);if(search){const q=search.toLowerCase();l=l.filter(d=>d.host.toLowerCase().includes(q)||d.building.toLowerCase().includes(q)||d.room.toLowerCase().includes(q)||d.model.toLowerCase().includes(q)||d.firmware.toLowerCase().includes(q));}return l;},[allDevs,fType,fStatus,fBldg,search]);
+  const filtered=useMemo(()=>{let l=allDevs;if(fType!=="all")l=l.filter(d=>d._type===fType);if(fStatus==="success")l=l.filter(d=>d.status==="success");else if(fStatus==="errors")l=l.filter(d=>d.status!=="success");if(fBldg!=="all")l=l.filter(d=>d.building===fBldg);if(fFwStatus!=="all"){const naC1="N/A (Class 1)";l=l.filter(d=>{const t=targetFw[d._type];const hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");if(!hasT)return fFwStatus==="no_target";const ok=d.firmware==="N/A"||d.firmware===naC1||t.includes(d.firmware);if(fFwStatus==="ok")return ok&&d.status==="success";if(fFwStatus==="outdated")return !ok&&d.status==="success";if(fFwStatus==="offline")return d.status!=="success";return true;});}if(search){const q=search.toLowerCase();l=l.filter(d=>d.host.toLowerCase().includes(q)||d.building.toLowerCase().includes(q)||d.room.toLowerCase().includes(q)||d.model.toLowerCase().includes(q)||d.firmware.toLowerCase().includes(q));}return l;},[allDevs,fType,fStatus,fBldg,fFwStatus,search,targetFw]);
   const hierarchy=useMemo(()=>{const map={};filtered.forEach(d=>{if(!map[d.building])map[d.building]={};if(!map[d.building][d.room])map[d.building][d.room]=[];map[d.building][d.room].push(d);});return Object.entries(map).map(([building,rooms])=>{const all=Object.values(rooms).flat();return{building,types:[...new Set(all.map(d=>d._type))],rooms:Object.entries(rooms).map(([room,devices])=>({room,devices,types:[...new Set(devices.map(d=>d._type))],online:devices.filter(d=>d.status==="success").length})).sort((a,b)=>a.room.localeCompare(b.room,undefined,{numeric:true})),total:all.length,online:all.filter(d=>d.status==="success").length};}).sort((a,b)=>a.building.localeCompare(b.building));},[filtered]);
   const chartData=useMemo(()=>hierarchy.map(b=>({name:b.building,total:b.total,online:b.online,errors:b.total-b.online})).sort((a,b)=>b.total-a.total),[hierarchy]);
   const sorted=useMemo(()=>{const l=[...filtered];l.sort((a,b)=>{
@@ -279,7 +280,7 @@ function FleetConsole(){
       <button onClick={fetchData} style={{marginTop:16,padding:"8px 20px",borderRadius:6,border:`1px solid ${T.accent}`,background:T.accentDim,color:T.accent,fontFamily:S,fontSize:13,fontWeight:600,cursor:"pointer"}}>Refresh</button></div></div>;
 
   return(
-    <div style={{minHeight:"100vh",background:T.bg,fontFamily:S,color:T.text}}>
+    <div style={{height:"100vh",background:T.bg,fontFamily:S,color:T.text,display:"flex",flexDirection:"column",overflow:view==="table"?"hidden":"auto"}}>
       {/* HEADER */}
       <div style={{padding:"14px 24px",borderBottom:"1px solid #e2e2e2",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,background:"#00693e"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -305,7 +306,7 @@ function FleetConsole(){
         </div>
       </div>
 
-      <div style={{padding:"14px 24px"}}>
+      <div style={{padding:"14px 24px",flex:view==="table"?1:undefined,display:view==="table"?"flex":undefined,flexDirection:view==="table"?"column":undefined,overflow:view==="table"?"hidden":undefined,minHeight:0}}>
         {/* COMPACT STATS BAR - shown on all tabs except sources */}
         {view!=="sources"&&<div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
           {[{label:"Devices",value:stats.total,sub:`${stats.buildings} bldgs · ${stats.rooms} rooms`},{label:"Online",value:stats.online,color:T.green,sub:stats.total>0?((stats.online/stats.total)*100).toFixed(0)+"%":""},{label:"Issues",value:stats.errors,color:stats.errors>0?T.red:T.green}
@@ -352,6 +353,7 @@ function FleetConsole(){
           <span style={{fontSize:13,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:1}}>Filter</span>
           <select value={fType} onChange={e=>setFType(e.target.value)} style={selStyle}><option value="all">All Types</option>{typeOpts.map(t=><option key={t} value={t}>{DTYPES[t]?DTYPES[t].icon+" "+DTYPES[t].label:t}</option>)}</select>
           <select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={selStyle}><option value="all">All Status</option><option value="success">Online</option><option value="errors">Errors</option></select>
+          <select value={fFwStatus} onChange={e=>setFFwStatus(e.target.value)} style={selStyle}><option value="all">All FW Status</option><option value="ok">✓ OK</option><option value="outdated">⚠ Outdated</option><option value="offline">Offline</option><option value="no_target">No Target</option></select>
           <select value={fBldg} onChange={e=>setFBldg(e.target.value)} style={selStyle}><option value="all">All Buildings</option>{bldgOpts.map(b=><option key={b} value={b}>{b}</option>)}</select>
           <div style={{flex:1}}/><input placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"5px 10px",color:T.text,fontFamily:M,fontSize:13,outline:"none",width:140}}/>
           <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{filtered.length}/{allDevs.length}</span>
@@ -483,9 +485,8 @@ function FleetConsole(){
         </div>}
 
         {/* TABLE */}
-        {view==="table"&&<div>
-          <FwStatusPie devices={sorted} targetFw={targetFw}/>
-          <div style={{overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`,maxHeight:"calc(100vh - 380px)"}}>
+        {view==="table"&&<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
+          <div style={{flex:1,overflow:"auto",borderRadius:6,border:`1px solid ${T.border}`}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontFamily:S,fontSize:13}}>
             <thead><tr>{[{key:"building",label:"Building"},{key:"room",label:"Room"},{key:"_type",label:"Type"},{key:"host",label:"Host"},{key:"model",label:"Model"},{key:"firmware",label:"Firmware"},{key:"_fwStatus",label:"FW Status"},{key:"status",label:"Status"},{key:"serial",label:"Serial"}].map(col=>
               <th key={col.key} onClick={()=>hSort(col.key)} style={{position:"sticky",top:0,zIndex:2,background:T.surfaceAlt,color:T.textMuted,textAlign:"left",padding:"12px 14px",borderBottom:`2px solid ${T.border}`,cursor:"pointer",userSelect:"none",fontSize:11,textTransform:"uppercase",letterSpacing:1,fontWeight:700,whiteSpace:"nowrap"}}>{col.label}<SA col={col.key}/></th>)}</tr></thead>

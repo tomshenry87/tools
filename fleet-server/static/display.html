@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firmware Dashboard — Display</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1a1a}#root{min-height:100vh}#loading{color:#999;font-family:'Inter',sans-serif;text-align:center;padding:60px;font-size:16px}</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"><div id="loading">Loading Display...</div></div>
+<script type="text/babel">
+const {useState,useMemo,useCallback,useEffect}=React;
+
+const T={bg:"#1a1a1a",surface:"#242424",surfaceAlt:"#2e2e2e",surfaceHi:"#3a3a3a",border:"#3a3a3a",borderHi:"#4a4a4a",text:"#e2e2e2",textBright:"#f7f7f7",textMuted:"#999",textDim:"#666",accent:"#00693e",accentDim:"rgba(0,105,62,0.15)",green:"#4ade80",greenDim:"rgba(74,222,128,0.12)",amber:"#fbbf24",amberDim:"rgba(251,191,36,0.12)",red:"#f87171",redDim:"rgba(248,113,113,0.10)"};
+const DTYPES={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3",bg:"rgba(103,184,227,0.12)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80",bg:"rgba(74,222,128,0.12)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7",bg:"rgba(184,156,199,0.12)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a",bg:"rgba(240,118,74,0.12)"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24",bg:"rgba(251,191,36,0.12)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9",bg:"rgba(91,163,217,0.12)"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e",bg:"rgba(196,149,110,0.12)"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171",bg:"rgba(248,113,113,0.12)"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a",bg:"rgba(111,207,138,0.12)"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb",bg:"rgba(167,139,219,0.12)"},unknown:{icon:"?",label:"Device",color:"#999",bg:"rgba(153,153,153,0.1)"}};
+const CHART_COLORS=["#67b8e3","#4ade80","#b89cc7","#f0764a","#fbbf24","#5ba3d9","#c4956e","#f87171"];
+const S="'Inter','Helvetica Neue',sans-serif";
+
+function extractBR(host){if(!host)return{building:"Unknown",room:"?"};var p=host.split(".")[0].split("-");if(p[0]==="cts")p=p.slice(1);if(p.length<2)return{building:(p[0]||"?").charAt(0).toUpperCase()+(p[0]||"").slice(1),room:"?"};var bldg,rm;if(/^\d+$/.test(p[0])&&p.length>=3){bldg=p[0]+"-"+p[1].charAt(0).toUpperCase()+p[1].slice(1);rm=p[2]||"?";}else{bldg=p[0].charAt(0).toUpperCase()+p[0].slice(1);rm=p[1]||"?";}var renames={"4-Currier":"Currier04","Osher":"Court01"};if(renames[bldg])bldg=renames[bldg];return{building:bldg,room:rm};}
+
+function norm(raw){
+  var host=raw.host||"";var br=extractBR(host);var type=raw._type||"unknown";
+  var fw=raw.firmware_version||raw.firmware||raw.routeros_version||"N/A";
+  if(type==="ups")fw=raw.agent_firmware||"N/A";
+  return {host:host,building:br.building,room:br.room,status:raw.status||"unknown",_type:type,firmware:fw,model:raw.model||raw.product_name||raw.product_family||"N/A"};
+}
+
+function FwStatusPie(props){
+  var devices=props.devices,targetFw=props.targetFw;
+  if(!devices||devices.length===0)return null;
+  var naC="N/A (Class 1)";
+  var okCount=0,outdatedCount=0,offlineCount=0,noTargetCount=0;
+  devices.forEach(function(d){
+    if(d.status!=="success"){offlineCount++;return;}
+    var t=targetFw[d._type];
+    var hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
+    if(!hasT){noTargetCount++;return;}
+    if(d.firmware==="N/A"||d.firmware===naC||t.includes(d.firmware))okCount++;
+    else outdatedCount++;
+  });
+  var total=devices.length;
+  var segments=[
+    {label:"OK",count:okCount,color:T.green},
+    {label:"Outdated",count:outdatedCount,color:T.amber},
+    {label:"Offline",count:offlineCount,color:T.red},
+    {label:"No Target",count:noTargetCount,color:T.textDim}
+  ].filter(function(s){return s.count>0;});
+  var sz=240,scx=120,scy=120,sr=98,sa=-90;
+  var arcs=segments.map(function(seg){
+    var ang=(seg.count/total)*360;
+    var ea=sa+ang,la=ang>180?1:0;
+    var rad=function(a){return a*Math.PI/180;};
+    var x1=scx+sr*Math.cos(rad(sa)),y1=scy+sr*Math.sin(rad(sa));
+    var x2=scx+sr*Math.cos(rad(ea)),y2=scy+sr*Math.sin(rad(ea));
+    var p=ang>=359.9
+      ?"M"+(scx-sr)+","+scy+"A"+sr+","+sr+",0,1,1,"+(scx+sr)+","+scy+"A"+sr+","+sr+",0,1,1,"+(scx-sr)+","+scy
+      :"M"+scx+","+scy+"L"+x1+","+y1+"A"+sr+","+sr+",0,"+la+",1,"+x2+","+y2+"Z";
+    sa=ea;
+    return {label:seg.label,count:seg.count,color:seg.color,path:p,pct:Math.round(seg.count/total*100)};
+  });
+  return <div style={{background:T.surface,border:"1px solid "+T.border,borderRadius:12,padding:28}}>
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+      <span style={{fontSize:24}}>📊</span>
+      <span style={{fontSize:24,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>Firmware Status</span>
+      <span style={{fontSize:16,color:T.textMuted}}>{total} devices</span>
+    </div>
+    <div style={{display:"flex",gap:28,alignItems:"center"}}>
+      <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
+        {arcs.map(function(a,i){return <path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={2}/>;})}
+        <circle cx={scx} cy={scy} r={50} fill={T.surface}/>
+        <text x={scx} y={scy-4} textAnchor="middle" fill={T.textBright} fontSize={36} fontWeight={700} fontFamily={S}>{total}</text>
+        <text x={scx} y={scy+18} textAnchor="middle" fill={T.textMuted} fontSize={14} fontFamily={S}>total</text>
+      </svg>
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {arcs.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:18,height:18,borderRadius:4,background:a.color}}/>
+          <div>
+            <div style={{fontSize:36,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
+            <div style={{fontSize:16,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
+          </div>
+        </div>;})}
+      </div>
+    </div>
+  </div>;
+}
+
+function Display(){
+  var [allDevs,setAllDevs]=useState([]);
+  var [targetFw,setTargetFw]=useState({});
+  var [lastUpdate,setLastUpdate]=useState(null);
+
+  var fetchData=useCallback(function(){
+    fetch("/api/display-data").then(function(r){return r.json();}).then(function(data){
+      var devs=(data.devices||[]).map(norm);
+      setAllDevs(devs);
+      if(data.target_firmware)setTargetFw(data.target_firmware);
+      setLastUpdate(new Date());
+    }).catch(function(){});
+  },[]);
+
+  useEffect(function(){fetchData();var iv=setInterval(fetchData,60000);return function(){clearInterval(iv);};},[fetchData]);
+
+  var typeOpts=useMemo(function(){var s=new Set();allDevs.forEach(function(d){s.add(d._type);});return Array.from(s).sort();},[allDevs]);
+
+  var stats=useMemo(function(){
+    var online=allDevs.filter(function(d){return d.status==="success";}).length;
+    var errors=allDevs.length-online;
+    var buildings=new Set();allDevs.forEach(function(d){buildings.add(d.building);});
+    return {total:allDevs.length,online:online,errors:errors,buildings:buildings.size};
+  },[allDevs]);
+
+  if(allDevs.length===0)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:T.textMuted,fontSize:18}}>Loading data...</div></div>;
+
+  return(
+    <div style={{minHeight:"100vh",background:T.bg,fontFamily:S,color:T.text}}>
+      {/* HEADER */}
+      <div style={{padding:"16px 28px",borderBottom:"1px solid "+T.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#00693e"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <img src="/static/d-pine.png" alt="D" style={{width:44,height:44,objectFit:"contain",filter:"brightness(0) invert(1)"}} onError={function(e){e.target.style.display="none";}}/>
+          <div>
+            <div style={{fontWeight:700,fontSize:24,color:"#fff",fontFamily:"'EB Garamond',Georgia,serif"}}>Firmware Dashboard</div>
+            <div style={{fontSize:14,color:"rgba(255,255,255,0.55)"}}>Design & Engineering · {stats.total} devices · {stats.buildings} buildings</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:16,alignItems:"center"}}>
+          <div style={{display:"flex",gap:12}}>
+            {[{label:"Online",value:stats.online,color:"#4ade80"},{label:"Issues",value:stats.errors,color:stats.errors>0?"#f87171":"#4ade80"}].map(function(s,i){
+              return <div key={i} style={{textAlign:"center"}}>
+                <div style={{fontSize:28,fontWeight:700,color:s.color,lineHeight:1}}>{s.value}</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{s.label}</div>
+              </div>;
+            })}
+          </div>
+          {lastUpdate&&<div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Updated {lastUpdate.toLocaleTimeString()}</div>}
+        </div>
+      </div>
+
+      {/* CHARTS */}
+      <div style={{padding:"20px 28px"}}>
+        <FwStatusPie devices={allDevs} targetFw={targetFw}/>
+        <div style={{marginTop:20,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(460px,1fr))",gap:16}}>
+          {typeOpts.map(function(type){
+            var cfg=DTYPES[type]||DTYPES.unknown;
+            var devsOfType=allDevs.filter(function(d){return d._type===type;});
+            var fwMap={};
+            devsOfType.forEach(function(d){var fw=d.firmware||"N/A";fwMap[fw]=(fwMap[fw]||0)+1;});
+            var fwList=Object.entries(fwMap).sort(function(a,b){return b[1]-a[1];});
+            var total=devsOfType.length;
+            var selected=targetFw[type]||[];
+            var hasTarget=Array.isArray(selected)&&selected.length>0&&!selected.includes("*");
+
+            var size=200,cx=100,cy=100,r=82;
+            var startAngle=-90;
+            var slices=fwList.map(function(entry,i){
+              var fw=entry[0],count=entry[1];
+              var angle=(count/total)*360;
+              var endAngle=startAngle+angle;
+              var largeArc=angle>180?1:0;
+              var rad=function(d){return d*Math.PI/180;};
+              var x1=cx+r*Math.cos(rad(startAngle)),y1=cy+r*Math.sin(rad(startAngle));
+              var x2=cx+r*Math.cos(rad(endAngle)),y2=cy+r*Math.sin(rad(endAngle));
+              var naC1="N/A (Class 1)";
+              var isAccepted=hasTarget&&selected.includes(fw);
+              var isOutdated=hasTarget&&!selected.includes(fw)&&fw!=="N/A"&&fw!==naC1;
+              var color=isAccepted?T.green:isOutdated?T.amber:CHART_COLORS[i%CHART_COLORS.length];
+              var path=angle>=359.9
+                ?"M"+(cx-r)+","+cy+"A"+r+","+r+",0,1,1,"+(cx+r)+","+cy+"A"+r+","+r+",0,1,1,"+(cx-r)+","+cy
+                :"M"+cx+","+cy+"L"+x1+","+y1+"A"+r+","+r+",0,"+largeArc+",1,"+x2+","+y2+"Z";
+              startAngle=endAngle;
+              return {fw:fw,count:count,color:color,path:path,isAccepted:isAccepted,isOutdated:isOutdated,pct:Math.round(count/total*100)};
+            });
+
+            return <div key={type} style={{background:T.surface,border:"1px solid "+T.border,borderRadius:8,padding:24}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
+                <span style={{fontSize:22}}>{cfg.icon}</span>
+                <span style={{fontSize:20,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
+                <span style={{fontSize:15,color:T.textMuted}}>{total} devices</span>
+              </div>
+              <div style={{display:"flex",gap:20,alignItems:"center"}}>
+                <svg width={size} height={size} viewBox={"0 0 "+size+" "+size}>
+                  {slices.map(function(s,i){return <path key={i} d={s.path} fill={s.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>;})}
+                  <circle cx={cx} cy={cy} r={42} fill={T.surface}/>
+                  <text x={cx} y={cy-4} textAnchor="middle" fill={T.textBright} fontSize={28} fontWeight={700} fontFamily={S}>{total}</text>
+                  <text x={cx} y={cy+14} textAnchor="middle" fill={T.textMuted} fontSize={12} fontFamily={S}>devices</text>
+                </svg>
+                <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
+                  {slices.map(function(s,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:12,height:12,borderRadius:3,background:s.color,flexShrink:0}}/>
+                    <span style={{fontSize:14,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
+                    <span style={{fontSize:14,color:T.textMuted,fontWeight:600}}>{s.count}</span>
+                    <span style={{fontSize:13,color:T.textDim,minWidth:36,textAlign:"right"}}>{s.pct}%</span>
+                    {hasTarget&&<span style={{fontSize:14,width:16,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"\u2713":s.isOutdated?"\u26A0":""}</span>}
+                  </div>;})}
+                </div>
+              </div>
+            </div>;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(Display));
+</script>
+</body>
+</html>
