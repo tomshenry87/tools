@@ -1,8 +1,13 @@
 cameras.csv
 scripts/secrets/axis_firmware.csv
+scripts/serets/biamp_firmware.csv
 scripts/secrets/bravia_firmware.csv
 scripts/secrets/kramer_firmware.csv
 scripts/secrets/mikrotik_firmware.csv
 scripts/secrets/netgear_firmware.csv
 scripts/secrets/pjlink_firmware.csv
+scripts/sercets/relay_firmware.csv
 scripts/secrets/rlink_firmware.csv
+scripts/secerts/shuremxa_firmware.csv
+scripts/secrets/tp_firmware.csv
+scripts/secrets/ups_firmware.csv
