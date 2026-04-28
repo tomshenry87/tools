@@ -163,6 +163,7 @@ function FleetConsole(){
   const[fBldg,setFBldg]=useState("all");
   const[sortCol,setSortCol]=useState("building");
   const[sortDir,setSortDir]=useState("asc");
+  const[selectedBldg,setSelectedBldg]=useState(null);
   const[targetFw,setTargetFw]=useState({});
   const[fwSaving,setFwSaving]=useState(false);
   const[logoErr,setLogoErr]=useState(false);
@@ -387,26 +388,68 @@ function FleetConsole(){
 
         {/* HIERARCHY */}
         {view==="hierarchy"&&<div>
-          <div style={{display:"flex",gap:10,marginBottom:8}}>{btnSm(expAll,"Expand All")}{btnSm(colAll,"Collapse All")}</div>
-          {hierarchy.map(b=>{const open=expB.has(b.building);const issues=b.total-b.online;return <div key={b.building} style={{marginBottom:4}}>
-            <div onClick={()=>tB(b.building)} style={{display:"flex",alignItems:"center",gap:8,padding:"12px 16px",background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",borderLeft:`3px solid ${issues>0?T.amber:T.green}`}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background=T.surface}>
-              <span style={{color:T.textDim,fontSize:13,width:14,textAlign:"center",transform:open?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
-              <span style={{fontWeight:700,fontSize:13,color:T.textBright,minWidth:100}}>{b.building}</span>
-              <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{b.rooms.length} rm{b.rooms.length!==1?"s":""}</span>
-              <span style={{fontSize:13,color:T.textMuted,fontFamily:M}}>{b.online}/{b.total}</span>
-              <div style={{display:"flex",gap:3}}>{b.types.map(t=><span key={t} style={{fontSize:12}} title={DTYPES[t]?DTYPES[t].label:""}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
-              {issues>0&&<Badge color={T.amber} bg={T.amberDim}>{issues} issue{issues!==1?"s":""}</Badge>}</div>
-            {open&&<div style={{marginLeft:18,borderLeft:`1px solid ${T.border}`}}>{b.rooms.map(r=>{const rk=b.building+"::"+r.room;const ro=expR.has(rk);const ri=r.devices.length-r.online;return <div key={rk}>
-              <div onClick={()=>tR(rk)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",cursor:"pointer",borderRadius:3}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <span style={{color:T.textDim,fontSize:8,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
-                <span style={{fontWeight:600,fontSize:12.5,color:T.text}}>{r.room}</span>
-                <div style={{display:"flex",gap:2}}>{r.types.map(t=><span key={t} style={{fontSize:13}}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
-                <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{r.online}/{r.devices.length}</span>
-                {ri>0&&<Badge color={T.red} bg={T.redDim} style={{fontSize:13}}>{ri} err</Badge>}</div>
-              {ro&&<div style={{marginLeft:14,marginBottom:4}}>{r.devices.map((d,di)=><div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderBottom:`1px solid ${T.border}`,fontSize:13}} onMouseEnter={e=>e.currentTarget.style.background=T.surfaceAlt} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                <DBadge type={d._type}/><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim} style={{fontSize:13}}>{d.status==="success"?"OK":d.error||d.status}</Badge>
-                <DDetail d={d}/><div style={{flex:1}}/><span style={{fontSize:13,color:T.textDim,fontFamily:M,maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{hostShort(d.host)}</span></div>)}</div>}
-            </div>;})}</div>}</div>;})}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
+          {hierarchy.map(b=>{const issues=b.total-b.online;const onlinePct=b.total>0?Math.round(b.online/b.total*100):0;return <div key={b.building} style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:10,cursor:"pointer",transition:"all 0.15s",borderLeft:`4px solid ${issues>0?T.amber:T.green}`}} onClick={()=>{setSelectedBldg(b.building);setExpR(new Set());}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 16px rgba(0,0,0,0.1)";}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="";}}>
+            <div style={{padding:"18px 20px"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <span style={{fontWeight:700,fontSize:18,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{b.building}</span>
+                {issues>0&&<span style={{fontSize:13,fontWeight:700,color:"#fff",background:T.red,borderRadius:12,padding:"2px 8px",minWidth:24,textAlign:"center"}}>{issues}</span>}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <span style={{fontSize:14,color:T.textMuted,fontWeight:500}}>{b.rooms.length} room{b.rooms.length!==1?"s":""}</span>
+                <span style={{fontSize:14,color:T.textDim}}>·</span>
+                <span style={{fontSize:14,color:onlinePct===100?T.green:T.textMuted,fontWeight:600}}>{b.online}/{b.total}</span>
+                <span style={{fontSize:12,color:T.textDim}}>({onlinePct}%)</span>
+              </div>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{b.types.map(t=><span key={t} style={{fontSize:16}} title={DTYPES[t]?DTYPES[t].label:""}>{DTYPES[t]?DTYPES[t].icon:""}</span>)}</div>
+            </div>
+          </div>;})}
+          </div>
+
+          {/* LIGHTBOX MODAL */}
+          {selectedBldg&&(()=>{
+            var b=hierarchy.find(function(x){return x.building===selectedBldg;});
+            if(!b)return null;
+            var issues=b.total-b.online;
+            var onlinePct=b.total>0?Math.round(b.online/b.total*100):0;
+            return <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setSelectedBldg(null)}>
+              <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)"}}/>
+              <div style={{position:"relative",background:T.surface,border:`1px solid ${T.border}`,borderRadius:12,width:"auto",minWidth:500,maxWidth:"90vw",maxHeight:"90vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",overflow:"hidden"}} onClick={function(e){e.stopPropagation();}}>
+                {/* Modal Header */}
+                <div style={{padding:"24px 28px 16px",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <span style={{fontWeight:700,fontSize:24,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{b.building}</span>
+                    <span onClick={function(){setSelectedBldg(null);}} style={{fontSize:20,color:T.textMuted,cursor:"pointer",padding:"4px 8px",borderRadius:4}} onMouseEnter={function(e){e.currentTarget.style.background=T.surfaceAlt;}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>✕</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                    <span style={{fontSize:15,color:T.textMuted}}>{b.rooms.length} room{b.rooms.length!==1?"s":""}</span>
+                    <span style={{fontSize:15,color:onlinePct===100?T.green:issues>0?T.amber:T.textMuted,fontWeight:600}}>{b.online}/{b.total} online ({onlinePct}%)</span>
+                    {issues>0&&<Badge color={T.red} bg={T.redDim}>{issues} issue{issues!==1?"s":""}</Badge>}
+                    <div style={{display:"flex",gap:4,marginLeft:8}}>{b.types.map(function(t){return <span key={t} style={{fontSize:16}} title={DTYPES[t]?DTYPES[t].label:""}>{DTYPES[t]?DTYPES[t].icon:""}</span>;})}</div>
+                  </div>
+                </div>
+                {/* Modal Body - Rooms */}
+                <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
+                  {b.rooms.map(function(r){var rk=b.building+"::"+r.room;var ro=expR.has(rk);var ri=r.devices.length-r.online;return <div key={rk}>
+                    <div onClick={function(){tR(rk);}} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 28px",cursor:"pointer"}} onMouseEnter={function(e){e.currentTarget.style.background=T.surfaceAlt;}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
+                      <span style={{color:T.textDim,fontSize:10,width:12,textAlign:"center",transform:ro?"rotate(90deg)":"rotate(0deg)",display:"inline-block",transition:"transform 0.15s"}}>▶</span>
+                      <span style={{fontWeight:700,fontSize:15,color:T.text}}>{r.room}</span>
+                      <div style={{display:"flex",gap:3}}>{r.types.map(function(t){return <span key={t} style={{fontSize:14}}>{DTYPES[t]?DTYPES[t].icon:""}</span>;})}</div>
+                      <span style={{fontSize:14,color:T.textDim,marginLeft:"auto"}}>{r.online}/{r.devices.length}</span>
+                      {ri>0&&<Badge color={T.red} bg={T.redDim}>{ri} err</Badge>}
+                    </div>
+                    {ro&&<div style={{padding:"0 20px 8px 48px"}}>{r.devices.map(function(d,di){return <div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderBottom:`1px solid ${T.border}`,fontSize:14}} onMouseEnter={function(e){e.currentTarget.style.background=T.surfaceAlt;}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
+                      <DBadge type={d._type}/>
+                      <Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim}>{d.status==="success"?"OK":d.error||d.status}</Badge>
+                      <span style={{fontSize:13,color:T.text,fontWeight:500}}>{d.model!=="N/A"?d.model:""}</span>
+                      <span style={{fontSize:13,color:T.textMuted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{hostShort(d.host)}</span>
+                      {d.firmware!=="N/A"&&<span style={{fontSize:13,color:T.green,fontWeight:500}}>{d.firmware}</span>}
+                    </div>;})}</div>}
+                  </div>;})}
+                </div>
+              </div>
+            </div>;
+          })()}
         </div>}
 
         {/* TABLE */}
