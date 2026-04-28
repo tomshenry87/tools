@@ -4,21 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Firmware Dashboard — Display</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1a1a}#root{min-height:100vh}#loading{color:#999;font-family:'Inter',sans-serif;text-align:center;padding:60px;font-size:16px}</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#111;overflow:hidden;width:100vw;height:100vh}
+#root{width:100vw;height:100vh}
+#loading{color:#555;font-family:'Inter',sans-serif;text-align:center;padding:60px;font-size:16px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes slideProgress{from{width:0%}to{width:100%}}
+</style>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
-<div id="root"><div id="loading">Loading Display...</div></div>
+<div id="root"><div id="loading">Loading...</div></div>
 <script type="text/babel">
 const {useState,useMemo,useCallback,useEffect}=React;
 
-const T={bg:"#1a1a1a",surface:"#242424",surfaceAlt:"#2e2e2e",surfaceHi:"#3a3a3a",border:"#3a3a3a",borderHi:"#4a4a4a",text:"#e2e2e2",textBright:"#f7f7f7",textMuted:"#999",textDim:"#666",accent:"#00693e",accentDim:"rgba(0,105,62,0.15)",green:"#4ade80",greenDim:"rgba(74,222,128,0.12)",amber:"#fbbf24",amberDim:"rgba(251,191,36,0.12)",red:"#f87171",redDim:"rgba(248,113,113,0.10)"};
-const DTYPES={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3",bg:"rgba(103,184,227,0.12)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80",bg:"rgba(74,222,128,0.12)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7",bg:"rgba(184,156,199,0.12)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a",bg:"rgba(240,118,74,0.12)"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24",bg:"rgba(251,191,36,0.12)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9",bg:"rgba(91,163,217,0.12)"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e",bg:"rgba(196,149,110,0.12)"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171",bg:"rgba(248,113,113,0.12)"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a",bg:"rgba(111,207,138,0.12)"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb",bg:"rgba(167,139,219,0.12)"},unknown:{icon:"?",label:"Device",color:"#999",bg:"rgba(153,153,153,0.1)"}};
-const CHART_COLORS=["#67b8e3","#4ade80","#b89cc7","#f0764a","#fbbf24","#5ba3d9","#c4956e","#f87171"];
+const T={bg:"#111",surface:"#1a1a1a",surfaceAlt:"#222",border:"#2a2a2a",text:"#e2e2e2",textBright:"#fff",textMuted:"#888",textDim:"#555",green:"#4ade80",greenDim:"rgba(74,222,128,0.12)",amber:"#fbbf24",amberDim:"rgba(251,191,36,0.12)",red:"#f87171",redDim:"rgba(248,113,113,0.10)",accent:"#00693e"};
+const DTYPES={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb"},unknown:{icon:"?",label:"Device",color:"#888"}};
+const CHART_COLORS=["#67b8e3","#4ade80","#b89cc7","#f0764a","#fbbf24","#5ba3d9","#c4956e","#f87171","#6fcf8a","#a78bdb"];
 const S="'Inter','Helvetica Neue',sans-serif";
+const SLIDE_DURATION=10000;
+const CHARTS_PER_SLIDE=4;
 
 function extractBR(host){if(!host)return{building:"Unknown",room:"?"};var p=host.split(".")[0].split("-");if(p[0]==="cts")p=p.slice(1);if(p.length<2)return{building:(p[0]||"?").charAt(0).toUpperCase()+(p[0]||"").slice(1),room:"?"};var bldg,rm;if(/^\d+$/.test(p[0])&&p.length>=3){bldg=p[0]+"-"+p[1].charAt(0).toUpperCase()+p[1].slice(1);rm=p[2]||"?";}else{bldg=p[0].charAt(0).toUpperCase()+p[0].slice(1);rm=p[1]||"?";}var renames={"4-Currier":"Currier04","Osher":"Court01"};if(renames[bldg])bldg=renames[bldg];return{building:bldg,room:rm};}
 
@@ -26,72 +36,39 @@ function norm(raw){
   var host=raw.host||"";var br=extractBR(host);var type=raw._type||"unknown";
   var fw=raw.firmware_version||raw.firmware||raw.routeros_version||"N/A";
   if(type==="ups")fw=raw.agent_firmware||"N/A";
-  return {host:host,building:br.building,room:br.room,status:raw.status||"unknown",_type:type,firmware:fw,model:raw.model||raw.product_name||raw.product_family||"N/A"};
+  return{host:host,building:br.building,room:br.room,status:raw.status||"unknown",_type:type,firmware:fw,model:raw.model||raw.product_name||raw.product_family||"N/A"};
 }
 
-function FwStatusPie(props){
-  var devices=props.devices,targetFw=props.targetFw;
-  if(!devices||devices.length===0)return null;
-  var naC="N/A (Class 1)";
-  var okCount=0,outdatedCount=0,offlineCount=0,noTargetCount=0;
-  devices.forEach(function(d){
-    if(d.status!=="success"){offlineCount++;return;}
-    var t=targetFw[d._type];
-    var hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
-    if(!hasT){noTargetCount++;return;}
-    if(d.firmware==="N/A"||d.firmware===naC||t.includes(d.firmware))okCount++;
-    else outdatedCount++;
-  });
-  var total=devices.length;
-  var segments=[
-    {label:"OK",count:okCount,color:T.green},
-    {label:"Outdated",count:outdatedCount,color:T.amber},
-    {label:"Offline",count:offlineCount,color:T.red},
-    {label:"No Target",count:noTargetCount,color:T.textDim}
-  ].filter(function(s){return s.count>0;});
-  var sz=240,scx=120,scy=120,sr=98,sa=-90;
-  var arcs=segments.map(function(seg){
-    var ang=(seg.count/total)*360;
+function PieChart(props){
+  var sliceData=props.slices,size=props.size||220,centerNum=props.centerNum,centerSub=props.centerSub;
+  var cx=size/2,cy=size/2,r=size*0.42,ir=size*0.22;
+  var sa=-90;
+  var paths=sliceData.map(function(s){
+    var ang=(s.value/Math.max(sliceData.reduce(function(a,b){return a+b.value;},0),1))*360;
     var ea=sa+ang,la=ang>180?1:0;
     var rad=function(a){return a*Math.PI/180;};
-    var x1=scx+sr*Math.cos(rad(sa)),y1=scy+sr*Math.sin(rad(sa));
-    var x2=scx+sr*Math.cos(rad(ea)),y2=scy+sr*Math.sin(rad(ea));
+    var x1=cx+r*Math.cos(rad(sa)),y1=cy+r*Math.sin(rad(sa));
+    var x2=cx+r*Math.cos(rad(ea)),y2=cy+r*Math.sin(rad(ea));
     var p=ang>=359.9
-      ?"M"+(scx-sr)+","+scy+"A"+sr+","+sr+",0,1,1,"+(scx+sr)+","+scy+"A"+sr+","+sr+",0,1,1,"+(scx-sr)+","+scy
-      :"M"+scx+","+scy+"L"+x1+","+y1+"A"+sr+","+sr+",0,"+la+",1,"+x2+","+y2+"Z";
+      ?"M"+(cx-r)+","+cy+"A"+r+","+r+",0,1,1,"+(cx+r)+","+cy+"A"+r+","+r+",0,1,1,"+(cx-r)+","+cy
+      :"M"+cx+","+cy+"L"+x1+","+y1+"A"+r+","+r+",0,"+la+",1,"+x2+","+y2+"Z";
     sa=ea;
-    return {label:seg.label,count:seg.count,color:seg.color,path:p,pct:Math.round(seg.count/total*100)};
+    return{color:s.color,path:p};
   });
-  return <div style={{background:T.surface,border:"1px solid "+T.border,borderRadius:12,padding:28}}>
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
-      <span style={{fontSize:24}}>📊</span>
-      <span style={{fontSize:24,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>Firmware Status</span>
-      <span style={{fontSize:16,color:T.textMuted}}>{total} devices</span>
-    </div>
-    <div style={{display:"flex",gap:28,alignItems:"center"}}>
-      <svg width={sz} height={sz} viewBox={"0 0 "+sz+" "+sz}>
-        {arcs.map(function(a,i){return <path key={i} d={a.path} fill={a.color} opacity={0.85} stroke={T.surface} strokeWidth={2}/>;})}
-        <circle cx={scx} cy={scy} r={50} fill={T.surface}/>
-        <text x={scx} y={scy-4} textAnchor="middle" fill={T.textBright} fontSize={36} fontWeight={700} fontFamily={S}>{total}</text>
-        <text x={scx} y={scy+18} textAnchor="middle" fill={T.textMuted} fontSize={14} fontFamily={S}>total</text>
-      </svg>
-      <div style={{display:"flex",flexDirection:"column",gap:16}}>
-        {arcs.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:18,height:18,borderRadius:4,background:a.color}}/>
-          <div>
-            <div style={{fontSize:36,fontWeight:700,color:a.color,lineHeight:1}}>{a.count}</div>
-            <div style={{fontSize:16,color:T.textMuted}}>{a.label} ({a.pct}%)</div>
-          </div>
-        </div>;})}
-      </div>
-    </div>
-  </div>;
+  return <svg width={size} height={size} viewBox={"0 0 "+size+" "+size}>
+    {paths.map(function(p,i){return <path key={i} d={p.path} fill={p.color} opacity={0.9} stroke={T.bg} strokeWidth={2}/>;})}
+    <circle cx={cx} cy={cy} r={ir} fill={T.surface}/>
+    {centerNum!=null&&<text x={cx} y={cy-2} textAnchor="middle" fill={T.textBright} fontSize={size*0.15} fontWeight={800} fontFamily={S}>{centerNum}</text>}
+    {centerSub&&<text x={cx} y={cy+size*0.07} textAnchor="middle" fill={T.textMuted} fontSize={size*0.06} fontFamily={S}>{centerSub}</text>}
+  </svg>;
 }
 
 function Display(){
-  var [allDevs,setAllDevs]=useState([]);
-  var [targetFw,setTargetFw]=useState({});
-  var [lastUpdate,setLastUpdate]=useState(null);
+  var[allDevs,setAllDevs]=useState([]);
+  var[targetFw,setTargetFw]=useState({});
+  var[lastUpdate,setLastUpdate]=useState(null);
+  var[slideIdx,setSlideIdx]=useState(0);
+  var[fadeKey,setFadeKey]=useState(0);
 
   var fetchData=useCallback(function(){
     fetch("/api/display-data").then(function(r){return r.json();}).then(function(data){
@@ -108,42 +85,119 @@ function Display(){
 
   var stats=useMemo(function(){
     var online=allDevs.filter(function(d){return d.status==="success";}).length;
-    var errors=allDevs.length-online;
     var buildings=new Set();allDevs.forEach(function(d){buildings.add(d.building);});
-    return {total:allDevs.length,online:online,errors:errors,buildings:buildings.size};
+    var types={};allDevs.forEach(function(d){types[d._type]=(types[d._type]||0)+1;});
+    return{total:allDevs.length,online:online,errors:allDevs.length-online,buildings:buildings.size,types:types};
   },[allDevs]);
 
-  if(allDevs.length===0)return <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:T.textMuted,fontSize:18}}>Loading data...</div></div>;
+  var fwStats=useMemo(function(){
+    var naC="N/A (Class 1)";var ok=0,outdated=0,offline=0,noTarget=0;
+    allDevs.forEach(function(d){
+      if(d.status!=="success"){offline++;return;}
+      var t=targetFw[d._type];var hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
+      if(!hasT){noTarget++;return;}
+      if(d.firmware==="N/A"||d.firmware===naC||t.includes(d.firmware))ok++;else outdated++;
+    });
+    return{ok:ok,outdated:outdated,offline:offline,noTarget:noTarget};
+  },[allDevs,targetFw]);
+
+  var slides=useMemo(function(){
+    var s=[{type:"overview"}];
+    for(var i=0;i<typeOpts.length;i+=CHARTS_PER_SLIDE){
+      s.push({type:"charts",types:typeOpts.slice(i,i+CHARTS_PER_SLIDE)});
+    }
+    return s;
+  },[typeOpts]);
+
+  useEffect(function(){
+    if(slides.length<=1)return;
+    var iv=setInterval(function(){
+      setSlideIdx(function(prev){return(prev+1)%slides.length;});
+      setFadeKey(function(k){return k+1;});
+    },SLIDE_DURATION);
+    return function(){clearInterval(iv);};
+  },[slides.length]);
+
+  var currentSlide=slides[slideIdx]||slides[0];
+
+  if(allDevs.length===0)return <div style={{width:"100vw",height:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:T.textMuted,fontSize:20,animation:"pulse 2s infinite"}}>Connecting to fleet data...</div></div>;
+
+  var onlinePct=stats.total>0?Math.round(stats.online/stats.total*100):0;
 
   return(
-    <div style={{minHeight:"100vh",background:T.bg,fontFamily:S,color:T.text}}>
+    <div style={{width:"100vw",height:"100vh",background:T.bg,fontFamily:S,color:T.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
       {/* HEADER */}
-      <div style={{padding:"16px 28px",borderBottom:"1px solid "+T.border,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#00693e"}}>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <img src="/static/d-pine.png" alt="D" style={{width:44,height:44,objectFit:"contain",filter:"brightness(0) invert(1)"}} onError={function(e){e.target.style.display="none";}}/>
+      <div style={{padding:"10px 32px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"linear-gradient(135deg, #00693e 0%, #004d2e 100%)",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <img src="/static/d-pine.png" alt="" style={{width:36,height:36,objectFit:"contain",filter:"brightness(0) invert(1)"}} onError={function(e){e.target.style.display="none";}}/>
           <div>
-            <div style={{fontWeight:700,fontSize:24,color:"#fff",fontFamily:"'EB Garamond',Georgia,serif"}}>Firmware Dashboard</div>
-            <div style={{fontSize:14,color:"rgba(255,255,255,0.55)"}}>Design & Engineering · {stats.total} devices · {stats.buildings} buildings</div>
+            <div style={{fontWeight:700,fontSize:20,color:"#fff",fontFamily:"'EB Garamond',Georgia,serif",letterSpacing:0.5}}>Firmware Dashboard</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",letterSpacing:0.3}}>Design & Engineering</div>
           </div>
         </div>
-        <div style={{display:"flex",gap:16,alignItems:"center"}}>
-          <div style={{display:"flex",gap:12}}>
-            {[{label:"Online",value:stats.online,color:"#4ade80"},{label:"Issues",value:stats.errors,color:stats.errors>0?"#f87171":"#4ade80"}].map(function(s,i){
-              return <div key={i} style={{textAlign:"center"}}>
-                <div style={{fontSize:28,fontWeight:700,color:s.color,lineHeight:1}}>{s.value}</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{s.label}</div>
-              </div>;
-            })}
-          </div>
-          {lastUpdate&&<div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Updated {lastUpdate.toLocaleTimeString()}</div>}
+        <div style={{display:"flex",gap:28,alignItems:"center"}}>
+          {[{label:"Devices",value:stats.total,color:"#fff"},{label:"Online",value:onlinePct+"%",color:"#4ade80"},{label:"Issues",value:stats.errors,color:stats.errors>0?"#f87171":"#4ade80"}].map(function(s,i){
+            return <div key={i} style={{textAlign:"center"}}>
+              <div style={{fontSize:24,fontWeight:800,color:s.color,lineHeight:1,letterSpacing:-0.5}}>{s.value}</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",letterSpacing:1.5,marginTop:2}}>{s.label}</div>
+            </div>;
+          })}
+          {lastUpdate&&<div style={{fontSize:10,color:"rgba(255,255,255,0.25)"}}>{lastUpdate.toLocaleTimeString()}</div>}
         </div>
       </div>
 
-      {/* CHARTS */}
-      <div style={{padding:"20px 28px"}}>
-        <FwStatusPie devices={allDevs} targetFw={targetFw}/>
-        <div style={{marginTop:20,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(460px,1fr))",gap:16}}>
-          {typeOpts.map(function(type){
+      {/* PROGRESS BAR */}
+      <div style={{height:3,background:T.border,flexShrink:0}}>
+        <div key={fadeKey} style={{height:"100%",background:"linear-gradient(90deg, #00693e, #4ade80)",animation:"slideProgress "+SLIDE_DURATION+"ms linear"}}/>
+      </div>
+
+      {/* SLIDE CONTENT */}
+      <div key={fadeKey} style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",animation:"fadeIn 0.6s ease-out"}}>
+
+        {currentSlide.type==="overview"&&<div style={{flex:1,display:"flex",padding:"16px 24px",gap:20,overflow:"hidden",alignItems:"stretch"}}>
+          {/* Left: FW Status Pie - pie fills the panel */}
+          <div style={{flex:"0 0 50%",background:T.surface,borderRadius:16,padding:"16px 24px",display:"flex",alignItems:"center",gap:24}}>
+            <div style={{flex:1,display:"flex",justifyContent:"center",alignItems:"center"}}><PieChart size={380} centerNum={stats.total} centerSub="devices" slices={[
+              {value:fwStats.ok,color:T.green},
+              {value:fwStats.outdated,color:T.amber},
+              {value:fwStats.offline,color:T.red},
+              {value:fwStats.noTarget,color:T.textDim}
+            ].filter(function(s){return s.value>0;})}/></div>
+            <div style={{display:"flex",flexDirection:"column",gap:20,justifyContent:"center"}}>
+              <div style={{fontSize:20,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif",letterSpacing:0.5}}>Firmware Status</div>
+              {[{label:"OK",count:fwStats.ok,color:T.green},{label:"Outdated",count:fwStats.outdated,color:T.amber},{label:"Offline",count:fwStats.offline,color:T.red},{label:"No Target",count:fwStats.noTarget,color:T.textDim}].filter(function(s){return s.count>0;}).map(function(s,i){
+                return <div key={i} style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{width:16,height:16,borderRadius:4,background:s.color,flexShrink:0}}/>
+                  <div>
+                    <div style={{fontSize:32,fontWeight:800,color:s.color,lineHeight:1}}>{s.count}</div>
+                    <div style={{fontSize:12,color:T.textMuted,textTransform:"uppercase",letterSpacing:1.5}}>{s.label}</div>
+                  </div>
+                </div>;
+              })}
+            </div>
+          </div>
+
+          {/* Right: Device type grid */}
+          <div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,alignContent:"stretch"}}>
+            {Object.entries(stats.types).sort(function(a,b){return b[1]-a[1];}).map(function(entry){
+              var type=entry[0],count=entry[1];
+              var cfg=DTYPES[type]||DTYPES.unknown;
+              var online=allDevs.filter(function(d){return d._type===type&&d.status==="success";}).length;
+              var pct=count>0?Math.round(online/count*100):0;
+              return <div key={type} style={{background:T.surface,borderRadius:12,padding:"14px 16px",display:"flex",flexDirection:"column",justifyContent:"center",borderLeft:"4px solid "+(online===count?T.green:pct>80?"#fbbf24":T.red)}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:20}}>{cfg.icon}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:cfg.color,textTransform:"uppercase",letterSpacing:1}}>{cfg.label}</span>
+                </div>
+                <div style={{fontSize:36,fontWeight:800,color:T.textBright,lineHeight:1,margin:"4px 0"}}>{count}</div>
+                <div style={{fontSize:12,color:online===count?T.green:T.textMuted,fontWeight:600}}>{online}/{count} online{online!==count?<span style={{color:T.red,marginLeft:6}}>({count-online} down)</span>:""}</div>
+              </div>;
+            })}
+          </div>
+        </div>}
+
+        {currentSlide.type==="charts"&&<div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(2,1fr)",gridTemplateRows:"repeat(2,1fr)",gap:16,padding:"20px 32px",overflow:"hidden"}}>
+          {currentSlide.types.map(function(type){
             var cfg=DTYPES[type]||DTYPES.unknown;
             var devsOfType=allDevs.filter(function(d){return d._type===type;});
             var fwMap={};
@@ -152,54 +206,41 @@ function Display(){
             var total=devsOfType.length;
             var selected=targetFw[type]||[];
             var hasTarget=Array.isArray(selected)&&selected.length>0&&!selected.includes("*");
-
-            var size=200,cx=100,cy=100,r=82;
-            var startAngle=-90;
+            var naC1="N/A (Class 1)";
             var slices=fwList.map(function(entry,i){
               var fw=entry[0],count=entry[1];
-              var angle=(count/total)*360;
-              var endAngle=startAngle+angle;
-              var largeArc=angle>180?1:0;
-              var rad=function(d){return d*Math.PI/180;};
-              var x1=cx+r*Math.cos(rad(startAngle)),y1=cy+r*Math.sin(rad(startAngle));
-              var x2=cx+r*Math.cos(rad(endAngle)),y2=cy+r*Math.sin(rad(endAngle));
-              var naC1="N/A (Class 1)";
               var isAccepted=hasTarget&&selected.includes(fw);
               var isOutdated=hasTarget&&!selected.includes(fw)&&fw!=="N/A"&&fw!==naC1;
               var color=isAccepted?T.green:isOutdated?T.amber:CHART_COLORS[i%CHART_COLORS.length];
-              var path=angle>=359.9
-                ?"M"+(cx-r)+","+cy+"A"+r+","+r+",0,1,1,"+(cx+r)+","+cy+"A"+r+","+r+",0,1,1,"+(cx-r)+","+cy
-                :"M"+cx+","+cy+"L"+x1+","+y1+"A"+r+","+r+",0,"+largeArc+",1,"+x2+","+y2+"Z";
-              startAngle=endAngle;
-              return {fw:fw,count:count,color:color,path:path,isAccepted:isAccepted,isOutdated:isOutdated,pct:Math.round(count/total*100)};
+              return{value:count,color:color,fw:fw,count:count,isAccepted:isAccepted,isOutdated:isOutdated,pct:total>0?Math.round(count/total*100):0};
             });
-
-            return <div key={type} style={{background:T.surface,border:"1px solid "+T.border,borderRadius:8,padding:24}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
-                <span style={{fontSize:22}}>{cfg.icon}</span>
-                <span style={{fontSize:20,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
-                <span style={{fontSize:15,color:T.textMuted}}>{total} devices</span>
+            return <div key={type} style={{background:T.surface,borderRadius:14,padding:"20px 28px",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,flexShrink:0}}>
+                <span style={{fontSize:28}}>{cfg.icon}</span>
+                <span style={{fontSize:24,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif"}}>{cfg.label}s</span>
+                <span style={{fontSize:18,color:cfg.color,fontWeight:700,marginLeft:"auto"}}>{total}</span>
               </div>
-              <div style={{display:"flex",gap:20,alignItems:"center"}}>
-                <svg width={size} height={size} viewBox={"0 0 "+size+" "+size}>
-                  {slices.map(function(s,i){return <path key={i} d={s.path} fill={s.color} opacity={0.85} stroke={T.surface} strokeWidth={1.5}/>;})}
-                  <circle cx={cx} cy={cy} r={42} fill={T.surface}/>
-                  <text x={cx} y={cy-4} textAnchor="middle" fill={T.textBright} fontSize={28} fontWeight={700} fontFamily={S}>{total}</text>
-                  <text x={cx} y={cy+14} textAnchor="middle" fill={T.textMuted} fontSize={12} fontFamily={S}>devices</text>
-                </svg>
-                <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
-                  {slices.map(function(s,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:12,height:12,borderRadius:3,background:s.color,flexShrink:0}}/>
-                    <span style={{fontSize:14,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
-                    <span style={{fontSize:14,color:T.textMuted,fontWeight:600}}>{s.count}</span>
-                    <span style={{fontSize:13,color:T.textDim,minWidth:36,textAlign:"right"}}>{s.pct}%</span>
-                    {hasTarget&&<span style={{fontSize:14,width:16,textAlign:"center",color:s.isAccepted?T.green:s.isOutdated?T.amber:T.textDim}}>{s.isAccepted?"\u2713":s.isOutdated?"\u26A0":""}</span>}
+              <div style={{display:"flex",gap:24,alignItems:"center",flex:1,minHeight:0,justifyContent:"center"}}>
+                <div style={{flexShrink:0,display:"flex",alignItems:"center"}}><PieChart size={260} centerNum={total} centerSub="devices" slices={slices}/></div>
+                <div style={{flex:1,display:"flex",flexDirection:"column",gap:6,overflow:"hidden",justifyContent:"center"}}>
+                  {slices.slice(0,7).map(function(s,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:14,height:14,borderRadius:3,background:s.color,flexShrink:0}}/>
+                    <span style={{fontSize:16,color:T.text,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.fw}</span>
+                    <span style={{fontSize:16,color:T.textMuted,fontWeight:600}}>{s.count}</span>
+                    <span style={{fontSize:15,color:T.textDim,minWidth:40,textAlign:"right"}}>{s.pct}%</span>
+                    {hasTarget&&<span style={{fontSize:16,color:s.isAccepted?T.green:s.isOutdated?T.amber:"transparent"}}>{s.isAccepted?"\u2713":s.isOutdated?"\u26A0":""}</span>}
                   </div>;})}
+                  {slices.length>7&&<div style={{fontSize:14,color:T.textDim,marginTop:2}}>+{slices.length-7} more</div>}
                 </div>
               </div>
             </div>;
           })}
-        </div>
+        </div>}
+      </div>
+
+      {/* DOTS */}
+      <div style={{display:"flex",justifyContent:"center",gap:8,padding:"8px 0",flexShrink:0}}>
+        {slides.map(function(s,i){return <div key={i} onClick={function(){setSlideIdx(i);setFadeKey(function(k){return k+1;});}} style={{width:i===slideIdx?24:8,height:8,borderRadius:4,background:i===slideIdx?"#00693e":"#333",transition:"all 0.3s",cursor:"pointer"}}/>;})}
       </div>
     </div>
   );
