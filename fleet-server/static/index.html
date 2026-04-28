@@ -292,7 +292,7 @@ function FleetConsole(){
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           <div style={{display:"flex",borderRadius:4,overflow:"hidden",border:"1px solid rgba(255,255,255,0.2)"}}>
-            {[{id:"hierarchy",label:"Buildings"},{id:"attention",label:"Attention"+(attStats.total>0?` (${attStats.total})`:"")} ,{id:"table",label:"Table"},{id:"charts",label:"Charts"}].filter(t=>t.id!=="attention"||isAdmin).map(t=>
+            {[{id:"hierarchy",label:"Buildings"},{id:"attention",label:"Attention"+(attStats.total>0?` (${attStats.total})`:"")} ,{id:"table",label:"Table"},{id:"charts",label:"Charts"},{id:"sources",label:"Sources"}].filter(t=>t.id!=="attention"||isAdmin).map(t=>
               <button key={t.id} onClick={()=>setView(t.id)} style={{padding:"7px 14px",border:"none",cursor:"pointer",fontFamily:S,fontSize:13,fontWeight:600,background:view===t.id?"rgba(255,255,255,0.2)":"transparent",color:view===t.id?"#fff":"rgba(255,255,255,0.65)"}}>{t.label}</button>)}
           </div>
           <button onClick={fetchData} style={{padding:"7px 14px",borderRadius:4,border:"1px solid rgba(255,255,255,0.2)",background:"transparent",color:"rgba(255,255,255,0.7)",fontFamily:S,fontSize:13,fontWeight:600,cursor:"pointer"}} title="Refresh data">↻</button>
@@ -306,22 +306,46 @@ function FleetConsole(){
       </div>
 
       <div style={{padding:"14px 24px"}}>
-        {/* SOURCE FILES */}
-        <div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
-          {fMeta.map((f,i)=>{const c=DTYPES[f.type]||DTYPES.unknown;return <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:T.surface,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 10px",fontSize:13,fontFamily:M}}>
-            <span>{c.icon}</span><span style={{color:T.text}}>{f.filename}</span><span style={{color:c.color}}>({f.count})</span></div>;})}
-          <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>auto-refreshes every 60s</span>
-        </div>
-
-        {/* STATS */}
-        <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
-          {[{label:"Devices",value:stats.total,sub:`${stats.buildings} bldgs · ${stats.rooms} rooms`},{label:"Online",value:stats.online,color:T.green,sub:stats.total>0?((stats.online/stats.total)*100).toFixed(0)+"%":""},{label:"Issues",value:stats.errors,color:stats.errors>0?T.red:T.green},
-            ...Object.entries(stats.types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>({label:DTYPES[t]?DTYPES[t].label:t,value:n,color:DTYPES[t]?DTYPES[t].color:T.textMuted,icon:DTYPES[t]?DTYPES[t].icon:""}))
+        {/* COMPACT STATS BAR - shown on all tabs except sources */}
+        {view!=="sources"&&<div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
+          {[{label:"Devices",value:stats.total,sub:`${stats.buildings} bldgs · ${stats.rooms} rooms`},{label:"Online",value:stats.online,color:T.green,sub:stats.total>0?((stats.online/stats.total)*100).toFixed(0)+"%":""},{label:"Issues",value:stats.errors,color:stats.errors>0?T.red:T.green}
           ].map((s,i)=><div key={i} style={{flex:"1 1 120px",minWidth:110,background:T.surface,border:`1px solid ${T.border}`,borderRadius:7,padding:"12px 16px"}}>
             <div style={{fontSize:13,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:0.8}}>{s.icon?s.icon+" ":""}{s.label}</div>
             <div style={{fontSize:26,fontWeight:700,color:s.color||T.textBright,fontFamily:S}}>{s.value}</div>
             {s.sub&&<div style={{fontSize:13,color:T.textDim,fontFamily:M}}>{s.sub}</div>}</div>)}
-        </div>
+        </div>}
+
+        {/* SOURCES TAB */}
+        {view==="sources"&&<div>
+          {/* Source Files */}
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:20,marginBottom:16}}>
+            <div style={{fontSize:18,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif",marginBottom:14}}>Source Files</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:10}}>
+              {fMeta.map((f,i)=>{const c=DTYPES[f.type]||DTYPES.unknown;return <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:6,padding:"12px 16px"}}>
+                <span style={{fontSize:18}}>{c.icon}</span>
+                <div style={{flex:1,overflow:"hidden"}}>
+                  <div style={{fontSize:14,fontWeight:600,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.filename}</div>
+                  <div style={{fontSize:12,color:T.textMuted}}>{c.label} · {f.count} devices</div>
+                </div>
+                <span style={{fontSize:15,fontWeight:700,color:c.color}}>{f.count}</span>
+              </div>;})}
+            </div>
+            <div style={{marginTop:12,fontSize:13,color:T.textDim}}>Auto-refreshes every 60 seconds</div>
+          </div>
+
+          {/* Device Type Stats */}
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:8,padding:20}}>
+            <div style={{fontSize:18,fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif",marginBottom:14}}>Device Summary</div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              {[{label:"Devices",value:stats.total,sub:`${stats.buildings} bldgs · ${stats.rooms} rooms`},{label:"Online",value:stats.online,color:T.green,sub:stats.total>0?((stats.online/stats.total)*100).toFixed(0)+"%":""},{label:"Issues",value:stats.errors,color:stats.errors>0?T.red:T.green},
+                ...Object.entries(stats.types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>({label:DTYPES[t]?DTYPES[t].label:t,value:n,color:DTYPES[t]?DTYPES[t].color:T.textMuted,icon:DTYPES[t]?DTYPES[t].icon:""}))
+              ].map((s,i)=><div key={i} style={{flex:"1 1 120px",minWidth:110,background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:7,padding:"12px 16px"}}>
+                <div style={{fontSize:13,color:T.textDim,fontFamily:M,textTransform:"uppercase",letterSpacing:0.8}}>{s.icon?s.icon+" ":""}{s.label}</div>
+                <div style={{fontSize:26,fontWeight:700,color:s.color||T.textBright,fontFamily:S}}>{s.value}</div>
+                {s.sub&&<div style={{fontSize:13,color:T.textDim,fontFamily:M}}>{s.sub}</div>}</div>)}
+            </div>
+          </div>
+        </div>}
 
         {/* FILTERS */}
         {view!=="attention"&&<div style={{display:"flex",gap:10,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"10px 14px",background:T.surface,borderRadius:6,border:`1px solid ${T.border}`}}>
@@ -438,12 +462,18 @@ function FleetConsole(){
                       <span style={{fontSize:14,color:T.textDim,marginLeft:"auto"}}>{r.online}/{r.devices.length}</span>
                       {ri>0&&<Badge color={T.red} bg={T.redDim}>{ri} err</Badge>}
                     </div>
-                    {ro&&<div style={{padding:"0 20px 8px 48px"}}>{r.devices.map(function(d,di){return <div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderBottom:`1px solid ${T.border}`,fontSize:14}} onMouseEnter={function(e){e.currentTarget.style.background=T.surfaceAlt;}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
+                    {ro&&<div style={{padding:"0 20px 8px 48px"}}>{r.devices.map(function(d,di){
+                  var tf=targetFw[d._type];var hasT=tf&&Array.isArray(tf)&&tf.length>0&&!tf.includes("*");
+                  var naC1="N/A (Class 1)";
+                  var fwOk=!hasT||d.firmware==="N/A"||d.firmware===naC1||tf.includes(d.firmware);
+                  var fwCol=!fwOk&&hasT?T.amber:T.green;
+                  return <div key={di} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderBottom:`1px solid ${T.border}`,fontSize:14}} onMouseEnter={function(e){e.currentTarget.style.background=T.surfaceAlt;}} onMouseLeave={function(e){e.currentTarget.style.background="transparent";}}>
                       <DBadge type={d._type}/>
                       <Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim}>{d.status==="success"?"OK":d.error||d.status}</Badge>
                       <span style={{fontSize:13,color:T.text,fontWeight:500}}>{d.model!=="N/A"?d.model:""}</span>
                       <span style={{fontSize:13,color:T.textMuted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{hostShort(d.host)}</span>
-                      {d.firmware!=="N/A"&&<span style={{fontSize:13,color:T.green,fontWeight:500}}>{d.firmware}</span>}
+                      {d.serial!=="N/A"&&<span style={{fontSize:12,color:T.textDim}}>{d.serial}</span>}
+                      {d.firmware!=="N/A"&&<span style={{fontSize:13,color:fwCol,fontWeight:!fwOk&&hasT?600:500}}>{d.firmware}</span>}
                     </div>;})}</div>}
                   </div>;})}
                 </div>
@@ -471,7 +501,7 @@ function FleetConsole(){
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`}}><DBadge type={d._type}/></td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:T.textMuted,maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{hostShort(d.host)}</td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:T.text}}>{d.model!=="N/A"?d.model:"—"}</td>
-              <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:d.firmware!=="N/A"?T.green:T.textDim}}>{d.firmware!=="N/A"?d.firmware:"—"}</td>
+              <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:!fwOk&&hasTarget&&d.firmware!=="N/A"?T.amber:d.firmware!=="N/A"?T.green:T.textDim,fontWeight:!fwOk&&hasTarget&&d.firmware!=="N/A"?600:400}}>{d.firmware!=="N/A"?d.firmware:"—"}</td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,fontWeight:600,color:fwColor}}>{fwStatus}</td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`}}><Badge color={stColor(d.status)} bg={d.status==="success"?T.greenDim:d.status==="auth_error"?T.amberDim:T.redDim}>{d.status==="success"?"OK":d.error||d.status}</Badge></td>
               <td style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,color:T.textDim,fontSize:12}}>{d.serial!=="N/A"?d.serial:"—"}</td></tr>})}</tbody>
