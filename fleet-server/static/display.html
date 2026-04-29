@@ -157,22 +157,26 @@ function Display(){
         {/* OVERVIEW */}
         {cur.type==="overview"&&<div style={{flex:1,display:"flex",padding:"1.5vh 2vw",gap:"1.5vw",overflow:"hidden"}}>
           {/* Pie panel */}
-          <div style={{flex:"0 0 52%",background:T.surface,borderRadius:"1.2vh",padding:"2vh 2vw",display:"flex",alignItems:"center",gap:"2vw",animation:"glowPulse 4s infinite"}}>
-            <div style={{flex:"0 0 auto",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Pie size={Math.min(500,window.innerHeight*0.65)} centerNum={stats.total} centerSub="devices" slices={[
+          <div style={{flex:"0 0 52%",background:T.surface,borderRadius:"1.2vh",padding:"2vh 2vw",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"glowPulse 4s infinite"}}>
+            <div style={{fontSize:"2.2vh",fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif",letterSpacing:1,marginBottom:"1.5vh"}}>Firmware Status</div>
+            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",width:"100%",minHeight:0}}>
+              <Pie size={Math.min(window.innerHeight*0.62,window.innerWidth*0.3)} centerNum={stats.total} centerSub="devices" slices={[
                 {value:fwStats.ok,color:T.green},
                 {value:fwStats.outdated,color:T.amber},
                 {value:fwStats.offline,color:T.red},
                 {value:fwStats.noTarget,color:T.textDim}
               ].filter(function(s){return s.value>0;})}/>
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:"2.5vh",justifyContent:"center"}}>
-              <div style={{fontSize:"2.2vh",fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif",letterSpacing:1}}>Firmware Status</div>
+            <div style={{display:"flex",gap:"3vw",justifyContent:"center",flexWrap:"wrap",marginTop:"2vh"}}>
               {[{label:"OK",count:fwStats.ok,color:T.green},{label:"Outdated",count:fwStats.outdated,color:T.amber},{label:"Offline",count:fwStats.offline,color:T.red},{label:"No Target",count:fwStats.noTarget,color:T.textDim}].filter(function(s){return s.count>0;}).map(function(s,i){
-                return <div key={i} style={{display:"flex",alignItems:"center",gap:"1vw"}}>
+                var pct=stats.total>0?Math.round(s.count/stats.total*100):0;
+                return <div key={i} style={{display:"flex",alignItems:"center",gap:"0.8vw"}}>
                   <div style={{width:"1.8vh",height:"1.8vh",borderRadius:"0.4vh",background:s.color,flexShrink:0}}/>
                   <div>
-                    <div style={{fontSize:"3.5vh",fontWeight:800,color:s.color,lineHeight:1}}>{s.count}</div>
+                    <div style={{display:"flex",alignItems:"baseline",gap:"0.5vw"}}>
+                      <div style={{fontSize:"4vh",fontWeight:800,color:s.color,lineHeight:1}}>{s.count}</div>
+                      <div style={{fontSize:"1.8vh",color:s.color,opacity:0.7,fontWeight:600}}>{pct}%</div>
+                    </div>
                     <div style={{fontSize:"1.2vh",color:T.textMuted,textTransform:"uppercase",letterSpacing:2}}>{s.label}</div>
                   </div>
                 </div>;
