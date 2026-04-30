@@ -1,0 +1,5615 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/rlink_firmware.csv",
+    "timestamp": "2026-04-29T16:23:31.267928+00:00",
+    "protocol": "HTTP/HTTPS (RackLink Settings JSON)",
+    "mode": "json_api",
+    "workers": 5,
+    "total": 164,
+    "success": 134,
+    "errors": 30,
+    "elapsed_seconds": 80.46
+  },
+  "pdus": [
+    {
+      "host": "baker-102-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.747712+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-01A749",
+      "mac_address": "00:1e:c5:01:a7:49",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp Dsp",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Magewell Streamer",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Extron Amp",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Dell ZR",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Kramer HDBT Reciever",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-102-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.750018+00:00",
+      "status": "error",
+      "error": "Could not connect to baker-102-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "baker-213-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.751639+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-018710",
+      "mac_address": "00:1e:c5:01:87:10",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Tesira DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell Streamer",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp (Extron)",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Cam POE Injector",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Mac Mini",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Program Amp",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-213-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.753044+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-015565",
+      "mac_address": "00:1e:c5:01:55:65",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-219-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.754419+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "2E-219-PS2",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-0101DA",
+      "mac_address": "00:1e:c5:01:01:da",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "BiAmpTesiraFORTE",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Dell Optiplex 7000",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-219-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.771135+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "2E-219-PS1",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-0105B9",
+      "mac_address": "00:1e:c5:01:05:b9",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-227-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.773025+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0107E2",
+      "mac_address": "00:1e:c5:01:07:e2",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-227-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.780741+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "BAKER-227-PS2",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-01140D",
+      "mac_address": "00:1e:c5:01:14:0d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-234-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.786882+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-01872B",
+      "mac_address": "00:1e:c5:01:87:2b",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Tesira DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Extron Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Camera POE Injector",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Mac Mini",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "baker-234-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.788640+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-01599F",
+      "mac_address": "00:1e:c5:01:59:9f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "bartlett-105-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.790279+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0158AD",
+      "mac_address": "00:1e:c5:01:58:ad",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "PC ZR",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Magewell Streamer",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Kramer HDBT R",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Kramer HDBT T",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Camera POE Injector",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "bartlett-105-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.799466+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0186DD",
+      "mac_address": "00:1e:c5:01:86:dd",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "bartlett-105-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.802124+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-018396",
+      "mac_address": "00:1e:c5:01:83:96",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "bartlett-105a-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.807164+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-01870E",
+      "mac_address": "00:1e:c5:01:87:0e",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Camera 1",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "bartlett-105a-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.809000+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "bartlett-105a-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.812445+00:00",
+      "status": "error",
+      "error": "Could not connect to bartlett-105a-power-strip-3.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "berry-180-pdu-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.814067+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "BER-180-PS2",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E898",
+      "mac_address": "00:1e:c5:00:e8:98",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Dell (ZRC)",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program AMP",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berry-180-pdu-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.821539+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "BER-180-PS4",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EE0D",
+      "mac_address": "00:1e:c5:00:ee:0d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Rear TV",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berry-180-pdu-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.824839+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "BER-180-PS3",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EFA8",
+      "mac_address": "00:1e:c5:00:ef:a8",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berrysport-010-power-strip.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.836865+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "PDU1-010",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0181B6",
+      "mac_address": "00:1e:c5:01:81:b6",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "berrysport-045-power-strip.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.838530+00:00",
+      "status": "error",
+      "error": "Could not connect to berrysport-045-power-strip.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "berrysport-206-power-strip.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.840690+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "PDU1-206",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0181A9",
+      "mac_address": "00:1e:c5:01:81:a9",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-060-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.849849+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E866",
+      "mac_address": "00:1e:c5:00:e8:66",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-060-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.860850+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00F0F2",
+      "mac_address": "00:1e:c5:00:f0:f2",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-1-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.866048+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-0124CF",
+      "mac_address": "00:1e:c5:01:24:cf",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio Dsp",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Netgear 1",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Netgear 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-1-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.886025+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011A17",
+      "mac_address": "00:1e:c5:01:1a:17",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-1-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.897724+00:00",
+      "status": "error",
+      "error": "Could not connect to carson-061-1-power-strip-3.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "carson-061-2-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.912222+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011B2D",
+      "mac_address": "00:1e:c5:01:1b:2d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Receiver ",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-2-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:10.932740+00:00",
+      "status": "error",
+      "error": "Could not connect to carson-061-2-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "carson-061-2-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.787205+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-0119B6",
+      "mac_address": "00:1e:c5:01:19:b6",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 3",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-2-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.795949+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-0119DE",
+      "mac_address": "00:1e:c5:01:19:de",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 4",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-2-power-strip-5.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.829555+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-0119E5",
+      "mac_address": "00:1e:c5:01:19:e5",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 5",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-061-2-power-strip-6.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.837920+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011B35",
+      "mac_address": "00:1e:c5:01:1b:35",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 6",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-l01-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.851120+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-01249A",
+      "mac_address": "00:1e:c5:01:24:9a",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-l01-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.854464+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-01244B",
+      "mac_address": "00:1e:c5:01:24:4b",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-l01-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.864091+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011B4D",
+      "mac_address": "00:1e:c5:01:1b:4d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-l02-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.872164+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-012446",
+      "mac_address": "00:1e:c5:01:24:46",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-l02-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.878395+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-01249D",
+      "mac_address": "00:1e:c5:01:24:9d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "carson-l02-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.882072+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011B45",
+      "mac_address": "00:1e:c5:01:1b:45",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "cts-ecsc-001a-pdu2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.893695+00:00",
+      "status": "error",
+      "error": "Could not connect to cts-ecsc-001a-pdu2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "dewey-101-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.899736+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-019418",
+      "mac_address": "00:1e:c5:01:94:18",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Extron Speech Amp Dante",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Camera 1 POE ++",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Extron Program Amp",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "dewey-101-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.904024+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-019800",
+      "mac_address": "00:1e:c5:01:98:00",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "dewey-101-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.910803+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0193E4",
+      "mac_address": "00:1e:c5:01:93:e4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Mac Mini",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "fairchild-101-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.913236+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-014212",
+      "mac_address": "00:1e:c5:01:42:12",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Rear cam1",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "rear cam2 (board)",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "fairchild-101-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.920985+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0135D2",
+      "mac_address": "00:1e:c5:01:35:d2",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "floren-332-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.924184+00:00",
+      "status": "error",
+      "error": "Could not connect to floren-332-power-strip-1.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "floren-332-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.926096+00:00",
+      "status": "error",
+      "error": "Could not connect to floren-332-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "floren-332-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.940013+00:00",
+      "status": "error",
+      "error": "Could not connect to floren-332-power-strip-3.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "haldeman-028-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.951344+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-010F16",
+      "mac_address": "00:1e:c5:01:0f:16",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "haldeman-028-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.954037+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00F114",
+      "mac_address": "00:1e:c5:00:f1:14",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "haldeman-046-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.964468+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0130AD",
+      "mac_address": "00:1e:c5:01:30:ad",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech AMP",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Rear Cam 1",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Rear Cam 2",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Front Cam",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "haldeman-046-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.980954+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-012997",
+      "mac_address": "00:1e:c5:01:29:97",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "haldeman-046-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.983663+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-013045",
+      "mac_address": "00:1e:c5:01:30:45",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Monitor",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "USB Hub",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Class Mac",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "hopkins-054-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:30.990276+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-0123EC",
+      "mac_address": "00:1e:c5:01:23:ec",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "hopkins-054-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.017354+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-01244F",
+      "mac_address": "00:1e:c5:01:24:4f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "hopkins-054-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.021826+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "kemeny-004-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.026668+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-0102EC",
+      "mac_address": "00:1e:c5:01:02:ec",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Room Mac",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-004-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.032883+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-01046C",
+      "mac_address": "00:1e:c5:01:04:6c",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-006-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.040619+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00DAD1",
+      "mac_address": "00:1e:c5:00:da:d1",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-006-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.052264+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00F08D",
+      "mac_address": "00:1e:c5:00:f0:8d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-007-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.058959+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E76D",
+      "mac_address": "00:1e:c5:00:e7:6d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-007-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.070546+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EEE3",
+      "mac_address": "00:1e:c5:00:ee:e3",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-008-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.087493+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E633",
+      "mac_address": "00:1e:c5:00:e6:33",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-008-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.100995+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00F23C",
+      "mac_address": "00:1e:c5:00:f2:3c",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "kemeny-105-power-strip.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.110701+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "kemeny-108-power-strip.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.115272+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-100-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.117666+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "LSC-100-PS1",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-011BE1",
+      "mac_address": "00:1e:c5:01:1b:e1",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Rack Fan",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Tracking Camera",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell 2",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Zoom room",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Magewell 1",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Video Switcher",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-100-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.121571+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-100-PS3",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011A4C",
+      "mac_address": "00:1e:c5:01:1a:4c",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 2",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-100-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.134365+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-100-PS2",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011A6B",
+      "mac_address": "00:1e:c5:01:1a:6b",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-102-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.149044+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-015958",
+      "mac_address": "00:1e:c5:01:59:58",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-102-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.161320+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0159BD",
+      "mac_address": "00:1e:c5:01:59:bd",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-104-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.167511+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0158A7",
+      "mac_address": "00:1e:c5:01:58:a7",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-104-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.171183+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-015970",
+      "mac_address": "00:1e:c5:01:59:70",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-104-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.187364+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0155EE",
+      "mac_address": "00:1e:c5:01:55:ee",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-105-1-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.191411+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-0113A0",
+      "mac_address": "00:1e:c5:01:13:a0",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-105-1-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.194242+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011054",
+      "mac_address": "00:1e:c5:01:10:54",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-105-1-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.202189+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011048",
+      "mac_address": "00:1e:c5:01:10:48",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector 2",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-105-1-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.209907+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-105-1-power-strip-4.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-105-1-power-strip-5.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.216116+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-105-1-power-strip-5.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-105-2-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.224163+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-105-2-power-strip-1.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-105-2-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:31.230242+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-105-2-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-105-2-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:50.954251+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-01100A",
+      "mac_address": "00:1e:c5:01:10:0a",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display 3",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Kramer Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-106-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:50.957051+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0159AF",
+      "mac_address": "00:1e:c5:01:59:af",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-106-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:50.966849+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-01596E",
+      "mac_address": "00:1e:c5:01:59:6e",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-135-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:50.976824+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-018245",
+      "mac_address": "00:1e:c5:01:82:45",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Sony Camera",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-135-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:50.990856+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-01845B",
+      "mac_address": "00:1e:c5:01:84:5b",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "TV",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Soundbar",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-1-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:50.994301+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "LSC-200-PS1",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-011BE2",
+      "mac_address": "00:1e:c5:01:1b:e2",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Media Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Media Encoder 2",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Auto Tracking Camer...",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-1-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.003975+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS2",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011AE5",
+      "mac_address": "00:1e:c5:01:1a:e5",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-1-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.011860+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS3",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011A35",
+      "mac_address": "00:1e:c5:01:1a:35",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-1-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.014687+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS4",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011AE4",
+      "mac_address": "00:1e:c5:01:1a:e4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-1-power-strip-5.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.020913+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS5",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011A87",
+      "mac_address": "00:1e:c5:01:1a:87",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Display",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Kramer Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.026453+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-200-2-power-strip-1.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-200-2-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.034028+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS7",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011A5F",
+      "mac_address": "00:1e:c5:01:1a:5f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.041081+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS8",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011A4A",
+      "mac_address": "00:1e:c5:01:1a:4a",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.043745+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS9",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011B1C",
+      "mac_address": "00:1e:c5:01:1b:1c",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-5.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.050941+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS10",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011B02",
+      "mac_address": "00:1e:c5:01:1b:02",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-6.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.061138+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS11",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011AB9",
+      "mac_address": "00:1e:c5:01:1a:b9",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-7.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.065330+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS12",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011AA4",
+      "mac_address": "00:1e:c5:01:1a:a4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-200-2-power-strip-8.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.079568+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "LSC-200-PS13",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-011AB4",
+      "mac_address": "00:1e:c5:01:1a:b4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-201-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.103104+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-011BDF",
+      "mac_address": "00:1e:c5:01:1b:df",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Media Encoder 1",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Media Encoder 2",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Video Transfer 1",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "VIdeo Transfer 2",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-201-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.114575+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-010838",
+      "mac_address": "00:1e:c5:01:08:38",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-201-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.126625+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-205-1-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.129035+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-0102E2",
+      "mac_address": "00:1e:c5:01:02:e2",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-205-1-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.132505+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-205-1-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-205-1-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.157179+00:00",
+      "status": "error",
+      "error": "Could not connect to lsc-205-1-power-strip-3.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "lsc-205-1-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.251476+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011110",
+      "mac_address": "00:1e:c5:01:11:10",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-205-1-power-strip-5.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.257186+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-01105E",
+      "mac_address": "00:1e:c5:01:10:5e",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-205-2-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.268742+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011063",
+      "mac_address": "00:1e:c5:01:10:63",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-205-2-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.285850+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-011024",
+      "mac_address": "00:1e:c5:01:10:24",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "lsc-205-2-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.307332+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-01083F",
+      "mac_address": "00:1e:c5:01:08:3f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "moore-110-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.318130+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-010F01",
+      "mac_address": "00:1e:c5:01:0f:01",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "moore-110-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.337249+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-010405",
+      "mac_address": "00:1e:c5:01:04:05",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "moore-150-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.340785+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-010F24",
+      "mac_address": "00:1e:c5:01:0f:24",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Room Mac",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "moore-150-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.368370+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-010466",
+      "mac_address": "00:1e:c5:01:04:66",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "moore-202-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.373101+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-010F3D",
+      "mac_address": "00:1e:c5:01:0f:3d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "moore-202-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.380459+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-0103C1",
+      "mac_address": "00:1e:c5:01:03:c1",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-001-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.402094+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-01244E",
+      "mac_address": "00:1e:c5:01:24:4e",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech AMP",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-001-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.408494+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-012A7A",
+      "mac_address": "00:1e:c5:01:2a:7a",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Dell Monitor",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Class Mac",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "USB Hub",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-001-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.440000+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-0129B2",
+      "mac_address": "00:1e:c5:01:29:b2",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "HDBT Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-002-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.445010+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-01307F",
+      "mac_address": "00:1e:c5:01:30:7f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Kramer Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-002-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.456191+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-012A54",
+      "mac_address": "00:1e:c5:01:2a:54",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Dell Monitor",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Class Mac",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "USB Dock",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-002-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.466384+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-012862",
+      "mac_address": "00:1e:c5:01:28:62",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Kramer Receiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-003-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.470536+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-01302F",
+      "mac_address": "00:1e:c5:01:30:2f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-003-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.485534+00:00",
+      "status": "error",
+      "error": "Could not connect to rockefeller-003-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "rockefeller-003-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.493562+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-011E24",
+      "mac_address": "00:1e:c5:01:1e:24",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Class Mac",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-208-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.519261+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-013046",
+      "mac_address": "00:1e:c5:01:30:46",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Video Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Netgear Switch",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Vaddio Doc Camera",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-208-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.528189+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-01292F",
+      "mac_address": "00:1e:c5:01:29:2f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-209-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.543408+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0193D1",
+      "mac_address": "00:1e:c5:01:93:d1",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Magewell Streamer",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Camera-1 Poe++",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Mac Mini",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Kramer HDBT Transmitter",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Rack Fan",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Usb Hub",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Doc Cam",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Dell Monitor",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-209-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.556195+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0193CE",
+      "mac_address": "00:1e:c5:01:93:ce",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Speech AMP",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "rockefeller-209-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.568061+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-019DC6",
+      "mac_address": "00:1e:c5:01:9d:c6",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-113-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.574483+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E635",
+      "mac_address": "00:1e:c5:00:e6:35",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-113-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.608691+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D662",
+      "mac_address": "00:1e:c5:00:d6:62",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-119-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.615674+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0193E6",
+      "mac_address": "00:1e:c5:01:93:e6",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Extron Amp (speech)",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Program Amp",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Doc Camera",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Mic Charger",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Monitor",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-119-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.640864+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0193D4",
+      "mac_address": "00:1e:c5:01:93:d4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Camera 1 (POE++)",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Kramer HDBT Transmitter",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Class Mac",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-119-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.652462+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0197BB",
+      "mac_address": "00:1e:c5:01:97:bb",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-213-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.679154+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E68C",
+      "mac_address": "00:1e:c5:00:e6:8c",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-213-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.691946+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D441",
+      "mac_address": "00:1e:c5:00:d4:41",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-215-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.704325+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E659",
+      "mac_address": "00:1e:c5:00:e6:59",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-215-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.720272+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D3AF",
+      "mac_address": "00:1e:c5:00:d3:af",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-310-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.751948+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00DDBE",
+      "mac_address": "00:1e:c5:00:dd:be",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-310-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.785270+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D6EB",
+      "mac_address": "00:1e:c5:00:d6:eb",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-312-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.798603+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00E637",
+      "mac_address": "00:1e:c5:00:e6:37",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "silsby-312-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.835364+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00EDCF",
+      "mac_address": "00:1e:c5:00:ed:cf",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "steele-007-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.860736+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-0158B0",
+      "mac_address": "00:1e:c5:01:58:b0",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Biamp DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Magewell 1",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Magewell 2",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "PTZ Camera 1",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "PTZ Camera 2",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "steele-007-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.886685+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "steele-007-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.891318+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0135F4",
+      "mac_address": "00:1e:c5:01:35:f4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Kramer HDBT Reciever",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "steele-007-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.900126+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0135FF",
+      "mac_address": "00:1e:c5:01:35:ff",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Kramer HDBT Transceiver",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "steele-007-power-strip-5.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.918601+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-015662",
+      "mac_address": "00:1e:c5:01:56:62",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Class Mac",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Outlet 3",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Mic charger",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "sudikoff-003-pdu1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.956048+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00CFC6",
+      "mac_address": "00:1e:c5:00:cf:c6",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Kramer-Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Kramer-RX",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "DSP-Biamp",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Netgear-Switch",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Extron-Amp",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "sudikoff-003-pdu2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:51.994917+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D3EE",
+      "mac_address": "00:1e:c5:00:d3:ee",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "sudikoff-143-pdu1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:52.016580+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00CF74",
+      "mac_address": "00:1e:c5:00:cf:74",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Netgear-Router",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Kramer-Switcher",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Kramer HDBT Receive...",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Outlet 4",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Outlet 5",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Outlet 6",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Biamp-DSP",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Extron-Amp",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "sudikoff-143-pdu2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:52.030874+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D3B4",
+      "mac_address": "00:1e:c5:00:d3:b4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Outlet 1",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "wilder-111-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:52.055731+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "CLAS-111-PS1",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-915R-012AC4",
+      "mac_address": "00:1e:c5:01:2a:c4",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "HDMI Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Magewell",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "ZR PC",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Vaddio Bridge",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Network Switch",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Outlet 7",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Outlet 8",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "wilder-111-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:22:52.075962+00:00",
+      "status": "error",
+      "error": "Could not connect to wilder-111-power-strip-2.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "wilder-111-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.054578+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "CLAS-111-PS3",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0127DE",
+      "mac_address": "00:1e:c5:01:27:de",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Center Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "wilder-111-power-strip-4.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.069169+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "CLAS-111-PS4",
+      "firmware_version": "1.16.04",
+      "serial_number": "RLNK-215-0127A3",
+      "mac_address": "00:1e:c5:01:27:a3",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Right Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "wilder-115-pdu-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.082405+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-915R",
+      "device_name": "RLNK-915R",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-915R-00CE1D",
+      "mac_address": "00:1e:c5:00:ce:1d",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Switcher",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Audio DSP",
+          "status": "on"
+        },
+        {
+          "number": 3,
+          "name": "Zoom Room PC",
+          "status": "on"
+        },
+        {
+          "number": 4,
+          "name": "Streaming Encoder",
+          "status": "on"
+        },
+        {
+          "number": 5,
+          "name": "Speech Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 6,
+          "name": "Program Amplifier",
+          "status": "on"
+        },
+        {
+          "number": 7,
+          "name": "Mac Mini",
+          "status": "on"
+        },
+        {
+          "number": 8,
+          "name": "Netgear",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "wilder-115-pdu-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.107781+00:00",
+      "status": "success",
+      "error": null,
+      "manufacturer": "Middle Atlantic",
+      "model": "RLNK-215",
+      "device_name": "RLNK-215",
+      "firmware_version": "1.14.02",
+      "serial_number": "RLNK-215-00D63F",
+      "mac_address": "00:1e:c5:00:d6:3f",
+      "outlets": [
+        {
+          "number": 1,
+          "name": "Projector",
+          "status": "on"
+        },
+        {
+          "number": 2,
+          "name": "Outlet 2",
+          "status": "on"
+        }
+      ]
+    },
+    {
+      "host": "wilson-205-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.124142+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "wilson-205-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.129834+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "wilson-205-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.138484+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "wilson-219-power-strip-1.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.144255+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "wilson-219-power-strip-2.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.149852+00:00",
+      "status": "auth_error",
+      "error": "Authentication failed (HTTP 401)",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    },
+    {
+      "host": "wilson-219-power-strip-3.openav.dartmouth.edu",
+      "port": 80,
+      "query_timestamp": "2026-04-29T16:23:11.155784+00:00",
+      "status": "error",
+      "error": "Could not connect to wilson-219-power-strip-3.openav.dartmouth.edu via HTTPS or HTTP",
+      "manufacturer": "Middle Atlantic",
+      "model": null,
+      "device_name": null,
+      "firmware_version": null,
+      "serial_number": null,
+      "mac_address": null,
+      "outlets": []
+    }
+  ]
+}
