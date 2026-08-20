@@ -1,0 +1,35 @@
+{
+  "query_info": {
+    "csv_file": null,
+    "timestamp": "2026-04-30T21:06:40.899655+00:00",
+    "protocol": "VISCA over IP (UDP) — Sony 8-byte header envelope",
+    "mode": "local UDP port 52381, RESET-then-inquire",
+    "workers": 1,
+    "total": 1,
+    "success": 1,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 0.28
+  },
+  "cameras": [
+    {
+      "host": "baker-213-camera-1.openav.dartmouth.edu",
+      "port": 52381,
+      "camera_name": "",
+      "camera_type": "auto",
+      "status": "success",
+      "manufacturer": "Sony",
+      "model": "Unknown (0x0621)",
+      "model_code": "0x0621",
+      "firmware_version": "3.01",
+      "rom_revision": "0x0301",
+      "vendor_id": "0x0001",
+      "max_sockets": "N/A",
+      "software_version": "N/A",
+      "software_version_hex": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-30T21:06:40.642720+00:00",
+      "reset_status": "ok"
+    }
+  ]
+}

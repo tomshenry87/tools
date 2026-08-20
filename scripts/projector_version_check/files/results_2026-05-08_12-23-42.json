@@ -1,0 +1,2121 @@
+{
+    "query_info": {
+        "csv_file": "/home/admin/tools/scripts/secrets/pjlink_firmware.csv",
+        "timestamp": "2026-05-08T16:24:16.120659+00:00",
+        "protocol": "PJLink Class 1 + Class 2",
+        "mode": "firmware+lamp",
+        "workers": 5,
+        "total": 74,
+        "success": 73,
+        "errors": 1,
+        "elapsed_seconds": 33.1
+    },
+    "projectors": [
+        {
+            "host": "4-currier-232-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:43.015303+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ66",
+            "projector_name": "VPL-FHZ66",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "4433 0",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "4433h",
+                    "hours_int": 4433,
+                    "on": false,
+                    "status": "Off"
+                }
+            ],
+            "lamp_hours_total": 4433,
+            "lamp_hours_total_display": "4433h",
+            "lamp_hours_summary": "Lamp 1: 4433h (Off)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "baker-213-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:43.015688+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7101926",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "565",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "565h",
+                    "hours_int": 565,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 565,
+            "lamp_hours_total_display": "565h",
+            "lamp_hours_summary": "Lamp 1: 565h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "baker-219-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:43.016099+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.06",
+            "serial_number": "7004155",
+            "firmware_version": "1.06",
+            "lamp_info_raw": "616",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "616h",
+                    "hours_int": 616,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 616,
+            "lamp_hours_total_display": "616h",
+            "lamp_hours_summary": "Lamp 1: 616h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "baker-227-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:43.016677+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007583",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "158",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "158h",
+                    "hours_int": 158,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 158,
+            "lamp_hours_total_display": "158h",
+            "lamp_hours_summary": "Lamp 1: 158h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "baker-234-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:43.017081+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7101582",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "593",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "593h",
+                    "hours_int": 593,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 593,
+            "lamp_hours_total_display": "593h",
+            "lamp_hours_summary": "Lamp 1: 593h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "bartlett-105-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:44.526034+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7100100",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "650",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "650h",
+                    "hours_int": 650,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 650,
+            "lamp_hours_total_display": "650h",
+            "lamp_hours_summary": "Lamp 1: 650h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "berry-180-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:44.824395+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7003861",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2354",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2354h",
+                    "hours_int": 2354,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2354,
+            "lamp_hours_total_display": "2354h",
+            "lamp_hours_summary": "Lamp 1: 2354h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "brace-008-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:44.825081+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007629",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "702",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "702h",
+                    "hours_int": 702,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 702,
+            "lamp_hours_total_display": "702h",
+            "lamp_hours_summary": "Lamp 1: 702h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "carson-060-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:44.830297+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008353",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2213",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2213h",
+                    "hours_int": 2213,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2213,
+            "lamp_hours_total_display": "2213h",
+            "lamp_hours_summary": "Lamp 1: 2213h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "carson-061-1-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:44.832752+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008352",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2035",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2035h",
+                    "hours_int": 2035,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2035,
+            "lamp_hours_total_display": "2035h",
+            "lamp_hours_summary": "Lamp 1: 2035h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "carson-l01-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:46.332466+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008358",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2408",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2408h",
+                    "hours_int": 2408,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2408,
+            "lamp_hours_total_display": "2408h",
+            "lamp_hours_summary": "Lamp 1: 2408h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "carson-l02-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:46.630871+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008282",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2768",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2768h",
+                    "hours_int": 2768,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2768,
+            "lamp_hours_total_display": "2768h",
+            "lamp_hours_summary": "Lamp 1: 2768h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "dewey-101-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:46.636404+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7101581",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "249",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "249h",
+                    "hours_int": 249,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 249,
+            "lamp_hours_total_display": "249h",
+            "lamp_hours_summary": "Lamp 1: 249h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "fairchild-101-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:46.641788+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7101654",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "1263",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1263h",
+                    "hours_int": 1263,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1263,
+            "lamp_hours_total_display": "1263h",
+            "lamp_hours_summary": "Lamp 1: 1263h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "haldeman-028-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:46.644177+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007690",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1513",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1513h",
+                    "hours_int": 1513,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1513,
+            "lamp_hours_total_display": "1513h",
+            "lamp_hours_summary": "Lamp 1: 1513h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "haldeman-046-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:48.142896+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7100105",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "717",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "717h",
+                    "hours_int": 717,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 717,
+            "lamp_hours_total_display": "717h",
+            "lamp_hours_summary": "Lamp 1: 717h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "hopkins-052-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:48.440125+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008646",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "580",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "580h",
+                    "hours_int": 580,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 580,
+            "lamp_hours_total_display": "580h",
+            "lamp_hours_summary": "Lamp 1: 580h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "hopkins-054-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:48.449012+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ91L",
+            "projector_name": "VPL-FHZ91L",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "1138 1",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1138h",
+                    "hours_int": 1138,
+                    "on": true,
+                    "status": "On"
+                }
+            ],
+            "lamp_hours_total": 1138,
+            "lamp_hours_total_display": "1138h",
+            "lamp_hours_summary": "Lamp 1: 1138h (On)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "hopkins-138-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:48.455120+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7100244",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "103",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "103h",
+                    "hours_int": 103,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 103,
+            "lamp_hours_total_display": "103h",
+            "lamp_hours_summary": "Lamp 1: 103h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "kemeny-004-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:48.456571+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007691",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1209",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1209h",
+                    "hours_int": 1209,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1209,
+            "lamp_hours_total_display": "1209h",
+            "lamp_hours_summary": "Lamp 1: 1209h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "kemeny-006-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:49.954028+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.05",
+            "serial_number": "7003863",
+            "firmware_version": "1.05",
+            "lamp_info_raw": "1951",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1951h",
+                    "hours_int": 1951,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1951,
+            "lamp_hours_total_display": "1951h",
+            "lamp_hours_summary": "Lamp 1: 1951h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "kemeny-007-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:49.958709+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.06",
+            "serial_number": "7004227",
+            "firmware_version": "1.06",
+            "lamp_info_raw": "1967",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1967h",
+                    "hours_int": 1967,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1967,
+            "lamp_hours_total_display": "1967h",
+            "lamp_hours_summary": "Lamp 1: 1967h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "kemeny-008-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:50.250544+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ91L",
+            "projector_name": "VPL-FHZ91L",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "2410 1",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2410h",
+                    "hours_int": 2410,
+                    "on": true,
+                    "status": "On"
+                }
+            ],
+            "lamp_hours_total": 2410,
+            "lamp_hours_total_display": "2410h",
+            "lamp_hours_summary": "Lamp 1: 2410h (On)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "kemeny-105-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:50.263923+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.06",
+            "serial_number": "7004036",
+            "firmware_version": "1.06",
+            "lamp_info_raw": "2111",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2111h",
+                    "hours_int": 2111,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2111,
+            "lamp_hours_total_display": "2111h",
+            "lamp_hours_summary": "Lamp 1: 2111h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "kemeny-108-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:50.273686+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ65",
+            "projector_name": "VPL-FHZ65",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "11208 0",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "11208h",
+                    "hours_int": 11208,
+                    "on": false,
+                    "status": "Off"
+                }
+            ],
+            "lamp_hours_total": 11208,
+            "lamp_hours_total_display": "11208h",
+            "lamp_hours_summary": "Lamp 1: 11208h (Off)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-100-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:51.760778+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ131L",
+            "projector_name": "VPL-FHZ131L",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "1767 1",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1767h",
+                    "hours_int": 1767,
+                    "on": true,
+                    "status": "On"
+                }
+            ],
+            "lamp_hours_total": 1767,
+            "lamp_hours_total_display": "1767h",
+            "lamp_hours_summary": "Lamp 1: 1767h (On)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "lsc-100-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:51.776078+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ131L",
+            "projector_name": "VPL-FHZ131L",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "2012 0",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2012h",
+                    "hours_int": 2012,
+                    "on": false,
+                    "status": "Off"
+                }
+            ],
+            "lamp_hours_total": 2012,
+            "lamp_hours_total_display": "2012h",
+            "lamp_hours_summary": "Lamp 1: 2012h (Off)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-102-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:51.785629+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7020004",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "227",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "227h",
+                    "hours_int": 227,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 227,
+            "lamp_hours_total_display": "227h",
+            "lamp_hours_summary": "Lamp 1: 227h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-102-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:51.788331+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019991",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "227",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "227h",
+                    "hours_int": 227,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 227,
+            "lamp_hours_total_display": "227h",
+            "lamp_hours_summary": "Lamp 1: 227h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-104-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:52.074431+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019996",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "234",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "234h",
+                    "hours_int": 234,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 234,
+            "lamp_hours_total_display": "234h",
+            "lamp_hours_summary": "Lamp 1: 234h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-104-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:53.271792+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019992",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "233",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "233h",
+                    "hours_int": 233,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 233,
+            "lamp_hours_total_display": "233h",
+            "lamp_hours_summary": "Lamp 1: 233h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-105-1-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:53.288793+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.11",
+            "serial_number": "7007621",
+            "firmware_version": "1.11",
+            "lamp_info_raw": "2137",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2137h",
+                    "hours_int": 2137,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2137,
+            "lamp_hours_total_display": "2137h",
+            "lamp_hours_summary": "Lamp 1: 2137h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-105-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:53.596731+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ75",
+            "projector_name": "VPL-FHZ75",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "2549 0",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2549h",
+                    "hours_int": 2549,
+                    "on": false,
+                    "status": "Off"
+                }
+            ],
+            "lamp_hours_total": 2549,
+            "lamp_hours_total_display": "2549h",
+            "lamp_hours_summary": "Lamp 1: 2549h (Off)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-106-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:53.603318+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7020005",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "46",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "46h",
+                    "hours_int": 46,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 46,
+            "lamp_hours_total_display": "46h",
+            "lamp_hours_summary": "Lamp 1: 46h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-106-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:53.892307+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019993",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "46",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "46h",
+                    "hours_int": 46,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 46,
+            "lamp_hours_total_display": "46h",
+            "lamp_hours_summary": "Lamp 1: 46h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-200-1-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:55.098074+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008107",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2223",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2223h",
+                    "hours_int": 2223,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2223,
+            "lamp_hours_total_display": "2223h",
+            "lamp_hours_summary": "Lamp 1: 2223h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "lsc-200-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:55.107498+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008116",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1818",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1818h",
+                    "hours_int": 1818,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1818,
+            "lamp_hours_total_display": "1818h",
+            "lamp_hours_summary": "Lamp 1: 1818h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "lsc-201-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:55.134977+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008113",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1961",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1961h",
+                    "hours_int": 1961,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1961,
+            "lamp_hours_total_display": "1961h",
+            "lamp_hours_summary": "Lamp 1: 1961h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-201-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:55.412869+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008111",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2409",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2409h",
+                    "hours_int": 2409,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2409,
+            "lamp_hours_total_display": "2409h",
+            "lamp_hours_summary": "Lamp 1: 2409h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "lsc-202-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:55.704172+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7020003",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "28",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "28h",
+                    "hours_int": 28,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 28,
+            "lamp_hours_total_display": "28h",
+            "lamp_hours_summary": "Lamp 1: 28h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-202-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:56.913369+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7020000",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "28",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "28h",
+                    "hours_int": 28,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 28,
+            "lamp_hours_total_display": "28h",
+            "lamp_hours_summary": "Lamp 1: 28h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-204-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:56.925732+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019999",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "87",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "87h",
+                    "hours_int": 87,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 87,
+            "lamp_hours_total_display": "87h",
+            "lamp_hours_summary": "Lamp 1: 87h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-204-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:56.950927+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019998",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "88",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "88h",
+                    "hours_int": 88,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 88,
+            "lamp_hours_total_display": "88h",
+            "lamp_hours_summary": "Lamp 1: 88h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-205-1-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:57.224029+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007620",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1896",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1896h",
+                    "hours_int": 1896,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1896,
+            "lamp_hours_total_display": "1896h",
+            "lamp_hours_summary": "Lamp 1: 1896h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "lsc-205-1-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:57.517624+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007619",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1565",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1565h",
+                    "hours_int": 1565,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1565,
+            "lamp_hours_total_display": "1565h",
+            "lamp_hours_summary": "Lamp 1: 1565h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "lsc-206-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:58.725037+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7020001",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "30",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "30h",
+                    "hours_int": 30,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 30,
+            "lamp_hours_total_display": "30h",
+            "lamp_hours_summary": "Lamp 1: 30h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "lsc-206-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:58.739267+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ61",
+            "projector_name": "VPL-PHZ61",
+            "other_info": "",
+            "software_version": "1.08",
+            "serial_number": "7019989",
+            "firmware_version": "1.08",
+            "lamp_info_raw": "30",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "30h",
+                    "hours_int": 30,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 30,
+            "lamp_hours_total_display": "30h",
+            "lamp_hours_summary": "Lamp 1: 30h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "moore-110-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:58.760313+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.04",
+            "serial_number": "7002276",
+            "firmware_version": "1.04",
+            "lamp_info_raw": "3144",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "3144h",
+                    "hours_int": 3144,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 3144,
+            "lamp_hours_total_display": "3144h",
+            "lamp_hours_summary": "Lamp 1: 3144h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "moore-150-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:59.052012+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.06",
+            "serial_number": "7004890",
+            "firmware_version": "1.06",
+            "lamp_info_raw": "2151",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2151h",
+                    "hours_int": 2151,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2151,
+            "lamp_hours_total_display": "2151h",
+            "lamp_hours_summary": "Lamp 1: 2151h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "moore-202-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:23:59.334303+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.06",
+            "serial_number": "7004892",
+            "firmware_version": "1.06",
+            "lamp_info_raw": "2732",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2732h",
+                    "hours_int": 2732,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2732,
+            "lamp_hours_total_display": "2732h",
+            "lamp_hours_summary": "Lamp 1: 2732h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "preshouse-b02-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:00.541770+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.05",
+            "serial_number": "7003597",
+            "firmware_version": "1.05",
+            "lamp_info_raw": "28",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "28h",
+                    "hours_int": 28,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 28,
+            "lamp_hours_total_display": "28h",
+            "lamp_hours_summary": "Lamp 1: 28h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "rockefeller-001-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:00.554873+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008357",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2092",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2092h",
+                    "hours_int": 2092,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2092,
+            "lamp_hours_total_display": "2092h",
+            "lamp_hours_summary": "Lamp 1: 2092h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "rockefeller-002-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:00.575524+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008278",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "2140",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2140h",
+                    "hours_int": 2140,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2140,
+            "lamp_hours_total_display": "2140h",
+            "lamp_hours_summary": "Lamp 1: 2140h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "rockefeller-003-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:00.867066+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007582",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1859",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1859h",
+                    "hours_int": 1859,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1859,
+            "lamp_hours_total_display": "1859h",
+            "lamp_hours_summary": "Lamp 1: 1859h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "rockefeller-208-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:01.148131+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ60",
+            "projector_name": "VPL-PHZ60",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "746",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "746h",
+                    "hours_int": 746,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 746,
+            "lamp_hours_total_display": "746h",
+            "lamp_hours_summary": "Lamp 1: 746h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "rockefeller-209-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:02.358482+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.09",
+            "serial_number": "7100075",
+            "firmware_version": "1.09",
+            "lamp_info_raw": "290",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "290h",
+                    "hours_int": 290,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 290,
+            "lamp_hours_total_display": "290h",
+            "lamp_hours_summary": "Lamp 1: 290h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "silsby-029a-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:02.381522+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "Panasonic",
+            "product_name": "PT-MZ780",
+            "projector_name": "NAME4503",
+            "other_info": "Version:1.09",
+            "software_version": "MAIN:1.09/SUB:1.00",
+            "serial_number": "GA2550853",
+            "firmware_version": "MAIN:1.09/SUB:1.00",
+            "lamp_info_raw": "4805 1",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "4805h",
+                    "hours_int": 4805,
+                    "on": true,
+                    "status": "On"
+                }
+            ],
+            "lamp_hours_total": 4805,
+            "lamp_hours_total_display": "4805h",
+            "lamp_hours_summary": "Lamp 1: 4805h (On)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "silsby-029b-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:02.392416+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "Panasonic",
+            "product_name": "PT-MZ780",
+            "projector_name": "NAME4503",
+            "other_info": "Version:1.09",
+            "software_version": "MAIN:1.09/SUB:1.00",
+            "serial_number": "GA2550855",
+            "firmware_version": "MAIN:1.09/SUB:1.00",
+            "lamp_info_raw": "3658 0",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "3658h",
+                    "hours_int": 3658,
+                    "on": false,
+                    "status": "Off"
+                }
+            ],
+            "lamp_hours_total": 3658,
+            "lamp_hours_total_display": "3658h",
+            "lamp_hours_summary": "Lamp 1: 3658h (Off)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "silsby-113-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:02.667430+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.05",
+            "serial_number": "7003585",
+            "firmware_version": "1.05",
+            "lamp_info_raw": "3871",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "3871h",
+                    "hours_int": 3871,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 3871,
+            "lamp_hours_total_display": "3871h",
+            "lamp_hours_summary": "Lamp 1: 3871h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "silsby-213-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:02.679409+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.04",
+            "serial_number": "7001612",
+            "firmware_version": "1.04",
+            "lamp_info_raw": "3559",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "3559h",
+                    "hours_int": 3559,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 3559,
+            "lamp_hours_total_display": "3559h",
+            "lamp_hours_summary": "Lamp 1: 3559h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "silsby-215-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:04.177484+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.05",
+            "serial_number": "7003659",
+            "firmware_version": "1.05",
+            "lamp_info_raw": "2302",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2302h",
+                    "hours_int": 2302,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2302,
+            "lamp_hours_total_display": "2302h",
+            "lamp_hours_summary": "Lamp 1: 2302h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "silsby-310-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:04.290529+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.05",
+            "serial_number": "7003849",
+            "firmware_version": "1.05",
+            "lamp_info_raw": "3109",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "3109h",
+                    "hours_int": 3109,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 3109,
+            "lamp_hours_total_display": "3109h",
+            "lamp_hours_summary": "Lamp 1: 3109h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "silsby-312-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:04.348078+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.04",
+            "serial_number": "7002125",
+            "firmware_version": "1.04",
+            "lamp_info_raw": "2873",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "2873h",
+                    "hours_int": 2873,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 2873,
+            "lamp_hours_total_display": "2873h",
+            "lamp_hours_summary": "Lamp 1: 2873h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "steele-007-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:04.480906+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7100106",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "833",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "833h",
+                    "hours_int": 833,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 833,
+            "lamp_hours_total_display": "833h",
+            "lamp_hours_summary": "Lamp 1: 833h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "steele-007-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:04.493153+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7101559",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "846",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "846h",
+                    "hours_int": 846,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 846,
+            "lamp_hours_total_display": "846h",
+            "lamp_hours_summary": "Lamp 1: 846h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "sudikoff-003-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:05.993496+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ60",
+            "projector_name": "VPL-PHZ60",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "7005",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "7005h",
+                    "hours_int": 7005,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 7005,
+            "lamp_hours_total_display": "7005h",
+            "lamp_hours_summary": "Lamp 1: 7005h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "sudikoff-045-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:06.103333+00:00",
+            "status": "error",
+            "error": "Connection timed out: sudikoff-045-projector.openav.dartmouth.edu:4352",
+            "firmware_version": "ERROR",
+            "lamp_hours_total": -1,
+            "lamp_hours_total_display": "N/A",
+            "lamp_hours_summary": "N/A"
+        },
+        {
+            "host": "sudikoff-143-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:06.157504+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-PHZ60",
+            "projector_name": "VPL-PHZ60",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "7666",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "7666h",
+                    "hours_int": 7666,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 7666,
+            "lamp_hours_total_display": "7666h",
+            "lamp_hours_summary": "Lamp 1: 7666h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "wilder-111-projector-1.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:06.290725+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008154",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1857",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1857h",
+                    "hours_int": 1857,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1857,
+            "lamp_hours_total_display": "1857h",
+            "lamp_hours_summary": "Lamp 1: 1857h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "wilder-111-projector-2.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:06.306501+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007545",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1926",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1926h",
+                    "hours_int": 1926,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1926,
+            "lamp_hours_total_display": "1926h",
+            "lamp_hours_summary": "Lamp 1: 1926h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "wilder-111-projector-3.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:07.509481+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7008145",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "1853",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1853h",
+                    "hours_int": 1853,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 1853,
+            "lamp_hours_total_display": "1853h",
+            "lamp_hours_summary": "Lamp 1: 1853h (Unknown)",
+            "power_status": "Lamp On / Power On"
+        },
+        {
+            "host": "Wilder-115-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:07.672641+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.06",
+            "serial_number": "7003667",
+            "firmware_version": "1.06",
+            "lamp_info_raw": "3765",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "3765h",
+                    "hours_int": 3765,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 3765,
+            "lamp_hours_total_display": "3765h",
+            "lamp_hours_summary": "Lamp 1: 3765h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "wilson-205-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:08.121219+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "2",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ85",
+            "projector_name": "VPL-FHZ85",
+            "other_info": "",
+            "software_version": "1.07",
+            "serial_number": "7007578",
+            "firmware_version": "1.07",
+            "lamp_info_raw": "715",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "715h",
+                    "hours_int": 715,
+                    "on": null,
+                    "status": "Unknown"
+                }
+            ],
+            "lamp_hours_total": 715,
+            "lamp_hours_total_display": "715h",
+            "lamp_hours_summary": "Lamp 1: 715h (Unknown)",
+            "power_status": "Standby"
+        },
+        {
+            "host": "wilson-219-projector.openav.dartmouth.edu",
+            "port": 4352,
+            "query_timestamp": "2026-05-08T16:24:08.135653+00:00",
+            "status": "success",
+            "error": null,
+            "pjlink_class": "1",
+            "manufacturer": "SONY",
+            "product_name": "VPL-FHZ91L",
+            "projector_name": "VPL-FHZ91L",
+            "other_info": "",
+            "firmware_version": "N/A (Class 1)",
+            "lamp_info_raw": "1108 0",
+            "lamp_info": [
+                {
+                    "lamp": 1,
+                    "hours": "1108h",
+                    "hours_int": 1108,
+                    "on": false,
+                    "status": "Off"
+                }
+            ],
+            "lamp_hours_total": 1108,
+            "lamp_hours_total_display": "1108h",
+            "lamp_hours_summary": "Lamp 1: 1108h (Off)",
+            "power_status": "Standby"
+        }
+    ]
+}

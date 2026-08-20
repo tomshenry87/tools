@@ -2,16 +2,16 @@
 """
 Middle Atlantic RackLink Select Series — Device Info Query
 
-Queries firmware version, serial number, model, and MAC address from
-RLNK-915R, RLNK-415R, and RLNK-215 PDUs via their JSON settings
-endpoint at /assets/js/json/settings.json.
+Queries firmware version, serial number, model, MAC address, and outlet
+states from RLNK-915R, RLNK-415R, and RLNK-215 PDUs via their JSON
+settings endpoint at /assets/js/json/settings.json.
 
 Usage:
     python rlink_firmware.py                                  # reads secrets/rlink_firmware.csv
     python rlink_firmware.py --host 192.168.1.200             # single device
     python rlink_firmware.py --host 192.168.1.200 --port 80 -u admin -p s3cret
     python rlink_firmware.py -i secrets/rlink_firmware.csv -w 10
-    python rlink_firmware.py --firmware 2.0.1                 # hide up-to-date devices
+    python rlink_firmware.py --firmware 1.14.02               # hide up-to-date devices
 
 Input CSV (default: secrets/rlink_firmware.csv):
     host,port,user_name,pw
@@ -45,50 +45,28 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 # ── ANSI Color Palette ───────────────────────────────────────────────
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
+
+DEFAULT_PORT = 80
 
 
-# ── HTTP Fetch ───────────────────────────────────────────────────────
+# ── Shared Helpers ───────────────────────────────────────────────────
 
-_ssl_ctx = ssl.create_default_context()
-_ssl_ctx.check_hostname = False
-_ssl_ctx.verify_mode = ssl.CERT_NONE
-
-
-def http_get(url: str, username: str, password: str,
-             timeout: int = 10) -> tuple:
-    """
-    HTTP GET with Basic Auth.  Returns (status_code, body_text).
-    """
-    creds = base64.b64encode(f"{username}:{password}".encode()).decode()
-    req = urllib.request.Request(url, headers={
-        "Authorization": f"Basic {creds}",
-        "Accept-Encoding": "identity",
-        "User-Agent": "RackLinkQuery/1.0",
-    })
-    resp = urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx)
-    body = resp.read().decode("utf-8", errors="replace")
-    return resp.status, body
+def get_terminal_width() -> int:
+    try:
+        return shutil.get_terminal_size().columns
+    except Exception:
+        return 120
 
 
-# ── Helpers ──────────────────────────────────────────────────────────
-
-def status_icon(r):
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
-
-
-def clean(val):
+def clean(val) -> str:
+    """Sanitise a value for table display — converts None/-1/empty to N/A."""
     s = str(val) if val is not None else "N/A"
     if s in ("None", "-1", ""):
         return "N/A"
@@ -97,31 +75,53 @@ def clean(val):
     return s
 
 
-def truncate_error(err, max_len=30):
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+# HTTP status failures, missing settings paths, and TLS handshake errors.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"HTTP 401|\b401\b",             "Auth failed"),
+    (r"HTTP 403|\b403\b",             "Forbidden"),
+    (r"HTTP 404|\b404\b",             "No settings path"),
+    (r"[Ss]elf.signed",               "Self-signed cert"),
+    (r"CERTIFICATE_VERIFY_FAILED",    "Cert verify failed"),
+    (r"[Ss]slv3|handshake|SSLError|SSL", "TLS error"),
+    (r"[Ii]nvalid JSON|JSONDecode",   "Bad JSON"),
+    (r"[Cc]ould not connect",         "Unreachable"),
+    (r"urlopen error",                "Unreachable"),
+]
+
+
+def truncate_error(err, max_len: int = 30) -> str:
+    """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        (r"401",                          "Auth failed"),
-        (r"403",                          "Forbidden"),
-        (r"[Ss]elf.signed",              "Self-signed cert"),
-        (r"SSL",                          "SSL error"),
-        (r"[Cc]onnection timed out",      "Timed out"),
-        (r"timed out",                    "Timed out"),
-        (r"[Cc]onnection refused",        "Conn refused"),
-        (r"[Nn]o response .* timeout",    "No response"),
-        (r"[Nn]o route to host",          "No route"),
-        (r"[Nn]etwork is unreachable",    "Net unreachable"),
-        (r"[Nn]ame or service not known", "DNS failed"),
-        (r"[Nn]etwork error",             "Network error"),
-        (r"[Aa]uthentication",            "Auth required"),
-        (r"[Nn]ot a .* device",           "Not supported"),
-        (r"[Mm]alformed",                 "Bad response"),
-        (r"[Cc]ould not connect",         "Unreachable"),
-        (r"[Cc]ould not parse",           "Parse failed"),
-        (r"urlopen error",               "Unreachable"),
-        (r"JSON",                         "Bad JSON"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
@@ -151,14 +151,16 @@ def load_csv(csv_path: str) -> list:
             sys.exit(1)
         col_map = {n.strip().lower(): n for n in reader.fieldnames}
         if "host" not in col_map:
-            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs 'host' column.{RESET}")
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
             sys.exit(1)
         for row in reader:
             host = row.get(col_map["host"], "").strip()
             if not host or host.startswith("#"):
                 continue
-            port_raw = (row.get(col_map.get("port", ""), "") or "").strip()
-            port = int(port_raw) if port_raw.isdigit() else 80
+            try:
+                port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
+            except (ValueError, TypeError):
+                port = DEFAULT_PORT
             username = (row.get(col_map.get("user_name", ""), "") or "").strip() or "admin"
             password = (row.get(col_map.get("pw", ""), "") or "").strip() or "admin"
             devices.append({
@@ -167,19 +169,45 @@ def load_csv(csv_path: str) -> list:
                 "username": username,
                 "password": password,
             })
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
+        sys.exit(1)
     return devices
 
 
-# ── RackLink Query Logic ─────────────────────────────────────────────
+# ── HTTP Fetch (protocol — do not change) ────────────────────────────
+
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
+
+
+def http_get(url: str, username: str, password: str,
+             timeout: int = 10) -> tuple:
+    """
+    HTTP GET with Basic Auth.  Returns (status_code, body_text).
+    """
+    creds = base64.b64encode(f"{username}:{password}".encode()).decode()
+    req = urllib.request.Request(url, headers={
+        "Authorization": f"Basic {creds}",
+        "Accept-Encoding": "identity",
+        "User-Agent": "RackLinkQuery/1.0",
+    })
+    resp = urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx)
+    body = resp.read().decode("utf-8", errors="replace")
+    return resp.status, body
+
+
+# ── RackLink Query Logic (protocol — do not change) ──────────────────
 
 SETTINGS_PATH = "/assets/js/json/settings.json"
 
 
-def query_racklink(host: str, port: int = 80, username: str = "admin",
+def query_racklink(host: str, port: int = DEFAULT_PORT, username: str = "admin",
                    password: str = "admin", timeout: int = 10) -> dict:
     """
     Fetch /assets/js/json/settings.json from a RackLink Select Series PDU
-    and extract firmware, serial number, model, device name, and MAC address.
+    and extract firmware, serial, model, device name, MAC, and outlet states.
     """
     result = {
         "host": host,
@@ -191,8 +219,8 @@ def query_racklink(host: str, port: int = 80, username: str = "admin",
         "model": None,
         "device_name": None,
         "firmware_version": None,
-        "serial_number": None,
-        "mac_address": None,
+        "serial": None,
+        "mac": None,
         "outlets": [],
     }
 
@@ -217,9 +245,9 @@ def query_racklink(host: str, port: int = 80, username: str = "admin",
             if status == 200 and body:
                 break
         except urllib.error.HTTPError as e:
-            if e.code == 401:
+            if e.code in (401, 403):
                 result["status"] = "auth_error"
-                result["error"] = "Authentication failed (HTTP 401)"
+                result["error"] = f"Authentication failed (HTTP {e.code})"
                 return result
             body = None
             continue
@@ -246,14 +274,14 @@ def query_racklink(host: str, port: int = 80, username: str = "admin",
     result["model"] = ds.get("model") or None
     result["device_name"] = ds.get("deviceName") or None
     result["firmware_version"] = ds.get("firmware") or None
-    result["mac_address"] = ns.get("macAddress") or None
+    result["mac"] = ns.get("macAddress") or None
 
-    # Serial number: cloudSettings.serial_number, formatted with underscore to dash
+    # Serial: cloudSettings.serial_number, formatted with underscore to dash
     sn = cs.get("serial_number", "")
     if sn:
-        result["serial_number"] = sn.replace("_", "-")
+        result["serial"] = sn.replace("_", "-")
 
-    # Outlet names (JSON only, not shown in table)
+    # Outlet names and states (JSON only, summarised in the table)
     outlets = data.get("Outlets", [])
     result["outlets"] = []
     for i, o in enumerate(outlets, start=1):
@@ -265,7 +293,7 @@ def query_racklink(host: str, port: int = 80, username: str = "admin",
         })
 
     # Determine final status
-    if any([result["model"], result["firmware_version"], result["serial_number"]]):
+    if any([result["model"], result["firmware_version"], result["serial"]]):
         result["status"] = "success"
     else:
         result["error"] = "Connected but settings JSON contained no device info"
@@ -276,21 +304,20 @@ def query_racklink(host: str, port: int = 80, username: str = "admin",
 # ── Main ─────────────────────────────────────────────────────────────
 
 def main():
+    script_dir = Path(__file__).resolve().parent
+
     parser = argparse.ArgumentParser(
         description="Query Middle Atlantic RackLink Select Series PDUs"
     )
     parser.add_argument("--host", help="Single device IP or hostname")
-    parser.add_argument("--port", type=int, default=80,
-                        help="Port for single host (default: 80)")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT,
+                        help=f"Port for single host (default: {DEFAULT_PORT})")
     parser.add_argument("-u", "--username", default="admin",
                         help="Username for single host (default: admin)")
     parser.add_argument("-p", "--password", default="admin",
                         help="Password for single host (default: admin)")
     parser.add_argument("--firmware", metavar="VERSION",
                         help="Current firmware version — hides matching devices from table")
-    # ── Resolve paths relative to script location ──────────────────
-    script_dir = Path(__file__).resolve().parent
-
     parser.add_argument("-i", "--input",
                         default=str(script_dir / "secrets" / "rlink_firmware.csv"),
                         help="Input CSV file (default: secrets/rlink_firmware.csv)")
@@ -302,12 +329,16 @@ def main():
 
     # ── Build output path with timestamp ─────────────────────────────
     if args.output:
-        output_file = str(Path(args.output).resolve())
+        out_path = Path(args.output).resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        output_file = str(out_path)
     else:
         out_dir = script_dir / "rlink_firmware" / "files"
         out_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = str((out_dir / f"results_{stamp}.json").resolve())
+
+    csv_file = str(Path(args.input).resolve())
 
     # ── Build device list ────────────────────────────────────────────
     if args.host:
@@ -317,22 +348,18 @@ def main():
             "username": args.username,
             "password": args.password,
         }]
-        csv_label = f"(single host: {args.host})"
+        mode = "json_api_single_host"
     else:
         devices = load_csv(args.input)
-        csv_label = str(Path(args.input).resolve())
-
-    if not devices:
-        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No devices to query.{RESET}")
-        sys.exit(1)
+        mode = "json_api"
 
     total = len(devices)
 
     # ── Header Block ─────────────────────────────────────────────────
     print(f"{WHITE}")
-    print(f"  {BOLD}RackLink Select Series — Device Query{RESET}{WHITE}")
-    print(f"  Queries firmware, serial number, model, and MAC via settings JSON")
-    print(f"  Input:   {csv_label}")
+    print(f"  {BOLD}Middle Atlantic RackLink Select Series — Device Info Query{RESET}{WHITE}")
+    print(f"  Queries RackLink PDUs for firmware, serial, and outlet states")
+    print(f"  Input:   {csv_file}")
     print(f"  Output:  {output_file}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
@@ -344,7 +371,7 @@ def main():
     results = []
     t_start = time.time()
 
-    term_width = shutil.get_terminal_size((120, 24)).columns
+    term_width = get_terminal_width()
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
         f"{CYAN}{{bar}}{RESET}"
@@ -356,14 +383,13 @@ def main():
     def worker(dev):
         with active_lock:
             latest_host["value"] = dev["host"]
-        r = query_racklink(
+        return query_racklink(
             host=dev["host"],
-            port=dev.get("port", 80),
+            port=dev.get("port", DEFAULT_PORT),
             username=dev["username"],
             password=dev["password"],
             timeout=args.timeout,
         )
-        return r
 
     with tqdm(
         total=total,
@@ -392,7 +418,7 @@ def main():
     input_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: input_order.get(r["host"], 999999))
 
-    # ── Build Table ──────────────────────────────────────────────────
+    # ── Counts and metrics ───────────────────────────────────────────
     ok = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err = total - ok - auth
@@ -402,7 +428,14 @@ def main():
         if r["status"] == "success" and r["firmware_version"]
     ]
 
-    # Filter displayed rows when --firmware is set
+    outlets_on = sum(
+        1 for r in results for o in r.get("outlets", [])
+        if o.get("status") == "on"
+    )
+    outlets_total = sum(len(r.get("outlets", [])) for r in results)
+    reporting = sum(1 for r in results if r.get("outlets"))
+
+    # ── Filter displayed rows when --firmware is set ─────────────────
     if args.firmware:
         display_results = [
             r for r in results
@@ -413,18 +446,26 @@ def main():
         display_results = results
         hidden = 0
 
-    headers = ["Status", "Host", "Manufacturer", "Model",
-               "Firmware", "Serial Number", "MAC Address", "Error"]
+    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
+               "Serial", "MAC", "Device Name", "Outlets", "Error"]
     rows = []
     for r in display_results:
+        outs = r.get("outlets", [])
+        if outs:
+            on_count = sum(1 for o in outs if o.get("status") == "on")
+            outlet_state = f"{on_count}/{len(outs)} on"
+        else:
+            outlet_state = "N/A"
         rows.append([
             status_icon(r),
             clean(r["host"]),
             clean(r.get("manufacturer")),
             clean(r.get("model")),
             clean(r.get("firmware_version")),
-            clean(r.get("serial_number")),
-            clean(r.get("mac_address")),
+            clean(r.get("serial")),
+            clean(r.get("mac")),
+            clean(r.get("device_name")),
+            outlet_state,
             truncate_error(r.get("error")),
         ])
 
@@ -466,20 +507,29 @@ def main():
     print()
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
+
+    if outlets_total:
+        print(
+            f"  {BOLD}Outlets{RESET}{WHITE} — "
+            f"On: {outlets_on}  |  Total: {outlets_total}  |  "
+            f"Reported: {reporting}/{total}"
+        )
+    else:
+        print(f"  {BOLD}Outlets{RESET}{WHITE} — No data available")
 
     if fw_versions:
         unique = sorted(set(fw_versions))
         print(
-            f"  {BOLD}Firmware Versions{RESET}{WHITE} \u2014 "
+            f"  {BOLD}Firmware Versions{RESET}{WHITE} — "
             f"Unique: {', '.join(unique)}  |  "
             f"Reported: {len(fw_versions)}/{total}"
         )
     else:
-        print(f"  {BOLD}Firmware Versions{RESET}{WHITE} \u2014 No data available")
+        print(f"  {BOLD}Firmware Versions{RESET}{WHITE} — No data available")
 
     print(f"{RESET}")
 
@@ -491,10 +541,10 @@ def main():
     # ── JSON Output ──────────────────────────────────────────────────
     output = {
         "query_info": {
-            "csv_file": csv_label,
+            "csv_file": csv_file,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "protocol": "HTTP/HTTPS (RackLink Settings JSON)",
-            "mode": "json_api",
+            "protocol": "HTTP/HTTPS RackLink Settings JSON v1",
+            "mode": mode,
             "workers": args.workers,
             "total": total,
             "success": ok,

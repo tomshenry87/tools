@@ -2,8 +2,8 @@
 """
 Shure MXA Microphone Query Tool
 
-Uses the Shure Command Strings protocol (TCP port 2202) to query
-device information from Shure MXA-series ceiling and table microphones.
+Queries Shure MXA ceiling and table array microphones via the Shure
+Command Strings protocol over TCP, port 2202.
 
 Supported models:
   - MXA910   (ceiling array)
@@ -12,10 +12,9 @@ Supported models:
   - MXA310   (table array)
 
 Protocol reference:
-  - Shure Command Strings documentation for Microflex Advance
   - https://www.shure.com/en-US/docs/commandstrings/MXA920
   - TCP socket on port 2202
-  - Command format: < GET PARAMETER >
+  - Command format:  < GET PARAMETER >
   - Response format: < REP PARAMETER {value} >
 
 Queries (per official Shure documentation):
@@ -27,6 +26,8 @@ Queries (per official Shure documentation):
   - IP_ADDR_NET_AUDIO_PRIMARY    Primary audio network IP address
   - NA_DEVICE_NAME               Dante device name
   - ENCRYPTION                   Encryption status (ON/OFF)
+
+Conforms to: Conformance Spec — shure_script.py
 """
 
 import csv
@@ -56,15 +57,15 @@ except ImportError:
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
-# ANSI color palette
+# ANSI palette (spec 3.1) — no other colours
 # ---------------------------------------------------------------------------
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
 
 # ---------------------------------------------------------------------------
 # Defaults & constants
@@ -78,6 +79,9 @@ DEFAULT_OUTPUT  = os.path.join(
 DEFAULT_TIMEOUT = 10
 DEFAULT_PORT    = 2202
 DEFAULT_WORKERS = 5
+
+MANUFACTURER    = "Shure"
+PROTOCOL_LABEL  = "Shure Command Strings (TCP port 2202)"
 
 # Parameters to query — device-level (no channel index)
 # Per official Shure MXA920 Command Strings documentation
@@ -96,7 +100,7 @@ RECV_BUFFER = 4096
 
 
 # ---------------------------------------------------------------------------
-# Utility helpers
+# Shared helpers (spec 3.5) — byte-identical across all scripts
 # ---------------------------------------------------------------------------
 def get_terminal_width() -> int:
     try:
@@ -115,25 +119,53 @@ def clean(val) -> str:
     return s
 
 
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+# ---------------------------------------------------------------------------
+# Error labels (spec 3.6) — protocol patterns matched BEFORE the base list
+# ---------------------------------------------------------------------------
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script: Shure Command Strings failures —
+# REP responses that do not match the requested parameter, and ERR forms.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"<\s*REP\s+ERR\s*>",            "Command error"),
+    (r"REP\s+ERR",                    "Command error"),
+    (r"[Pp]arameter mismatch",        "Param mismatch"),
+    (r"[Uu]nrecognised parameter",    "Unknown param"),
+    (r"[Uu]nrecognized parameter",    "Unknown param"),
+    (r"[Nn]o REP for",                "Param mismatch"),
+]
+
+
 def truncate_error(err, max_len: int = 30) -> str:
     """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        (r"[Cc]onnection timed out",          "Timed out"),
-        (r"[Cc]onnection refused",             "Conn refused"),
-        (r"[Nn]o response .* timeout",         "No response"),
-        (r"[Nn]o route to host",               "No route"),
-        (r"[Nn]etwork is unreachable",         "Net unreachable"),
-        (r"[Nn]ame or service not known",      "DNS failed"),
-        (r"[Nn]etwork error",                  "Network error"),
-        (r"timed out",                         "Timed out"),
-        (r"[Nn]o data received",               "No response"),
-        (r"[Uu]nexpected response",            "Bad response"),
-        (r"[Nn]ot a .* device",                "Not supported"),
-        (r"[Mm]alformed",                      "Bad response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
@@ -142,18 +174,8 @@ def truncate_error(err, max_len: int = 30) -> str:
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-def status_icon(r: dict) -> str:
-    """Return a coloured status icon string for a result dict."""
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
-
-
 # ---------------------------------------------------------------------------
-# CSV loader
+# CSV loader (spec 3.7)
 # ---------------------------------------------------------------------------
 def load_csv(csv_path: str) -> list:
     devices = []
@@ -184,6 +206,7 @@ def load_csv(csv_path: str) -> list:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
             except (ValueError, TypeError):
                 port = DEFAULT_PORT
+            # Parse this script's additional columns here — port.
             devices.append({"host": host, "port": port})
     if not devices:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
@@ -193,6 +216,7 @@ def load_csv(csv_path: str) -> list:
 
 # ---------------------------------------------------------------------------
 # Shure Command Strings protocol helpers
+# PROTECTED (spec 4) — do not alter framing, sequencing, or timeouts
 # ---------------------------------------------------------------------------
 def send_command(sock: socket.socket, command: str, timeout: float = 5.0) -> str:
     """
@@ -214,11 +238,11 @@ def send_command(sock: socket.socket, command: str, timeout: float = 5.0) -> str
 def parse_response(raw: str, parameter: str) -> str:
     """
     Parse a Shure command string response.
-    Actual format: < REP PARAMETER {value                        } >
-    Values are wrapped in curly braces and padded with spaces.
-    Also handles: < REP 0 PARAMETER {value} > (channel prefix variant)
+    Handles both formats:
+      < REP PARAMETER {value                        } >  (curly braces, padded)
+      < REP PARAMETER value >                            (plain value)
     """
-    # Match value inside curly braces: < REP [0] PARAMETER {value} >
+    # Match value inside curly braces: < REP [x] PARAMETER {value} >
     pattern = rf'<\s*REP\s+(?:\d+\s+)?{re.escape(parameter)}\s+\{{(.*?)\}}\s*>'
     match = re.search(pattern, raw, re.IGNORECASE)
     if match:
@@ -255,6 +279,8 @@ def query_device_parameter(sock: socket.socket, parameter: str,
 
 # ---------------------------------------------------------------------------
 # Main query
+# PROTECTED (spec 4) — command sequence and timeouts unchanged;
+# only the result dict key names conform to the spec's data contract.
 # ---------------------------------------------------------------------------
 def query_microphone(host: str, port: int,
                      timeout: int = DEFAULT_TIMEOUT) -> dict:
@@ -263,14 +289,15 @@ def query_microphone(host: str, port: int,
         "host":             host,
         "port":             port,
         "status":           "error",
-        "device_id":        "N/A",
-        "model":            "N/A",
-        "serial_number":    "N/A",
-        "mac_address":      "N/A",
-        "firmware_version": "N/A",
-        "ip_address":       "N/A",
-        "dante_name":       "N/A",
-        "encryption":       "N/A",
+        "manufacturer":     MANUFACTURER,
+        "model":            None,
+        "firmware_version": None,
+        "serial":           None,
+        "mac":              None,
+        "device_id":        None,
+        "ip_address":       None,
+        "dante_name":       None,
+        "encryption":       None,
         "error":            None,
         "query_timestamp":  datetime.now(timezone.utc).isoformat(),
     }
@@ -286,8 +313,8 @@ def query_microphone(host: str, port: int,
 
             result["device_id"]        = query_device_parameter(sock, "DEVICE_ID", timeout)
             result["model"]            = query_device_parameter(sock, "MODEL", timeout)
-            result["serial_number"]    = query_device_parameter(sock, "SERIAL_NUM", timeout)
-            result["mac_address"]      = query_device_parameter(sock, "CONTROL_MAC_ADDR", timeout)
+            result["serial"]           = query_device_parameter(sock, "SERIAL_NUM", timeout)
+            result["mac"]              = query_device_parameter(sock, "CONTROL_MAC_ADDR", timeout)
             result["firmware_version"] = query_device_parameter(sock, "FW_VER", timeout)
             result["ip_address"]       = query_device_parameter(sock, "IP_ADDR_NET_AUDIO_PRIMARY", timeout)
             result["dante_name"]       = query_device_parameter(sock, "NA_DEVICE_NAME", timeout)
@@ -306,6 +333,13 @@ def query_microphone(host: str, port: int,
         result["error"] = str(e)
     except Exception as e:
         result["error"] = str(e)
+
+    # "N/A" is a display sentinel, not data — the contract wants null for
+    # "not reported" so the dashboard's ?? handling behaves correctly.
+    for key in ("model", "firmware_version", "serial", "mac",
+                "device_id", "ip_address", "dante_name", "encryption"):
+        if result[key] == "N/A":
+            result[key] = None
 
     return result
 
@@ -339,7 +373,7 @@ def query_microphone_raw(host: str, port: int,
 
 
 # ---------------------------------------------------------------------------
-# Output
+# Output — JSON (spec 2.1, 2.7)
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -348,9 +382,9 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
     err  = sum(1 for r in results if r["status"] == "error")
     output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()) if not args.host else "(single host)",
+            "csv_file":        "(single host)" if args.host else str(Path(args.input).resolve()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "protocol":        "Shure Command Strings (TCP port 2202)",
+            "protocol":        PROTOCOL_LABEL,
             "mode":            "single-host" if args.host else "csv",
             "workers":         args.workers,
             "total":           len(results),
@@ -365,27 +399,31 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
         json.dump(output, f, indent=2, ensure_ascii=False)
 
 
+# ---------------------------------------------------------------------------
+# Output — terminal (spec 3.4, 3.8)
+# ---------------------------------------------------------------------------
 def print_results_table(results: list, output_file: str, elapsed: float,
                         workers: int):
-    """Render the results table following the project visual style guide."""
+    """Render the results table following the conformance spec."""
 
     table_data = []
     for r in results:
         row = [
             status_icon(r),
             clean(r["host"]),
-            clean(r["device_id"]),
-            clean(r["model"]),
-            clean(r["firmware_version"]),
-            clean(r["serial_number"]),
-            clean(r["mac_address"]),
-            clean(r["encryption"]),
+            clean(r.get("manufacturer")),
+            clean(r.get("model")),
+            clean(r.get("firmware_version")),
+            clean(r.get("serial")),
+            clean(r.get("mac")),
+            clean(r.get("device_id")),
+            clean(r.get("encryption")),
             truncate_error(r.get("error")),
         ]
         table_data.append(row)
 
-    headers = ["Status", "Host", "Device ID", "Model", "Firmware",
-               "Serial", "MAC Address", "Encryption", "Error"]
+    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
+               "Serial", "MAC", "Device ID", "Encryption", "Error"]
 
     table = tabulate(table_data, headers=headers,
                      tablefmt="pretty", stralign="left", numalign="right")
@@ -394,7 +432,7 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw         = max(raw_width, 60)
 
-    title = "Shure MXA Microphone \u2014 Device Query Results"
+    title = "Shure MXA Microphone — Device Query Results"
     pad   = (bw - len(title)) // 2
 
     print(f"{WHITE}")
@@ -412,31 +450,36 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     print()
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
-    # Device-specific metric: encryption status
-    enc_counts = {}
+    # Device-specific metrics line — firmware version breakdown across the fleet
+    fw_counts = {}
     for r in results:
-        e = r.get("encryption", "N/A")
-        enc_counts[e] = enc_counts.get(e, 0) + 1
+        fw = r.get("firmware_version")
+        if fw:
+            fw_counts[fw] = fw_counts.get(fw, 0) + 1
 
-    reported = sum(v for k, v in enc_counts.items() if k != "N/A")
+    reported = sum(fw_counts.values())
     if reported:
         parts = "  |  ".join(
-            f"{BOLD}{k}:{RESET}{WHITE} {v}"
-            for k, v in sorted(enc_counts.items()) if k != "N/A"
+            f"{BOLD}{v}:{RESET}{WHITE} {c}"
+            for v, c in sorted(fw_counts.items())
         )
-        print(f"  {BOLD}Encryption \u2014{RESET}{WHITE} {parts}  |  {BOLD}Reported:{RESET}{WHITE} {reported}/{total}")
+        print(
+            f"  {BOLD}Firmware —{RESET}{WHITE} {parts}  |  "
+            f"{BOLD}Versions:{RESET}{WHITE} {len(fw_counts)}  |  "
+            f"{BOLD}Reported:{RESET}{WHITE} {reported}/{total}"
+        )
     else:
-        print(f"  {BOLD}Encryption \u2014{RESET}{WHITE} No data available")
+        print(f"  {BOLD}Firmware —{RESET}{WHITE} No data available")
 
     print()
-    print(f"  {BOLD}Results saved:{RESET}{WHITE} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers)")
-    print(f"{RESET}")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
+    print()
 
 
 # ---------------------------------------------------------------------------
@@ -447,12 +490,12 @@ def main():
         description="Query Shure MXA microphones for device info via Command Strings protocol.",
         epilog="""
 Examples:
-  python shuremxa_firmware.py
-  python shuremxa_firmware.py -i my_mics.csv
-  python shuremxa_firmware.py --host 192.168.1.10
-  python shuremxa_firmware.py --host 192.168.1.10 --port 2202
-  python shuremxa_firmware.py --host 192.168.1.10 --raw
-  python shuremxa_firmware.py -i mics.csv -t 15 -o output.json -w 10
+  python shure_script.py
+  python shure_script.py -i my_mics.csv
+  python shure_script.py --host 192.168.1.10
+  python shure_script.py --host 192.168.1.10 --port 2202
+  python shure_script.py --host 192.168.1.10 --raw
+  python shure_script.py -i mics.csv -t 15 -o output.json -w 10
 
 Protocol:
   Shure Command Strings over TCP port 2202. No authentication required.
@@ -492,12 +535,12 @@ Queried Parameters:
     start_time = time.monotonic()
 
     # -------------------------------------------------------------------
-    # Header block
+    # Header block (spec 3.2)
     # -------------------------------------------------------------------
     input_display = args.host if args.host else args.input
     print(f"{WHITE}")
-    print(f"  {BOLD}Shure MXA Microphone \u2014 Device Query Tool{RESET}{WHITE}")
-    print(f"  Queries device info via Shure Command Strings protocol (TCP).")
+    print(f"  {BOLD}Shure MXA Microphone Query Tool{RESET}{WHITE}")
+    print(f"  Queries MXA arrays via Shure Command Strings")
     print(f"  Input:   {input_display}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
@@ -531,7 +574,7 @@ Queried Parameters:
     microphones = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
 
     # -------------------------------------------------------------------
-    # Progress bar + concurrent query loop
+    # Progress bar + concurrent query loop (spec 3.3)
     # -------------------------------------------------------------------
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "

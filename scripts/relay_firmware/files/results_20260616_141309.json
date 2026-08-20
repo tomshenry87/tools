@@ -1,0 +1,2671 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/relay_firmware.csv",
+    "timestamp": "2026-06-16T14:13:10.047947+00:00",
+    "protocol": "Global Caché Unified TCP API v1.1 (raw TCP port 4998)",
+    "mode": "csv-batch",
+    "workers": 5,
+    "total": 59,
+    "success": 59,
+    "partial": 0,
+    "errors": 0,
+    "elapsed_seconds": 0.48
+  },
+  "relays": [
+    {
+      "host": "baker-213-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.594078+00:00"
+    },
+    {
+      "host": "baker-219-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.594816+00:00"
+    },
+    {
+      "host": "baker-227-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.595343+00:00"
+    },
+    {
+      "host": "baker-234-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.595724+00:00"
+    },
+    {
+      "host": "bartlett-105-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.596603+00:00"
+    },
+    {
+      "host": "berry-180-screen-relay.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.637281+00:00"
+    },
+    {
+      "host": "brace-008-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.637596+00:00"
+    },
+    {
+      "host": "carpenter-201c-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.637707+00:00"
+    },
+    {
+      "host": "carpenter-201f-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.638125+00:00"
+    },
+    {
+      "host": "carson-060-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.638230+00:00"
+    },
+    {
+      "host": "carson-061-1-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.673368+00:00"
+    },
+    {
+      "host": "carson-l01-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.673689+00:00"
+    },
+    {
+      "host": "carson-l02-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.673926+00:00"
+    },
+    {
+      "host": "dewey-101-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.674086+00:00"
+    },
+    {
+      "host": "fairchild-101-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.674193+00:00"
+    },
+    {
+      "host": "haldeman-028-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.709396+00:00"
+    },
+    {
+      "host": "haldeman-046-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.710251+00:00"
+    },
+    {
+      "host": "hopkins-052-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.710449+00:00"
+    },
+    {
+      "host": "hopkins-054-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.710604+00:00"
+    },
+    {
+      "host": "hopkins-138-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.710928+00:00"
+    },
+    {
+      "host": "kemeny-004-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.746136+00:00"
+    },
+    {
+      "host": "kemeny-006-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.746299+00:00"
+    },
+    {
+      "host": "kemeny-007-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.746578+00:00"
+    },
+    {
+      "host": "kemeny-008-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.746899+00:00"
+    },
+    {
+      "host": "kemeny-105-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.747386+00:00"
+    },
+    {
+      "host": "kemeny-108-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.781606+00:00"
+    },
+    {
+      "host": "lsc-100-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.782192+00:00"
+    },
+    {
+      "host": "lsc-100-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.782576+00:00"
+    },
+    {
+      "host": "lsc-104-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.782898+00:00"
+    },
+    {
+      "host": "lsc-105-1-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.783653+00:00"
+    },
+    {
+      "host": "lsc-105-1-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.817461+00:00"
+    },
+    {
+      "host": "lsc-200-1-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.818207+00:00"
+    },
+    {
+      "host": "lsc-200-1-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.818620+00:00"
+    },
+    {
+      "host": "lsc-201-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.818803+00:00"
+    },
+    {
+      "host": "lsc-201-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.819797+00:00"
+    },
+    {
+      "host": "lsc-204-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.853245+00:00"
+    },
+    {
+      "host": "lsc-205-1-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.854624+00:00"
+    },
+    {
+      "host": "lsc-205-1-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.854850+00:00"
+    },
+    {
+      "host": "moore-110-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.855309+00:00"
+    },
+    {
+      "host": "moore-150-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.855544+00:00"
+    },
+    {
+      "host": "moore-202-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.888744+00:00"
+    },
+    {
+      "host": "preshouse-b02-screen-relay.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.890164+00:00"
+    },
+    {
+      "host": "rockefeller-001-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.890604+00:00"
+    },
+    {
+      "host": "rockefeller-002-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.890939+00:00"
+    },
+    {
+      "host": "rockefeller-003-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.891235+00:00"
+    },
+    {
+      "host": "rockefeller-208-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.924160+00:00"
+    },
+    {
+      "host": "rockefeller-209-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.926113+00:00"
+    },
+    {
+      "host": "silsby-113-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.926832+00:00"
+    },
+    {
+      "host": "silsby-119-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.926942+00:00"
+    },
+    {
+      "host": "silsby-213-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.927374+00:00"
+    },
+    {
+      "host": "silsby-215-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.959897+00:00"
+    },
+    {
+      "host": "steele-007-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.962118+00:00"
+    },
+    {
+      "host": "steele-007-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.962788+00:00"
+    },
+    {
+      "host": "wilder-111-screen-control-1.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.963026+00:00"
+    },
+    {
+      "host": "wilder-111-screen-control-2.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.963239+00:00"
+    },
+    {
+      "host": "wilder-111-screen-control-3.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.995877+00:00"
+    },
+    {
+      "host": "wilder-115-screen-relay.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.998017+00:00"
+    },
+    {
+      "host": "wilson-205-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.998407+00:00"
+    },
+    {
+      "host": "wilson-219-screen-control.openav.dartmouth.edu",
+      "port": 4998,
+      "status": "success",
+      "firmware_version": "710-1008-05",
+      "product_family": "iTach",
+      "relay_module_count": 1,
+      "relay_port_count": 3,
+      "relay_states": [
+        {
+          "module": "1",
+          "port": "1",
+          "address": "1:1",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "2",
+          "address": "1:2",
+          "state": "0"
+        },
+        {
+          "module": "1",
+          "port": "3",
+          "address": "1:3",
+          "state": "0"
+        }
+      ],
+      "modules": [
+        {
+          "module": "0",
+          "ports": 0,
+          "type": "ETHERNET",
+          "subtype": null
+        },
+        {
+          "module": "1",
+          "ports": 3,
+          "type": "RELAY",
+          "subtype": null
+        }
+      ],
+      "error": null,
+      "query_timestamp": "2026-06-16T14:13:09.998947+00:00"
+    }
+  ]
+}

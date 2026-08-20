@@ -2,8 +2,8 @@
 """
 CyberPower OR700LCDRM1U UPS SNMP Query Tool
 
-Uses SNMP to query CyberPower UPS units equipped with the RMCARD205
-network management card.
+Queries CyberPower UPS units equipped with the RMCARD205 network management
+card over SNMPv2c.
 
 MIBs used:
   - CPS-MIB (CyberPower private MIB, enterprise OID 1.3.6.1.4.1.3808)
@@ -13,13 +13,13 @@ Data collected per device:
   - Model name         (CPS-MIB upsBaseIdentModel)
   - Serial number      (CPS-MIB upsAdvanceIdentSerialNumber)
   - MAC address        (MIB-II ifPhysAddress.1)
-  - UPS firmware       (CPS-MIB upsBaseIdentFirmwareVersion)
-  - RMCARD firmware    (CPS-MIB upsAdvanceIdentAgentFirmwareVersion)
+  - UPS firmware       (CPS-MIB upsAdvanceIdentFirmwareRevision)
+  - RMCARD firmware    (CPS-MIB upsAdvanceIdentAgentFirmwareRevision)
+  - Battery status     (CPS-MIB upsBaseBatteryStatus)
   - Battery capacity % (CPS-MIB upsAdvanceBatteryCapacity)
   - Runtime remaining  (CPS-MIB upsAdvanceBatteryRunTimeRemaining)
-  - Battery status     (CPS-MIB upsBaseBatteryStatus)
-  - Calibration status (CPS-MIB upsAdvanceBatteryRunTimeCalibration)
-  - Last calibration   (CPS-MIB upsAdvanceBatteryRunTimeCalibrationDate)
+  - Replace indicator  (CPS-MIB upsAdvanceBatteryReplaceIndicator)
+  - Calibration state  (CPS-MIB runtime calibration result / date)
 
 CSV input columns:
   host        - IP address or hostname (required)
@@ -27,15 +27,22 @@ CSV input columns:
   port        - UDP port (optional, default: 161)
 
 Output:
-  JSON file with query_info metadata and a "ups" array of per-device results.
+  ups_firmware/files/results_<YYYYMMDD>_<HHMMSS>.json
+  Envelope: {"query_info": {...}, "ups": [...]}
 
 Calibration note:
   The OR700LCDRM1U uses a runtime calibration (NOT a battery self-test) to
   accurately calculate remaining runtime. CyberPower recommends running this
-  once per year or after battery replacement. The script reports:
+  once per year or after battery replacement. Reported as:
     - calibration_status: "running" | "passed" | "failed" | "never_run"
     - calibration_needed: true/false  (true if last result was >= 365 days ago
                                        or if calibration has never been run)
+  This is informational only and never affects `status`.
+
+Note on internal temperature:
+  The OR700LCDRM1U does not expose upsTemperature (1.3.6.1.4.1.3808.1.1.1.10.2.0).
+  That OID returns "no such name" on this hardware — it is only present on the
+  OL and PR series. No temperature_c / temperature_f fields are emitted.
 
 Dependencies:
   sudo apt install libsnmp-dev snmp-mibs-downloader python3-dev
@@ -80,13 +87,13 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # ANSI color palette
 # ---------------------------------------------------------------------------
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
 
 # ---------------------------------------------------------------------------
 # Defaults & constants
@@ -101,6 +108,9 @@ DEFAULT_COMMUNITY = "public"
 DEFAULT_TIMEOUT   = 10
 DEFAULT_PORT      = 161
 DEFAULT_WORKERS   = 5
+
+MANUFACTURER      = "CyberPower"
+PROTOCOL_LABEL    = "SNMPv2c — CPS-MIB (CyberPower) + MIB-II (RFC 1213)"
 
 # ---------------------------------------------------------------------------
 # CPS-MIB OID map  (CyberPower enterprise: 1.3.6.1.4.1.3808)
@@ -124,7 +134,7 @@ OID = {
     "calibration_date":   "1.3.6.1.4.1.3808.1.1.1.7.2.4.0",   # mm/dd/yyyy
 
     # MIB-II
-    "mac_address":        "1.3.6.1.2.1.2.2.1.6.1",             # ifPhysAddress.1
+    "mac":                "1.3.6.1.2.1.2.2.1.6.1",             # ifPhysAddress.1
 }
 
 BATTERY_STATUS_MAP = {1: "unknown", 2: "normal", 3: "low"}
@@ -132,6 +142,17 @@ CALIBRATION_RESULT_MAP = {1: "never_run", 2: "passed", 3: "failed"}
 REPLACE_MAP = {1: "ok", 2: "replace_battery"}
 
 CALIBRATION_INTERVAL_DAYS = 365
+
+# Error strings that indicate an SNMP authentication/community failure rather
+# than a transport failure. Used only for status classification.
+AUTH_ERROR_PATTERNS = [
+    r"[Ww]rong community",
+    r"[Bb]ad community",
+    r"authorizationError",
+    r"[Aa]uthentication failure",
+    r"[Aa]uthorization",
+    r"USM",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -145,31 +166,62 @@ def get_terminal_width() -> int:
 
 
 def clean(val) -> str:
+    """Sanitise a value for table display — converts None/-1/empty to N/A."""
     s = str(val) if val is not None else "N/A"
-    if s in ("None", "-1", "", "0"):
+    if s in ("None", "-1", ""):
         return "N/A"
     if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
         return "N/A"
     return s
 
 
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+
+
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"[Ww]rong community",                    "Bad community"),
+    (r"[Bb]ad community",                      "Bad community"),
+    (r"authorizationError|[Aa]uthorization",   "Auth failed"),
+    (r"[Aa]uthentication failure",             "Auth failed"),
+    (r"[Nn]o such name",                       "OID not found"),
+    (r"[Nn]oSuchObject|NOSUCHOBJECT",          "OID not found"),
+    (r"[Nn]oSuchInstance|NOSUCHINSTANCE",      "OID not found"),
+    (r"[Nn]o such (object|variable)",          "OID not found"),
+    (r"[Ee]ndOfMibView|ENDOFMIBVIEW",          "OID not found"),
+    (r"[Uu]DP.*timeout|SNMP.*timeout",         "SNMP timeout"),
+]
+
+
 def truncate_error(err, max_len: int = 30) -> str:
+    """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        (r"[Tt]imed.?[Oo]ut|timed out",       "Timed out"),
-        (r"[Cc]onnection refused",             "Conn refused"),
-        (r"[Nn]o response",                    "No response"),
-        (r"[Nn]o route to host",               "No route"),
-        (r"[Nn]etwork is unreachable",         "Net unreachable"),
-        (r"[Nn]ame or service not known",      "DNS failed"),
-        (r"[Uu]DP.*timeout|SNMP.*timeout",     "SNMP timeout"),
-        (r"[Ww]rong community",                "Bad community"),
-        (r"[Nn]o such (object|variable)",      "OID not found"),
-        (r"[Nn]ot a.*device",                  "Not supported"),
-        (r"[Mm]alformed",                      "Bad response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
@@ -178,13 +230,22 @@ def truncate_error(err, max_len: int = 30) -> str:
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-def status_icon(r: dict) -> str:
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "warn":
-        return f"{YELLOW}\u26a0 WARN{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+def classify_status(err: str) -> str:
+    """
+    Map an error string to one of the two failure statuses from spec 2.5.
+
+    NOTE: SNMPv2c has no authentication handshake — a wrong community string and
+    an unreachable host both surface as a silent timeout at the transport layer.
+    An agent that replies with authorizationError, or an easysnmp build that
+    reports the community explicitly, is classified auth_error; everything else
+    falls through to error. See the README for the full caveat.
+    """
+    if not err:
+        return "error"
+    for pat in AUTH_ERROR_PATTERNS:
+        if re.search(pat, str(err)):
+            return "auth_error"
+    return "error"
 
 
 def format_mac(raw: str) -> str:
@@ -238,7 +299,7 @@ def calibration_needed(result_code: int, date_str: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# SNMP helpers  (easysnmp)
+# SNMP helpers  (easysnmp)  --  PROTOCOL LOGIC, DO NOT MODIFY
 # ---------------------------------------------------------------------------
 def make_session(host: str, port: int, community: str,
                  timeout: int) -> Session:
@@ -327,7 +388,7 @@ def load_csv(csv_path: str) -> list:
             ).strip()
             devices.append({"host": host, "port": port, "community": community})
     if not devices:
-        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries in CSV.{RESET}")
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
         sys.exit(1)
     return devices
 
@@ -338,14 +399,14 @@ def load_csv(csv_path: str) -> list:
 def query_ups(host: str, port: int, community: str,
               timeout: int = DEFAULT_TIMEOUT) -> dict:
     result = {
-        "host":                  host,
+        "host":                  host,      # written through unmodified
         "port":                  port,
-        "community":             community,
         "status":                "error",
+        "manufacturer":          MANUFACTURER,
         "model":                 "N/A",
         "serial":                "N/A",
-        "mac_address":           "N/A",
-        "ups_firmware":          "N/A",
+        "mac":                   "N/A",
+        "firmware_version":      "N/A",
         "agent_firmware":        "N/A",
         "battery_status":        "N/A",
         "battery_capacity_pct":  None,
@@ -365,19 +426,20 @@ def query_ups(host: str, port: int, community: str,
         # ---- Model (connectivity probe) ----
         model_val, model_err = snmp_get_value(session, OID["model"])
         if model_err:
-            result["error"] = model_err
+            result["error"]  = model_err
+            result["status"] = classify_status(model_err)
             return result
         result["model"] = model_val or "N/A"
 
         # ---- Identity ----
-        result["serial"]         = snmp_get_str(session, OID["serial"])
-        result["ups_firmware"]   = snmp_get_str(session, OID["ups_firmware"])
-        result["agent_firmware"] = snmp_get_str(session, OID["agent_firmware"])
+        result["serial"]           = snmp_get_str(session, OID["serial"])
+        result["firmware_version"] = snmp_get_str(session, OID["ups_firmware"])
+        result["agent_firmware"]   = snmp_get_str(session, OID["agent_firmware"])
 
         # ---- MAC address ----
-        mac_raw, _ = snmp_get_value(session, OID["mac_address"])
+        mac_raw, _ = snmp_get_value(session, OID["mac"])
         if mac_raw:
-            result["mac_address"] = format_mac(mac_raw)
+            result["mac"] = format_mac(mac_raw)
 
         # ---- Battery ----
         batt_status_int = snmp_get_int(session, OID["battery_status"])
@@ -393,7 +455,7 @@ def query_ups(host: str, port: int, community: str,
         )
         result["replace_indicator"] = REPLACE_MAP.get(replace_int, "N/A")
 
-        # ---- Calibration ----
+        # ---- Calibration (informational only — never affects status) ----
         cal_result_int = snmp_get_int(session, OID["calibration_result"])
         cal_date_str   = snmp_get_str(session, OID["calibration_date"])
         cal_cmd_int    = snmp_get_int(session, OID["calibration_cmd"])
@@ -407,15 +469,15 @@ def query_ups(host: str, port: int, community: str,
         result["calibration_needed"] = calibration_needed(cal_result_int, cal_date_str)
 
         # ---- Final status ----
-        # calibration_needed is informational only — does not affect status
-        if (result["replace_indicator"] == "replace_battery"
-                or result["battery_status"] == "low"):
-            result["status"] = "warn"
-        else:
-            result["status"] = "success"
+        # Spec 2.5: only success | auth_error | error. The device answered, so
+        # this is success even where a battery needs attention — a low battery
+        # or replace indicator is a fleet condition surfaced in the table and
+        # metrics line, not a query failure.
+        result["status"] = "success"
 
     except Exception as e:
-        result["error"] = str(e)
+        result["error"]  = str(e)
+        result["status"] = classify_status(str(e))
 
     return result
 
@@ -426,18 +488,18 @@ def query_ups(host: str, port: int, community: str,
 def save_results_json(results: list, filepath: str, args, elapsed: float):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     ok   = sum(1 for r in results if r["status"] == "success")
-    warn = sum(1 for r in results if r["status"] == "warn")
+    auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
     output = {
         "query_info": {
             "csv_file":        str(Path(args.input).resolve()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "protocol":        "SNMPv2c — CPS-MIB (CyberPower) + MIB-II (RFC 1213)",
-            "community":       args.community,
+            "protocol":        PROTOCOL_LABEL,
+            "mode":            "SNMPv2c read (community)",
             "workers":         args.workers,
             "total":           len(results),
             "success":         ok,
-            "warnings":        warn,
+            "auth_errors":     auth,
             "errors":          err,
             "elapsed_seconds": round(elapsed, 2),
         },
@@ -457,42 +519,43 @@ def print_results_table(results: list, output_file: str,
 
         cal_needed = r.get("calibration_needed")
         if cal_needed is True:
-            cal_flag = f"{YELLOW}YES{RESET}{WHITE}"
+            cal_flag = "YES"
         elif cal_needed is False:
-            cal_flag = f"{GREEN}No{RESET}{WHITE}"
+            cal_flag = "No"
         else:
             cal_flag = "N/A"
 
         replace = r.get("replace_indicator", "N/A")
         if replace == "replace_battery":
-            replace_str = f"{RED}REPLACE{RESET}{WHITE}"
+            replace_str = "REPLACE"
         elif replace == "ok":
-            replace_str = f"{GREEN}OK{RESET}{WHITE}"
+            replace_str = "OK"
         else:
             replace_str = "N/A"
 
         row = [
             status_icon(r),
             clean(r["host"]),
+            clean(r["manufacturer"]),
             clean(r["model"]),
-            clean(r["serial"]),
-            clean(r["mac_address"]),
-            clean(r["ups_firmware"]),
+            clean(r["firmware_version"]),
             clean(r["agent_firmware"]),
-            clean(r["battery_status"]),
+            clean(r["serial"]),
+            clean(r["mac"]),
             cap_str,
             clean(r["runtime_remaining"]),
             replace_str,
             cal_flag,
+            clean(r["battery_status"]),
             truncate_error(r.get("error")),
         ]
         table_data.append(row)
 
     headers = [
-        "Status", "Host", "Model", "Serial", "MAC Address",
-        "UPS FW", "Card FW",
-        "Batt Status", "Capacity", "Runtime",
-        "Replace?", "Cal Due?",
+        "Status", "Host", "Manufacturer", "Model", "Firmware",
+        "Card FW", "Serial", "MAC",
+        "Capacity", "Runtime", "Replace?", "Cal Due?",
+        "Batt Status",
         "Error",
     ]
 
@@ -501,9 +564,9 @@ def print_results_table(results: list, output_file: str,
 
     first_line = table.split("\n")[0]
     raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
-    bw         = max(raw_width, 80)
+    bw         = max(raw_width, 60)
 
-    title = "CyberPower OR700LCDRM1U — UPS Status Query Results"
+    title = "CyberPower OR700LCDRM1U \u2014 UPS Status Query Results"
     pad   = max((bw - len(title)) // 2, 0)
 
     print(f"{WHITE}")
@@ -515,25 +578,29 @@ def print_results_table(results: list, output_file: str,
 
     total = len(results)
     ok    = sum(1 for r in results if r["status"] == "success")
-    warn  = sum(1 for r in results if r["status"] == "warn")
+    auth  = sum(1 for r in results if r["status"] == "auth_error")
     err   = sum(1 for r in results if r["status"] == "error")
 
     print()
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u26a0{RESET}{WHITE} {BOLD}Warnings:{RESET}{WHITE} {warn}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
+    # Device-specific metrics line — battery capacity and replacement count
     cap_vals = [r["battery_capacity_pct"] for r in results
                 if r.get("battery_capacity_pct") is not None]
+    replace_count = sum(1 for r in results
+                        if r.get("replace_indicator") == "replace_battery")
     if cap_vals:
         print(
             f"  {BOLD}Battery Capacity \u2014{RESET}{WHITE} "
             f"Avg: {sum(cap_vals)/len(cap_vals):.0f}%  |  "
             f"Min: {min(cap_vals)}%  |  "
             f"Max: {max(cap_vals)}%  |  "
+            f"Needs replacement: {replace_count}  |  "
             f"Reported: {len(cap_vals)}/{total}"
         )
     else:
@@ -541,18 +608,18 @@ def print_results_table(results: list, output_file: str,
 
     cal_due = sum(1 for r in results if r.get("calibration_needed") is True)
     cal_ok  = sum(1 for r in results if r.get("calibration_needed") is False)
-    if cal_due:
+    if cal_due or cal_ok:
         print(
             f"  {BOLD}Calibration \u2014{RESET}{WHITE} "
-            f"{YELLOW}{cal_due} device(s) due for annual runtime calibration{RESET}{WHITE}  |  "
-            f"{GREEN}{cal_ok} up to date{RESET}{WHITE}"
+            f"Due: {cal_due}  |  Up to date: {cal_ok}  |  "
+            f"Reported: {cal_due + cal_ok}/{total}"
         )
     else:
-        print(f"  {BOLD}Calibration \u2014{RESET}{WHITE} All devices up to date")
+        print(f"  {BOLD}Calibration \u2014{RESET}{WHITE} No data available")
 
     print()
-    print(f"  {BOLD}Results saved:{RESET}{WHITE} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers)")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print(f"{RESET}")
 
 
@@ -582,8 +649,9 @@ CSV format (secrets/ups_firmware.csv):
 
 Calibration:
   CyberPower recommends a runtime calibration once per year or after battery
-  replacement. The script flags calibration_needed=true if the last recorded
-  calibration date is >= 365 days ago, or if it has never been run.
+  replacement. calibration_needed=true if the last recorded calibration date
+  is >= 365 days ago, or if it has never been run. Informational only — it
+  never changes the device status.
   To trigger from the RMCARD205 web UI:
     UPS -> Diagnostics -> Runtime Calibration -> Start
         """,
@@ -616,14 +684,13 @@ Calibration:
     # -----------------------------------------------------------------------
     input_display = args.host if args.host else args.input
     print(f"{WHITE}")
-    print(f"  {BOLD}CyberPower OR700LCDRM1U — UPS SNMP Query Tool{RESET}{WHITE}")
-    print(f"  Queries UPS status via SNMPv2c using CPS-MIB and MIB-II.")
-    print(f"  Input:     {input_display}")
-    print(f"  Output:    {args.output}")
-    print(f"  Workers:   {args.workers}")
-    print(f"  Timeout:   {args.timeout}s")
-    print(f"  Community: {args.community}")
-    print(f"  Protocol:  SNMPv2c — CPS-MIB + MIB-II (RFC 1213)")
+    print(f"  {BOLD}CyberPower OR700LCDRM1U UPS SNMP Query Tool{RESET}{WHITE}")
+    print(f"  Queries CyberPower UPS units with RMCARD205 cards over SNMP")
+    print(f"  Input:   {input_display}")
+    print(f"  Output:  {args.output}")
+    print(f"  Workers: {args.workers}")
+    print(f"  Timeout: {args.timeout}s")
+    print(f"  Mode:    SNMPv2c read (community)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
@@ -635,9 +702,9 @@ Calibration:
         for name, oid in OID.items():
             val, err = snmp_get_value(session, oid)
             if err:
-                print(f"  {RED}{name:<25}{RESET} {oid}  =>  ERROR: {err}")
+                print(f"  {RED}{name:<25}{RESET}{WHITE} {oid}  =>  ERROR: {err}{RESET}")
             else:
-                print(f"  {GREEN}{name:<25}{RESET} {oid}  =>  {val!r}")
+                print(f"  {GREEN}{name:<25}{RESET}{WHITE} {oid}  =>  {val!r}{RESET}")
         return
 
     # -----------------------------------------------------------------------
@@ -690,6 +757,7 @@ Calibration:
         f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True
     )
 
+    # Re-sort to match original input order
     host_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 

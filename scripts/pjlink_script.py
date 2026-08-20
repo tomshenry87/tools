@@ -10,14 +10,9 @@ Queries projectors via PJLink protocol for:
     - Lamp hours (LAMP for all classes)
     - Manufacturer, model, and other device info
 
-Features:
-    - Concurrent workers for fast scanning
-    - Cyan progress bar scaled to terminal width
-    - White text results table
-
 Defaults:
     Input:  secrets/pjlink_firmware.csv
-    Output: projector_version_check/files/results_YYYY-MM-DD_HH-MM-SS.json
+    Output: projector_version_check/files/results_<YYYYMMDD>_<HHMMSS>.json
 """
 
 import socket
@@ -46,7 +41,31 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Logging
+# Constants
+# ---------------------------------------------------------------------------
+
+DEFAULT_PORT = 4352
+DEFAULT_CSV = "secrets/pjlink_firmware.csv"
+DEFAULT_OUTPUT_DIR = "projector_version_check/files"
+DEFAULT_WORKERS = 5
+ARRAY_KEY = "projectors"
+
+
+# ---------------------------------------------------------------------------
+# ANSI
+# ---------------------------------------------------------------------------
+
+CYAN = "\033[96m"    # Progress bar fill — reserved, nothing else
+GREEN = "\033[92m"   # Success states
+RED = "\033[91m"     # Failure / error states
+YELLOW = "\033[93m"  # Auth-error states
+WHITE = "\033[97m"   # All body text, table content, labels
+BOLD = "\033[1m"     # Section headers, label emphasis
+RESET = "\033[0m"    # Always close every colour block
+
+
+# ---------------------------------------------------------------------------
+# Logging  —  PROTECTED (spec 4)
 # ---------------------------------------------------------------------------
 
 log = logging.getLogger("pjlink")
@@ -68,20 +87,84 @@ def setup_logging(debug: bool):
 
 
 # ---------------------------------------------------------------------------
-# ANSI
+# Shared helpers — byte-identical across all scripts (spec 3.5)
 # ---------------------------------------------------------------------------
 
-CYAN = "\033[96m"
-GREEN = "\033[92m"
-RED = "\033[91m"
-YELLOW = "\033[93m"
-WHITE = "\033[97m"
-BOLD = "\033[1m"
-RESET = "\033[0m"
+def get_terminal_width() -> int:
+    try:
+        return shutil.get_terminal_size().columns
+    except Exception:
+        return 120
+
+
+def clean(val) -> str:
+    """Sanitise a value for table display — converts None/-1/empty to N/A."""
+    s = str(val) if val is not None else "N/A"
+    if s in ("None", "-1", ""):
+        return "N/A"
+    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
+        return "N/A"
+    return s
+
+
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+# PJLink protocol errors. PJLINK ERRA is authentication failure; ERR1-ERR4 are
+# undefined command, out of parameter, unavailable time, and projector failure.
+# The specific codes precede the generic ERRA entry so it cannot swallow them.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"PJLINK ERRA", "Auth failed"),
+    (r"ERR1",        "Undefined cmd"),
+    (r"ERR2",        "Out of parameter"),
+    (r"ERR3",        "Unavailable time"),
+    (r"ERR4",        "Device failure"),
+    (r"ERRA",        "Auth error"),
+]
+
+
+def truncate_error(err, max_len: int = 30) -> str:
+    """Map verbose exception messages to short readable labels."""
+    if not err:
+        return ""
+    s = str(err)
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
+        if re.search(pat, s):
+            return label
+    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
+    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
+    s = re.sub(r'\s+', ' ', s).strip(': ')
+    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
 # ---------------------------------------------------------------------------
-# PJLink Client
+# PJLink Client  —  PROTECTED IN FULL (spec 4). DO NOT MODIFY.
+# Class 1 / Class 2 negotiation, auth challenge/response, command framing.
+# Field naming for the JSON contract is handled downstream in query_projector().
 # ---------------------------------------------------------------------------
 
 class PJLinkError(Exception):
@@ -93,7 +176,7 @@ class PJLinkAuthError(PJLinkError):
 
 
 class PJLinkClient:
-    DEFAULT_PORT = 4352
+    DEFAULT_PORT = DEFAULT_PORT
     BUFFER_SIZE = 4096
     DEFAULT_TIMEOUT = 10
     MAX_PASSWORD_LENGTH = 32
@@ -216,9 +299,14 @@ class PJLinkClient:
     def _compute_digest(self) -> str:
         if not self.security_enabled or not self.random_number:
             return ""
-        return hashlib.md5(
+        digest = hashlib.md5(
             f"{self.random_number}{self.password}".encode("utf-8")
         ).hexdigest()
+        log.debug(
+            f"[{self.host}] Auth digest — nonce: {self.random_number!r} "
+            f"+ password → MD5: {digest}"
+        )
+        return digest
 
     def _send_raw(self, data: bytes):
         if not self.socket:
@@ -562,11 +650,11 @@ class PJLinkClient:
 
 
 # ---------------------------------------------------------------------------
-# CSV
+# CSV (spec 3.7)
 # ---------------------------------------------------------------------------
 
 def load_csv(csv_path: str) -> list:
-    projectors = []
+    devices = []
     p = Path(csv_path)
     if not p.exists():
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
@@ -584,59 +672,83 @@ def load_csv(csv_path: str) -> list:
             sys.exit(1)
         col_map = {n.strip().lower(): n for n in reader.fieldnames}
         if "host" not in col_map:
-            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs 'host' column. Found: {reader.fieldnames}{RESET}")
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
             sys.exit(1)
         for row in reader:
             host = row.get(col_map["host"], "").strip()
             if not host or host.startswith("#"):
                 continue
-            port = PJLinkClient.DEFAULT_PORT
-            if "port" in col_map:
-                ps = row.get(col_map["port"], "").strip()
-                if ps:
-                    try:
-                        port = int(ps)
-                    except ValueError:
-                        pass
-            pw = None
+            try:
+                port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
+            except (ValueError, TypeError):
+                port = DEFAULT_PORT
+            password = None
             if "password" in col_map:
-                pw = row.get(col_map["password"], "").strip() or None
-            projectors.append({"host": host, "port": port, "password": pw})
-    return projectors
+                password = row.get(col_map["password"], "").strip() or None
+            devices.append({"host": host, "port": port, "password": password})
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
+        sys.exit(1)
+    return devices
 
 
 # ---------------------------------------------------------------------------
 # Query
 # ---------------------------------------------------------------------------
 
+def _map_to_contract(info: dict) -> dict:
+    """Map PJLinkClient's internal field names onto the JSON data contract.
+
+    Kept outside PJLinkClient so the protected class stays untouched (spec 4)
+    while the emitted JSON conforms to spec 2.3 / 2.4.
+    """
+    out = dict(info)
+    if "product_name" in out:
+        out["model"] = out.pop("product_name")
+    if "serial_number" in out:
+        out["serial"] = out.pop("serial_number")
+    # lamp_hours_total is read with `??` — null means not reported, 0 is a real
+    # zero reading. The client uses -1 as its not-reported sentinel.
+    if out.get("lamp_hours_total") == -1:
+        out["lamp_hours_total"] = None
+    return out
+
+
 def query_projector(host, port, password, timeout, query_all, diagnostic):
     result = {
-        "host": host, "port": port,
+        "host": host,
+        "port": port,
         "query_timestamp": datetime.now(timezone.utc).isoformat(),
-        "status": "success", "error": None,
+        "status": "success",
+        "error": None,
+        "manufacturer": None,
+        "model": None,
+        "serial": None,
+        "mac": None,
+        "firmware_version": None,
+        "lamp_hours_total": None,
+        "power_status": None,
     }
     client = PJLinkClient(host=host, port=port, password=password, timeout=timeout)
     try:
         client.connect()
         if diagnostic:
             result["diagnostic"] = client.run_diagnostic()
-            result["firmware_version"] = "See diagnostic"
-            result["lamp_hours_total"] = -1
             result["lamp_hours_total_display"] = "See diagnostic"
             result["lamp_hours_summary"] = "See diagnostic"
         elif query_all:
-            result.update(client.get_all_info())
+            result.update(_map_to_contract(client.get_all_info()))
         else:
-            result.update(client.get_firmware_info())
+            result.update(_map_to_contract(client.get_firmware_info()))
     except PJLinkAuthError as e:
-        result.update(status="auth_error", error=str(e), firmware_version="AUTH ERROR",
-                      lamp_hours_total=-1, lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
+        result.update(status="auth_error", error=str(e),
+                      lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
     except PJLinkError as e:
-        result.update(status="error", error=str(e), firmware_version="ERROR",
-                      lamp_hours_total=-1, lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
+        result.update(status="error", error=str(e),
+                      lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
     except Exception as e:
-        result.update(status="error", error=f"{type(e).__name__}: {e}", firmware_version="ERROR",
-                      lamp_hours_total=-1, lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
+        result.update(status="error", error=f"{type(e).__name__}: {e}",
+                      lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
     finally:
         client.disconnect()
     return result
@@ -651,68 +763,25 @@ def save_to_json(data, path):
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 
-def truncate_error(err, max_len=30):
-    if not err:
-        return ""
-    s = str(err)
-    for pat, label in [
-        (r"[Cc]onnection timed out", "Timed out"),
-        (r"[Cc]onnection refused", "Conn refused"),
-        (r"[Nn]o response .* timeout", "No response"),
-        (r"[Nn]o route to host", "No route"),
-        (r"[Nn]etwork is unreachable", "Net unreachable"),
-        (r"[Nn]ame or service not known", "DNS failed"),
-        (r"[Nn]etwork error", "Network error"),
-        (r"[Aa]uthentication required", "Auth required"),
-        (r"PJLINK ERRA", "Auth failed"),
-        (r"ERRA", "Auth error"),
-        (r"[Nn]ot a PJLink device", "Not PJLink"),
-        (r"[Mm]alformed greeting", "Bad greeting"),
-    ]:
-        if re.search(pat, s):
-            return label
-    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
-    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
-    s = re.sub(r'^(Network error|Socket error)\s*:\s*', '', s, flags=re.IGNORECASE)
-    s = re.sub(r'\s+', ' ', s).strip(': ')
-    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
-
-
 def print_results_table(results, firmware_filter=None):
-    def clean(val):
-        s = str(val) if val is not None else "N/A"
-        if s in ("None", "-1", ""):
-            return "N/A"
-        if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
-            return "N/A"
-        return s
-
-    def status_icon(r):
-        s = r.get("status", "error")
-        if s == "success":
-            return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-        elif s == "auth_error":
-            return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-        return f"{RED}\u2717 ERROR{RESET}{WHITE}"
-
     rows = []
     for r in results:
         rows.append([
             status_icon(r),
             r.get("host", "N/A"),
             clean(r.get("manufacturer")),
-            clean(r.get("product_name")),
+            clean(r.get("model")),
             clean(r.get("firmware_version")),
             clean(r.get("lamp_hours_total_display")),
             clean(r.get("pjlink_class")),
-            clean(r.get("power_status")),
             clean(r.get("projector_name")),
+            clean(r.get("power_status")),
             truncate_error(r.get("error", "")),
         ])
 
     headers = [
-        "Status", "Host", "Manufacturer", "Model",
-        "Firmware", "Lamp Hours", "Class", "Power", "Name", "Error",
+        "Status", "Host", "Manufacturer", "Model", "Firmware",
+        "Lamp Hours", "Class", "Name", "Power", "Error",
     ]
 
     table = tabulate(
@@ -732,7 +801,7 @@ def print_results_table(results, firmware_filter=None):
         title = f"PJLink Firmware Mismatch \u2014 Expected: {firmware_filter}"
     else:
         title = "PJLink Projector Query Results \u2014 Firmware & Lamp Hours"
-    pad = (bw - len(title)) // 2
+    pad = max((bw - len(title)) // 2, 0)
     print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
     print(f"  {'=' * bw}")
 
@@ -740,27 +809,28 @@ def print_results_table(results, firmware_filter=None):
         print(f"  {line}")
 
     total = len(results)
-    ok = sum(1 for r in results if r["status"] == "success")
-    auth = sum(1 for r in results if r["status"] == "auth_error")
+    ok = sum(1 for r in results if r.get("status") == "success")
+    auth = sum(1 for r in results if r.get("status") == "auth_error")
     err = total - ok - auth
 
+    # null means not reported; 0 is a genuine reading and is counted (spec 2.4)
     lamp_vals = [
-        r.get("lamp_hours_total", -1) for r in results
-        if isinstance(r.get("lamp_hours_total"), int) and r.get("lamp_hours_total", -1) > 0
+        r.get("lamp_hours_total") for r in results
+        if isinstance(r.get("lamp_hours_total"), int) and r.get("lamp_hours_total") >= 0
     ]
 
     print()
     if firmware_filter:
         print(
             f"  {BOLD}Firmware mismatches:{RESET}{WHITE} {total}  |  "
-            f"{YELLOW}Expected:{RESET}{WHITE} {firmware_filter}"
+            f"{BOLD}Expected:{RESET}{WHITE} {firmware_filter}"
         )
     else:
         print(
             f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-            f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-            f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+            f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+            f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+            f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
         )
 
     if lamp_vals:
@@ -777,7 +847,69 @@ def print_results_table(results, firmware_filter=None):
 
 
 # ---------------------------------------------------------------------------
-# INFO mode
+# Send mode
+# ---------------------------------------------------------------------------
+
+KNOWN_COMMANDS = {
+    "POWR": {"0": "Standby (Off)", "1": "Power On"},
+    "AVMT": {"10": "Video mute on", "11": "Video mute off",
+             "20": "Audio mute on", "21": "Audio mute off",
+             "30": "AV mute on",    "31": "AV mute off"},
+    "INPT": {},
+}
+
+
+def run_send_mode(host, port, password, cmd, param, timeout):
+    print(f"{WHITE}")
+    print(f"  {BOLD}Send Command{RESET}{WHITE}")
+    print(f"  Host:    {host}:{port}")
+    print(f"  Command: {cmd} {param}")
+    print(f"  {'─' * 60}{RESET}")
+
+    label = KNOWN_COMMANDS.get(cmd, {}).get(param, "")
+    if label:
+        print(f"{WHITE}  Action:  {BOLD}{label}{RESET}")
+
+    client = PJLinkClient(host=host, port=port, password=password, timeout=timeout)
+    try:
+        client.connect()
+        client.detect_class()
+
+        raw_resp = client._send_command(cmd, param)
+
+        print(f"{WHITE}  {BOLD}Response:{RESET}{WHITE} {raw_resp}{RESET}")
+
+        resp_u = raw_resp.strip().upper()
+        if param == "?":
+            meaning = KNOWN_COMMANDS.get(cmd, {}).get(raw_resp.strip(), "")
+            if cmd == "POWR":
+                meaning = client.POWER_STATES.get(raw_resp.strip(), "")
+            if meaning:
+                print(f"  {GREEN}✓ {meaning}{RESET}")
+            else:
+                print(f"  {GREEN}✓ Query response{RESET}")
+        elif resp_u == "OK":
+            print(f"  {GREEN}✓ Command accepted{RESET}")
+        elif resp_u.startswith("ERROR:"):
+            print(f"  {RED}✗ Device returned an error{RESET}")
+        else:
+            print(f"  {YELLOW}? Unexpected response{RESET}")
+
+    except PJLinkAuthError as e:
+        print(f"  {YELLOW}✗ AUTH ERROR — {e}{RESET}")
+    except PJLinkError as e:
+        print(f"  {RED}✗ {truncate_error(str(e))}{RESET}")
+    except Exception as e:
+        print(f"  {RED}✗ {type(e).__name__}: {e}{RESET}")
+    finally:
+        client.disconnect()
+
+    print(f"{WHITE}  {'─' * 60}{RESET}")
+    print()
+
+
+# ---------------------------------------------------------------------------
+# INFO mode  —  PROTECTED (spec 4). DO NOT MODIFY.
 # ---------------------------------------------------------------------------
 
 def run_info_mode(projectors, timeout):
@@ -846,13 +978,8 @@ def run_info_mode(projectors, timeout):
 # Main
 # ---------------------------------------------------------------------------
 
-DEFAULT_CSV = "secrets/pjlink_firmware.csv"
-DEFAULT_OUTPUT_DIR = "projector_version_check/files"
-DEFAULT_WORKERS = 5
-
-
 def default_output_path() -> str:
-    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     return str(Path(DEFAULT_OUTPUT_DIR) / f"results_{ts}.json")
 
 
@@ -863,7 +990,7 @@ def main():
         epilog=f"""
 Defaults:
     Input CSV:   {DEFAULT_CSV}
-    Output JSON: {DEFAULT_OUTPUT_DIR}/results_YYYY-MM-DD_HH-MM-SS.json
+    Output JSON: {DEFAULT_OUTPUT_DIR}/results_<YYYYMMDD>_<HHMMSS>.json
     Workers:     {DEFAULT_WORKERS}
 
 CSV Format:
@@ -875,6 +1002,9 @@ Examples:
     %(prog)s
     %(prog)s -i my_projectors.csv -o my_results.json
     %(prog)s -w 10 --all
+    %(prog)s --firmware 1.07 1.08
+    %(prog)s --info 192.168.1.10 --password 'secret'
+    %(prog)s --send POWR 1 --host 192.168.1.10
     %(prog)s --diagnostic --debug
         """,
     )
@@ -882,7 +1012,7 @@ Examples:
     parser.add_argument("-i", "--input", default=DEFAULT_CSV,
                         help=f"Input CSV (default: {DEFAULT_CSV})")
     parser.add_argument("-o", "--output", default=None,
-                        help=f"Output JSON (default: {DEFAULT_OUTPUT_DIR}/results_YYYY-MM-DD_HH-MM-SS.json)")
+                        help=f"Output JSON (default: {DEFAULT_OUTPUT_DIR}/results_<YYYYMMDD>_<HHMMSS>.json)")
     parser.add_argument("-t", "--timeout", type=int, default=10,
                         help="Timeout per device in seconds (default: 10)")
     parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
@@ -893,10 +1023,14 @@ Examples:
     parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
     parser.add_argument("--info", nargs="?", const=True, metavar="HOST",
                         help="Query INFO one by one; optionally pass a single HOST to skip CSV")
-    parser.add_argument("--port", type=int, default=PJLinkClient.DEFAULT_PORT,
-                        help=f"Port for single-host --info query (default: {PJLinkClient.DEFAULT_PORT})")
+    parser.add_argument("--send", nargs=2, metavar=("CMD", "PARAM"),
+                        help="Send a PJLink command to a single host, e.g. --send POWR 1")
+    parser.add_argument("--host", default=None,
+                        help="Single host for --send (IP or hostname)")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT,
+                        help=f"Port for single-host queries (default: {DEFAULT_PORT})")
     parser.add_argument("--password", default=None,
-                        help="Password for single-host --info query")
+                        help="Password for single-host queries")
     parser.add_argument("--debug", action="store_true", help="Debug logging")
 
     args = parser.parse_args()
@@ -904,16 +1038,13 @@ Examples:
 
     csv_file = args.input
     output_file = args.output if args.output else default_output_path()
-
-    # Ensure output directory exists
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-
     workers = max(1, args.workers)
 
-    # -- Header --
+    # -- Header (spec 3.2) --
     print(f"{WHITE}")
-    print(f"  {BOLD}PJLink Projector Query{RESET}{WHITE}")
-    print(f"  Firmware + Lamp Hours | Class 1 + 2")
+    print(f"  {BOLD}PJLink Projector Firmware & Lamp Hours Query{RESET}{WHITE}")
+    print(f"  Queries projectors via PJLink Class 1 and Class 2")
     print(f"  Input:   {csv_file}")
     print(f"  Output:  {output_file}")
     print(f"  Workers: {workers}")
@@ -923,23 +1054,27 @@ Examples:
         print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against {label}")
     print(f"{RESET}")
 
+    # -- Send mode: single command to a single host --
+    if args.send:
+        if not args.host:
+            print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} --send requires --host{RESET}")
+            sys.exit(1)
+        run_send_mode(
+            host=args.host, port=args.port, password=args.password,
+            cmd=args.send[0].upper(), param=args.send[1], timeout=args.timeout,
+        )
+        sys.exit(0)
+
     # -- INFO mode: sequential, one device at a time --
     if args.info:
         if isinstance(args.info, str):
             targets = [{"host": args.info, "port": args.port, "password": args.password}]
         else:
             targets = load_csv(csv_file)
-            if not targets:
-                print(f"  {WHITE}No projectors found in CSV.{RESET}")
-                sys.exit(1)
         run_info_mode(targets, args.timeout)
         sys.exit(0)
 
     projectors = load_csv(csv_file)
-    if not projectors:
-        print(f"  {WHITE}No projectors found in CSV.{RESET}")
-        sys.exit(1)
-
     total = len(projectors)
 
     # -- Track only the most recently started host --
@@ -955,11 +1090,11 @@ Examples:
             timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
         )
 
-    # -- Run with thread pool + tqdm --
+    # -- Run with thread pool + tqdm (spec 3.3) --
     results_map = {}
     start = time.time()
 
-    term_width = shutil.get_terminal_size((120, 24)).columns
+    term_width = get_terminal_width()
 
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
@@ -994,11 +1129,18 @@ Examples:
                 except Exception as e:
                     p = projectors[idx]
                     results_map[idx] = {
-                        "host": p["host"], "port": p["port"],
+                        "host": p["host"],
+                        "port": p["port"],
                         "query_timestamp": datetime.now(timezone.utc).isoformat(),
-                        "status": "error", "error": f"Worker error: {e}",
-                        "firmware_version": "ERROR",
-                        "lamp_hours_total": -1,
+                        "status": "error",
+                        "error": f"Worker error: {e}",
+                        "manufacturer": None,
+                        "model": None,
+                        "serial": None,
+                        "mac": None,
+                        "firmware_version": None,
+                        "lamp_hours_total": None,
+                        "power_status": None,
                         "lamp_hours_total_display": "N/A",
                         "lamp_hours_summary": "N/A",
                     }
@@ -1017,7 +1159,7 @@ Examples:
     # -- Reassemble in CSV order --
     results = [results_map[i] for i in range(total)]
 
-    # -- Save JSON --
+    # -- Save JSON (spec 2.1) --
     output_data = {
         "query_info": {
             "csv_file": str(Path(csv_file).resolve()),
@@ -1030,7 +1172,7 @@ Examples:
             "errors": sum(1 for r in results if r["status"] != "success"),
             "elapsed_seconds": round(elapsed, 1),
         },
-        "projectors": results,
+        ARRAY_KEY: results,
     }
 
     save_to_json(output_data, output_file)

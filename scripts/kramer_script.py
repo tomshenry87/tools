@@ -2,10 +2,10 @@
 """
 Kramer VP-440H2 - Protocol 3000 Device Query Tool
 ===================================================
-Reads a list of hosts from switchers.csv (one column: "host", optionally a
-second column "port").  For each host it opens a TCP socket, sends the
-standard Protocol 3000 queries, then prints a formatted table to the CLI
-and saves results.json.
+Reads a list of hosts from secrets/kramer_firmware.csv (one column: "host",
+optionally a second column "port").  For each host it opens a TCP socket, sends
+the standard Protocol 3000 queries, then prints a formatted table to the CLI and
+saves a timestamped JSON report to kramer_version_check/files/.
 
 Protocol 3000 reference (VP-440H2 User Manual):
   Command syntax : #<COMMAND>\r
@@ -14,9 +14,10 @@ Protocol 3000 reference (VP-440H2 User Manual):
 
 Usage:
   Normal run   : python3 kramer_firmware.py
+  Version audit: python3 kramer_firmware.py --firmware 1.02.0008
   Full debug   : python3 kramer_firmware.py --debug
   Single host  : python3 kramer_firmware.py --debug --host 192.168.1.100
-  Single cmd   : python3 kramer_firmware.py --debug --host 192.168.1.100 --cmd firmware
+  Single cmd   : python3 kramer_firmware.py --debug --host 192.168.1.100 --cmd firmware_version
 
 Dependencies: pip install tabulate tqdm python-dateutil
 """
@@ -30,6 +31,7 @@ import socket
 import sys
 import threading
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -53,17 +55,18 @@ except ImportError:
     _DATEUTIL = False
 
 # ---------------------------------------------------------------------------
-# ANSI colour palette  (style guide §1)
+# ANSI palette  (spec 3.1)
 # ---------------------------------------------------------------------------
-CYAN   = "\033[96m"   # Progress bar fill
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
 GREEN  = "\033[92m"   # Success states
 RED    = "\033[91m"   # Failure / error states
-YELLOW = "\033[93m"   # Warning / auth error states
+YELLOW = "\033[93m"   # Auth-error states
 WHITE  = "\033[97m"   # All body text, table content, labels
 BOLD   = "\033[1m"    # Section headers, label emphasis
 RESET  = "\033[0m"    # Always close every colour block
 
-# Debug-only private colours (never used in normal output)
+# Debug-mode colours. Retained under spec section 4, which protects
+# debug_print() from modification. Not used in normal output.
 _DBG_YLW = "\033[33m"
 _DBG_GRN = "\033[32m"
 _DBG_DIM = "\033[2m"
@@ -73,27 +76,32 @@ _DBG_MGT = "\033[35m"
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-DEFAULT_TCP_PORT = 5000
+SCRIPT_DIR       = Path(__file__).parent
+DEFAULT_PORT     = 5000
 CONNECT_TIMEOUT  = 8.0
 RECV_TIMEOUT     = 8.0
 BUFFER_SIZE      = 4096
-CSV_FILE         = "secrets/kramer_firmware.csv"
-OUTPUT_DIR       = Path(__file__).parent / "kramer_version_check" / "files"
-JSON_FILE        = OUTPUT_DIR / f"results_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.json"
 WORKERS          = 5
 SEND_PAUSE       = 0.02       # 20 ms post-send pause
 DRAIN_WINDOW     = 0.05       # 50 ms non-blocking drain window
 
+MANUFACTURER     = "Kramer"
+
+CSV_FILE         = SCRIPT_DIR / "secrets" / "kramer_firmware.csv"
+OUTPUT_DIR       = SCRIPT_DIR / "kramer_version_check" / "files"
+_RUN_STAMP       = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+JSON_FILE        = OUTPUT_DIR / f"results_{_RUN_STAMP}.json"
+
 # ---------------------------------------------------------------------------
-# Protocol queries
+# Protocol queries  (spec section 4 — command framing unchanged)
 # ---------------------------------------------------------------------------
 SCALAR_QUERIES = {
-    "model":      ("#MODEL?\r",      re.compile(r"~\d+@MODEL\s+(.+)",      re.IGNORECASE)),
-    "build_date": ("#BUILD-DATE?\r", re.compile(r"~\d+@BUILD-DATE\s+(.+)", re.IGNORECASE)),
-    "prot_ver":   ("#PROT-VER?\r",   re.compile(r"~\d+@PROT-VER\s+(.+)",   re.IGNORECASE)),
-    "serial":     ("#SN?\r",         re.compile(r"~\d+@SN\s+(.+)",         re.IGNORECASE)),
-    "firmware":   ("#VERSION?\r",    re.compile(r"~\d+@VERSION\s+(.+)",    re.IGNORECASE)),
-    "mac":        ("#NET-MAC?\r",    re.compile(r"~\d+@NET-MAC\s+(.+)",    re.IGNORECASE)),
+    "model":            ("#MODEL?\r",      re.compile(r"~\d+@MODEL\s+(.+)",      re.IGNORECASE)),
+    "build_date":       ("#BUILD-DATE?\r", re.compile(r"~\d+@BUILD-DATE\s+(.+)", re.IGNORECASE)),
+    "prot_ver":         ("#PROT-VER?\r",   re.compile(r"~\d+@PROT-VER\s+(.+)",   re.IGNORECASE)),
+    "serial":           ("#SN?\r",         re.compile(r"~\d+@SN\s+(.+)",         re.IGNORECASE)),
+    "firmware_version": ("#VERSION?\r",    re.compile(r"~\d+@VERSION\s+(.+)",    re.IGNORECASE)),
+    "mac":              ("#NET-MAC?\r",    re.compile(r"~\d+@NET-MAC\s+(.+)",    re.IGNORECASE)),
 }
 
 ALL_CMD_KEYS = list(SCALAR_QUERIES.keys())
@@ -102,7 +110,7 @@ DEBUG = False
 
 
 # ---------------------------------------------------------------------------
-# Debug helpers
+# Debug helpers  (spec section 4 — do not change)
 # ---------------------------------------------------------------------------
 def debug_print(host, label, data):
     if not DEBUG:
@@ -131,7 +139,7 @@ def debug_print(host, label, data):
 
 
 # ---------------------------------------------------------------------------
-# Socket I/O
+# Socket I/O  (spec section 4 — do not change)
 # ---------------------------------------------------------------------------
 def send_query(sock, command, host=""):
     """Send one Protocol 3000 command and return the stripped response string.
@@ -175,7 +183,7 @@ def send_query(sock, command, host=""):
 
 
 # ---------------------------------------------------------------------------
-# Date normalisation
+# Date normalisation  (spec section 4 — do not change)
 # ---------------------------------------------------------------------------
 _DATE_PATTERNS = [
     (
@@ -213,18 +221,17 @@ def normalise_date(raw):
 
 
 # ---------------------------------------------------------------------------
-# Table helpers  (style guide §3)
+# Shared helpers — byte-identical across all scripts  (spec 3.5)
 # ---------------------------------------------------------------------------
-def status_icon(r):
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+def get_terminal_width() -> int:
+    try:
+        return shutil.get_terminal_size().columns
+    except Exception:
+        return 120
 
 
-def clean(val):
+def clean(val) -> str:
+    """Sanitise a value for table display — converts None/-1/empty to N/A."""
     s = str(val) if val is not None else "N/A"
     if s in ("None", "-1", ""):
         return "N/A"
@@ -233,25 +240,54 @@ def clean(val):
     return s
 
 
-def truncate_error(err, max_len=30):
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+# ---------------------------------------------------------------------------
+# Error label truncation  (spec 3.6)
+# ---------------------------------------------------------------------------
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+# Protocol 3000 ~NN@ERR responses and the bare ERR forms the device returns
+# for unsupported or malformed commands.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"~\d+@ERR\s*0*1\b",   "Cmd unsupported"),
+    (r"~\d+@ERR\s*0*2\b",   "Param out of range"),
+    (r"~\d+@ERR\s*0*3\b",   "Cmd unavailable"),
+    (r"~\d+@ERR",           "Device error"),
+    (r"\bERR\s*\d+\b",      "Device error"),
+    (r"\bERR\b",            "Device error"),
+]
+
+
+def truncate_error(err, max_len: int = 30) -> str:
+    """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        # Protocol 3000 – specific
-        (r"Protocol 3000",               "Proto3000 error"),
-        # Generic network
-        (r"[Cc]onnection timed out",     "Timed out"),
-        (r"[Cc]onnection refused",       "Conn refused"),
-        (r"[Nn]o response .* timeout",   "No response"),
-        (r"[Nn]o route to host",         "No route"),
-        (r"[Nn]etwork is unreachable",   "Net unreachable"),
-        (r"[Nn]ame or service not known","DNS failed"),
-        (r"[Nn]etwork error",            "Network error"),
-        (r"[Aa]uthentication required",  "Auth required"),
-        (r"[Nn]ot a .* device",          "Not supported"),
-        (r"[Mm]alformed",                "Bad response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
@@ -264,19 +300,19 @@ def truncate_error(err, max_len=30):
 # Device querying
 # ---------------------------------------------------------------------------
 def query_device(host, port):
-    ts    = datetime.now(timezone.utc).isoformat()
     result = {
-        "host":            host,
-        "port":            port,
-        "query_timestamp": ts,
-        "status":          "error",
-        "error":           None,
-        "build_date":      "N/A",
-        "model":           "N/A",
-        "prot_ver":        "N/A",
-        "serial":          "N/A",
-        "firmware":        "N/A",
-        "mac":             "N/A",
+        "host":             host,
+        "port":             port,
+        "query_timestamp":  datetime.now(timezone.utc).isoformat(),
+        "status":           "error",
+        "error":            None,
+        "manufacturer":     MANUFACTURER,
+        "model":            None,
+        "firmware_version": None,
+        "serial":           None,
+        "mac":              None,
+        "build_date":       None,
+        "prot_ver":         None,
     }
     try:
         with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
@@ -300,21 +336,18 @@ def query_device(host, port):
                         result[key] = m.group(1).strip()
                         break
 
-            result["build_date"] = normalise_date(result["build_date"])
-            result["status"]     = "success"
+            if result["build_date"]:
+                result["build_date"] = normalise_date(result["build_date"])
+            result["status"] = "success"
 
-    except ConnectionRefusedError as exc:
-        result["error"] = str(exc)
-    except socket.timeout as exc:
-        result["error"] = str(exc)
-    except OSError as exc:
+    except (ConnectionRefusedError, socket.timeout, OSError) as exc:
         result["error"] = str(exc)
 
     return result
 
 
 # ---------------------------------------------------------------------------
-# Debug probe
+# Debug probe  (spec section 4 — do not change)
 # ---------------------------------------------------------------------------
 class DebugProbeError(Exception):
     """Raised when debug_probe encounters a fatal connection problem."""
@@ -356,9 +389,9 @@ def debug_probe(host, port, cmd_key):
 
 
 # ---------------------------------------------------------------------------
-# CSV loader  (style guide §6)
+# CSV loader  (spec 3.7)
 # ---------------------------------------------------------------------------
-def load_csv(csv_path):
+def load_csv(csv_path: str) -> list:
     devices = []
     p = Path(csv_path)
     if not p.exists():
@@ -383,14 +416,14 @@ def load_csv(csv_path):
             host = row.get(col_map["host"], "").strip()
             if not host or host.startswith("#"):
                 continue
-            port = DEFAULT_TCP_PORT
-            if "port" in col_map:
-                raw_port = row.get(col_map["port"], "").strip()
-                if raw_port.isdigit():
-                    port = int(raw_port)
+            try:
+                port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
+            except (ValueError, TypeError):
+                port = DEFAULT_PORT
+            # Parse this script's additional columns here — port.
             devices.append({"host": host, "port": port})
     if not devices:
-        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No hosts found in {csv_path}{RESET}")
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
         sys.exit(1)
     return devices
 
@@ -407,13 +440,14 @@ def main():
     parser.add_argument("--debug", action="store_true",
                         help="Print hex+ASCII dump of every socket exchange.")
     parser.add_argument("--host", metavar="IP",
-                        help="(Debug) Target a single host instead of switchers.csv.")
-    parser.add_argument("--port", metavar="PORT", type=int, default=DEFAULT_TCP_PORT,
-                        help=f"TCP port (default: {DEFAULT_TCP_PORT}).")
+                        help="(Debug) Target a single host instead of the CSV.")
+    parser.add_argument("--port", metavar="PORT", type=int, default=DEFAULT_PORT,
+                        help=f"TCP port (default: {DEFAULT_PORT}).")
     parser.add_argument("--cmd", metavar="CMD", choices=ALL_CMD_KEYS,
                         help="(Debug) Probe only one command. Choices: " + ", ".join(ALL_CMD_KEYS))
     parser.add_argument("--firmware", metavar="VERSION",
-                        help="Filter table to devices NOT running this firmware version. JSON output is unaffected.")
+                        help="Hide devices already on this firmware version from the "
+                             "terminal table. JSON output is unaffected.")
     args = parser.parse_args()
 
     DEBUG = args.debug
@@ -433,21 +467,20 @@ def main():
     total      = len(devices)
     start_time = time.time()
 
-    # Ensure output directory exists
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # -- Header block (style guide §2) --------------------------------------
+    # -- Header block (spec 3.2) -------------------------------------------
     print(f"{WHITE}")
-    print(f"  {BOLD}Kramer VP-440H2 Query Tool{RESET}{WHITE}")
-    print(f"  Protocol 3000 TCP device interrogation")
+    print(f"  {BOLD}Kramer VP-440H2 - Protocol 3000 Device Query Tool{RESET}{WHITE}")
+    print(f"  Queries Kramer matrix switchers for firmware and build date")
     print(f"  Input:   {CSV_FILE}")
     print(f"  Output:  {JSON_FILE}")
     print(f"  Workers: {WORKERS}")
     print(f"  Timeout: {CONNECT_TIMEOUT:.0f}s")
     print(f"{RESET}")
 
-    # -- Progress bar (style guide §3) -------------------------------------
-    term_width = shutil.get_terminal_size((120, 24)).columns
+    # -- Progress bar (spec 3.3) -------------------------------------------
+    term_width = get_terminal_width()
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
         f"{CYAN}{{bar}}{RESET}"
@@ -476,8 +509,7 @@ def main():
         with ThreadPoolExecutor(max_workers=WORKERS) as executor:
             futures = {executor.submit(worker_task, d): d for d in devices}
             for future in as_completed(futures):
-                result = future.result()
-                results.append(result)
+                results.append(future.result())
                 with active_lock:
                     host_display = latest_host["value"]
                 pbar.set_postfix_str(host_display, refresh=False)
@@ -489,38 +521,39 @@ def main():
             refresh=True,
         )
 
-    # -- Tally results ------------------------------------------------------
+    # -- Tally -------------------------------------------------------------
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
 
-    # -- Build table (style guide §3) --------------------------------------
-    # Apply --firmware filter for table display only; JSON always gets all results.
+    # -- Table (spec 3.4) --------------------------------------------------
+    # --firmware filters the table view only; JSON always receives all results.
     firmware_filter = args.firmware
     display_results = (
-        [r for r in results if r.get("firmware", "N/A") != firmware_filter]
+        [r for r in results if r.get("firmware_version") != firmware_filter]
         if firmware_filter else results
     )
     filtered_count = len(results) - len(display_results)
 
-    # Column order: Status | Host | Model | Firmware | Build Date | Protocol Ver | Serial | MAC | Error
-    table_rows = []
-    for r in display_results:
-        error_raw = r.get("error") or ""
-        table_rows.append([
+    # Status | Host | Manufacturer | Model | Firmware | Build Date | Protocol Ver | Serial | MAC | Error
+    table_rows = [
+        [
             status_icon(r),
             clean(r["host"]),
+            clean(r["manufacturer"]),
             clean(r["model"]),
-            clean(r["firmware"]),
+            clean(r["firmware_version"]),
             clean(r["build_date"]),
             clean(r["prot_ver"]),
             clean(r["serial"]),
             clean(r["mac"]),
-            truncate_error(error_raw),
-        ])
+            truncate_error(r.get("error") or ""),
+        ]
+        for r in display_results
+    ]
 
-    headers = ["Status", "Host", "Model", "Firmware", "Build Date",
-               "Protocol Ver", "Serial", "MAC", "Error"]
+    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
+               "Build Date", "Protocol Ver", "Serial", "MAC", "Error"]
 
     table = tabulate(
         table_rows,
@@ -530,14 +563,14 @@ def main():
         numalign="right",
     )
 
-    # -- Title banner -------------------------------------------------------
+    # -- Title banner ------------------------------------------------------
     first_line = table.split("\n")[0]
     raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw         = max(raw_width, 60)
     title      = "Kramer VP-440H2 Query Results — Protocol 3000"
     if firmware_filter:
         title += f" — Excluding {firmware_filter}"
-    pad        = (bw - len(title)) // 2
+    pad        = max(0, (bw - len(title)) // 2)
 
     print(f"{WHITE}")
     print(f"  {'=' * bw}")
@@ -546,35 +579,42 @@ def main():
     for line in table.split("\n"):
         print(f"  {line}")
 
-    # -- Summary footer -----------------------------------------------------
+    # -- Summary footer (spec 3.8) -----------------------------------------
     print()
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
+
+    # Device-specific metrics line: firmware version breakdown across the fleet
+    version_counts = Counter(
+        r["firmware_version"] for r in results
+        if r["status"] == "success" and r.get("firmware_version")
+    )
+    if version_counts:
+        breakdown = "  |  ".join(
+            f"{ver}: {count}" for ver, count in version_counts.most_common()
+        )
+        print(f"  {BOLD}Firmware Versions{RESET}{WHITE} — {breakdown}")
+    else:
+        print(f"  {BOLD}Firmware Versions{RESET}{WHITE} — No data available")
+
     if firmware_filter:
         print(
             f"  {BOLD}Firmware Filter:{RESET}{WHITE} hiding {filtered_count} device(s) "
             f"on {firmware_filter} — {len(display_results)} device(s) shown"
         )
-    print(f"  {BOLD}MAC Addresses{RESET}{WHITE} \u2014 Reported: {sum(1 for r in results if r.get('mac') not in ('N/A', None))}/{total}")
     print(f"{RESET}")
 
-    # -- Closing footer lines -----------------------------------------------
-    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {JSON_FILE}{RESET}")
-    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({WORKERS} workers){RESET}")
-    print()
-
-    # -- JSON output (style guide §5) --------------------------------------
-    ts_now = datetime.now(timezone.utc).isoformat()
+    # -- JSON output (spec 2.1 / 2.7) --------------------------------------
     output = {
         "query_info": {
             "csv_file":        str(Path(CSV_FILE).resolve()),
-            "timestamp":       ts_now,
+            "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "Kramer Protocol 3000",
-            "mode":            "sequential",
+            "mode":            "threaded",
             "workers":         WORKERS,
             "total":           total,
             "success":         ok,
@@ -584,7 +624,13 @@ def main():
         "switches": results,
     }
 
-    with open(JSON_FILE, "w", encoding="utf-8") as fh:        json.dump(output, fh, indent=2)
+    with open(JSON_FILE, "w", encoding="utf-8") as fh:
+        json.dump(output, fh, indent=2)
+
+    # -- Closing lines (spec 3.8) ------------------------------------------
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {JSON_FILE}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({WORKERS} workers){RESET}")
+    print()
 
 
 if __name__ == "__main__":

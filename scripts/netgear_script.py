@@ -3,16 +3,21 @@
 Netgear M4250 Router Version & CPU Temp Checker
 =================================================
 Reads router credentials from secrets/netgear_firmware.csv (default), connects via SSH,
-runs `show hardware` and `show environment | include Temp`,
-extracts firmware version and CPU temperature, writes results to
-netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json (default), and prints a summary table.
+runs `show hardware`, `show environment | include Temp`, and `show poe`,
+extracts firmware version, model, serial, CPU temperature, and PoE consumption,
+writes results to netgear_firmware/files/results_YYYYMMDD_HHMMSS.json (default),
+and prints a summary table.
+
+Temperature note: the M4250 CLI reports Celsius. The terminal table and metrics
+line display Fahrenheit (engineers here read °F). The JSON emits BOTH
+`board_temperature1_f` and `board_temperature1_c`, each suffixed truthfully.
 
 Usage:
-    python3 netgear_firmware.py
-    python3 netgear_firmware.py --verbose
-    python3 netgear_firmware.py --csv secrets/netgear_firmware.csv --output netgear_firmware/files/results.json
-    python3 netgear_firmware.py --include-raw --verbose
-    python3 netgear_firmware.py --firmware 12.0.20.7
+    python3 netgear_script.py
+    python3 netgear_script.py --verbose
+    python3 netgear_script.py --csv secrets/netgear_firmware.csv
+    python3 netgear_script.py --include-raw --verbose
+    python3 netgear_script.py --firmware 12.0.20.7
 
 CSV columns: host, username, password, port (port defaults to 22)
 """
@@ -50,87 +55,49 @@ except ImportError:
 
 
 # ──────────────────────────────────────────────
-#  ANSI color palette
+#  ANSI colour palette
 # ──────────────────────────────────────────────
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
+
+DEFAULT_PORT = 22
 
 # ──────────────────────────────────────────────
-#  Logging — plain text, no colors
+#  Logging — plain text, no colours
 # ──────────────────────────────────────────────
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s  %(levelname)-8s  %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-log = logging.getLogger("netgear_m4250_checker")
+log = logging.getLogger("netgear_script")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  CSV loader
+#  Unit conversion
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def load_csv(csv_path: Path) -> list[dict]:
-    if not csv_path.exists():
-        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
-        sys.exit(1)
-
-    routers: list[dict] = []
-    with csv_path.open("r", encoding="utf-8-sig") as fh:
-        sample = fh.read(4096)
-        fh.seek(0)
-        try:
-            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
-        except csv.Error:
-            dialect = csv.excel
-
-        reader = csv.DictReader(fh, dialect=dialect)
-        if not reader.fieldnames:
-            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
-            sys.exit(1)
-
-        col_map = {n.strip().lower(): n for n in reader.fieldnames}
-        if "host" not in col_map:
-            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
-            sys.exit(1)
-
-        for row in reader:
-            host = row.get(col_map["host"], "").strip()
-            if not host or host.startswith("#"):
-                continue
-            username = row.get(col_map.get("username", ""), "").strip() or "admin"
-            password = row.get(col_map.get("password", ""), "").strip()
-            try:
-                port = int(row.get(col_map.get("port", ""), "") or 22)
-            except ValueError:
-                port = 22
-            routers.append({
-                "host":     host,
-                "username": username,
-                "password": password,
-                "port":     port,
-            })
-
-    return routers
+def fahrenheit_to_celsius(f: float) -> float:
+    """Inverse of mikrotik_script.py's celsius_to_fahrenheit()."""
+    return (f - 32) * 5 / 9
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Table helpers
+#  Shared helpers — byte-identical across all scripts
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def status_icon(r: dict) -> str:
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    if s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+def get_terminal_width() -> int:
+    try:
+        return shutil.get_terminal_size().columns
+    except Exception:
+        return 120
 
 
 def clean(val) -> str:
+    """Sanitise a value for table display — converts None/-1/empty to N/A."""
     s = str(val) if val is not None else "N/A"
     if s in ("None", "-1", ""):
         return "N/A"
@@ -139,33 +106,107 @@ def clean(val) -> str:
     return s
 
 
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Error truncation — shared base + protocol extension
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+# Netgear CLI failures — auth rejection, `% Invalid input`, paramiko transport.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"[Aa]uthentication failed",   "Auth failed"),
+    (r"[Aa]uthentication required", "Auth required"),
+    (r"%\s*[Ii]nvalid input",       "Invalid input"),
+    (r"[Ii]ncomplete command",      "Invalid input"),
+    (r"[Nn]o existing session",     "No session"),
+    (r"SSH.*[Ee]rror",              "SSH error"),
+    (r"[Ee]rror reading SSH",       "SSH error"),
+    (r"[Cc]ould not parse firmware", "Parse error"),
+]
+
+
 def truncate_error(err, max_len: int = 30) -> str:
+    """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        # SSH-specific patterns first
-        (r"[Aa]uthentication failed",     "Auth failed"),
-        (r"[Aa]uthentication required",   "Auth required"),
-        (r"[Nn]o existing session",       "No session"),
-        (r"[Ss]SH.*[Ee]rror",            "SSH error"),
-        (r"[Cc]ould not parse firmware",  "Parse error"),
-        # Generic network patterns
-        (r"[Cc]onnection timed out",      "Timed out"),
-        (r"[Cc]onnection refused",        "Conn refused"),
-        (r"[Nn]o response .* timeout",    "No response"),
-        (r"[Nn]o route to host",          "No route"),
-        (r"[Nn]etwork is unreachable",    "Net unreachable"),
-        (r"[Nn]ame or service not known", "DNS failed"),
-        (r"[Nn]etwork error",             "Network error"),
-        (r"[Mm]alformed",                 "Bad response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
     s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
     s = re.sub(r'\s+', ' ', s).strip(': ')
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  CSV loader
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def load_csv(csv_path: str) -> list:
+    devices = []
+    p = Path(csv_path)
+    if not p.exists():
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
+        sys.exit(1)
+    with open(p, "r", encoding="utf-8-sig") as f:
+        sample = f.read(4096)
+        f.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        except csv.Error:
+            dialect = csv.excel
+        reader = csv.DictReader(f, dialect=dialect)
+        if not reader.fieldnames:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
+            sys.exit(1)
+        col_map = {n.strip().lower(): n for n in reader.fieldnames}
+        if "host" not in col_map:
+            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
+            sys.exit(1)
+        for row in reader:
+            host = row.get(col_map["host"], "").strip()
+            if not host or host.startswith("#"):
+                continue
+            try:
+                port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
+            except (ValueError, TypeError):
+                port = DEFAULT_PORT
+            username = (row.get(col_map.get("username", ""), "") or "").strip() or "admin"
+            password = (row.get(col_map.get("password", ""), "") or "").strip()
+            devices.append({
+                "host":     host,
+                "port":     port,
+                "username": username,
+                "password": password,
+            })
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
+        sys.exit(1)
+    return devices
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -311,6 +352,9 @@ def parse_cpu_temp(raw: str) -> tuple[str | None, float | None]:
     """
     Returns (display_string, numeric_value) or (None, None) if not found.
     Matches lines like:  Temp (C)........ 40
+
+    NOTE: the returned numeric value is FAHRENHEIT. The CLI reports Celsius and
+    this function converts. Callers must treat the returned number as °F.
     """
     clean_text = strip_ansi(raw)
     m = re.search(
@@ -332,25 +376,28 @@ def check_router(
     host: str,
     username: str = "admin",
     password: str = "",
-    port: int = 22,
+    port: int = DEFAULT_PORT,
     timeout: int = 20,
     include_raw: bool = False,
 ) -> dict:
     queried_at = datetime.now(timezone.utc).isoformat()
     result: dict = {
-        "host":               host,
-        "username":           username,
-        "port":               port,
-        "query_timestamp":    queried_at,
-        "status":             "error",
-        "model":              None,
-        "serial_number":      None,
-        "firmware_version":   None,
-        "cpu_temp":           None,
-        "cpu_temp_value":     None,
-        "poe_consumed":       None,
-        "poe_consumed_value": None,
-        "error":              None,
+        "host":                  host,
+        "port":                  port,
+        "query_timestamp":       queried_at,
+        "status":                "error",
+        "manufacturer":          "Netgear",
+        "model":                 None,
+        "serial":                None,
+        "mac":                   None,
+        "firmware_version":      None,
+        "board_temperature1_f":  None,
+        "board_temperature1_c":  None,
+        "poe_out_consumption_w": None,
+        "error":                 None,
+        # CLI-only display strings — not read by the dashboard's router branch
+        "cpu_temp":              None,
+        "poe_consumed":          None,
     }
 
     client = paramiko.SSHClient()
@@ -381,19 +428,28 @@ def check_router(
             result["raw_environment"] = raw_env
             result["raw_poe"]         = raw_poe
 
-        firmware           = parse_firmware_version(raw_ver)
-        model              = parse_machine_model(raw_ver)
-        serial             = parse_serial_number(raw_ver)
-        temp_str, temp_val = parse_cpu_temp(raw_env)
-        poe_str,  poe_val  = parse_poe_power(raw_poe)
+        firmware         = parse_firmware_version(raw_ver)
+        model            = parse_machine_model(raw_ver)
+        serial           = parse_serial_number(raw_ver)
+        temp_str, temp_f = parse_cpu_temp(raw_env)   # temp_f is FAHRENHEIT
+        poe_str, poe_w   = parse_poe_power(raw_poe)
 
-        result["model"]              = model
-        result["serial_number"]      = serial
-        result["firmware_version"]   = firmware
-        result["cpu_temp"]           = temp_str
-        result["cpu_temp_value"]     = temp_val
-        result["poe_consumed"]       = poe_str
-        result["poe_consumed_value"] = poe_val
+        result["model"]            = model
+        result["serial"]           = serial
+        result["firmware_version"] = firmware
+
+        # Temperature — emit both units, each suffixed truthfully.
+        # parse_cpu_temp() returns Fahrenheit; Celsius is derived from it.
+        result["board_temperature1_f"] = temp_f
+        result["board_temperature1_c"] = (
+            round(fahrenheit_to_celsius(temp_f), 2) if temp_f is not None else None
+        )
+
+        result["poe_out_consumption_w"] = poe_w
+
+        # CLI display strings
+        result["cpu_temp"]     = temp_str
+        result["poe_consumed"] = poe_str
 
         if firmware is not None:
             result["status"] = "success"
@@ -429,10 +485,13 @@ def print_results_table(
     elapsed: float,
     firmware_filter: str | None = None,
 ) -> None:
-    headers = ["Status", "Host", "Model", "Serial Number", "Firmware", "CPU Temp", "Total PoE (W)", "Error"]
+    headers = [
+        "Status", "Host", "Manufacturer", "Model", "Firmware",
+        "Serial", "CPU Temp", "PoE (W)", "Error",
+    ]
     rows: list[list[str]] = []
 
-    temp_vals: list[float] = []
+    temp_vals: list[float] = []   # Fahrenheit — the CLI display unit
     poe_vals:  list[float] = []
 
     # Apply firmware filter if provided
@@ -449,17 +508,21 @@ def print_results_table(
         rows.append([
             status_icon(r),
             clean(r.get("host")),
+            clean(r.get("manufacturer")),
             clean(r.get("model")),
-            clean(r.get("serial_number")),
             clean(r.get("firmware_version")),
+            clean(r.get("serial")),
             clean(r.get("cpu_temp")),
             clean(r.get("poe_consumed")),
             truncate_error(r.get("error")),
         ])
-        tv = r.get("cpu_temp_value")
+
+    # Metrics are computed across ALL results, not just the filtered view
+    for r in results:
+        tv = r.get("board_temperature1_f")
         if tv is not None:
             temp_vals.append(tv)
-        pv = r.get("poe_consumed_value")
+        pv = r.get("poe_out_consumption_w")
         if pv is not None:
             poe_vals.append(pv)
 
@@ -471,7 +534,7 @@ def print_results_table(
     # All-matched shortcut
     if firmware_filter and not display_results:
         print(f"{WHITE}")
-        print(f"  {GREEN}\u2713 All reachable routers are running firmware {firmware_filter}{RESET}")
+        print(f"  {GREEN}\u2713 All reachable devices are running firmware {firmware_filter}{RESET}{WHITE}")
     else:
         table = tabulate(
             rows,
@@ -530,14 +593,14 @@ def print_results_table(
     if poe_vals:
         avg_p = sum(poe_vals) / len(poe_vals)
         print(
-            f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 "
+            f"  {BOLD}PoE Consumed (W){RESET}{WHITE} \u2014 "
             f"Avg: {avg_p:.1f}  |  "
             f"Min: {min(poe_vals):.1f}  |  "
             f"Max: {max(poe_vals):.1f}  |  "
             f"Reported: {len(poe_vals)}/{total}"
         )
     else:
-        print(f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 No data available")
+        print(f"  {BOLD}PoE Consumed (W){RESET}{WHITE} \u2014 No data available")
 
     print(f"{RESET}")
 
@@ -548,6 +611,7 @@ def print_results_table(
 def check_all_routers(
     routers: list[dict],
     output_path: Path,
+    csv_path: Path,
     include_raw: bool = False,
     max_workers: int = 5,
     timeout: int = 20,
@@ -559,7 +623,7 @@ def check_all_routers(
     latest_host = {"value": ""}
     t_start     = time.time()
 
-    term_width = shutil.get_terminal_size((120, 24)).columns
+    term_width = get_terminal_width()
 
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
@@ -618,10 +682,10 @@ def check_all_routers(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "query_info": {
-            "csv_file":        str(output_path.parent),
+            "csv_file":        str(Path(csv_path).resolve()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "protocol":        "SSH / Netgear M4250 CLI",
-            "mode":            "firmware+temp",
+            "protocol":        "SSH / Netgear CLI",
+            "mode":            "firmware+temp+poe",
             "workers":         max_workers,
             "total":           total,
             "success":         ok,
@@ -645,11 +709,11 @@ def check_all_routers(
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def main() -> None:
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     p = argparse.ArgumentParser(
         description=(
-            "Check Netgear M4250 router firmware versions and CPU temps via SSH.\n"
+            "Check Netgear M4250 firmware versions, CPU temps, and PoE draw via SSH.\n"
             "Defaults: reads secrets/netgear_firmware.csv, writes to netgear_firmware/files/\n\n"
             "CSV columns: host, username, password, port"
         ),
@@ -663,7 +727,7 @@ def main() -> None:
     p.add_argument(
         "--output", type=Path,
         default=Path(f"netgear_firmware/files/results_{timestamp}.json"),
-        help="Output JSON file (default: netgear_firmware/files/results_YYYY-MM-DD_HH-MM-SS.json)",
+        help="Output JSON file (default: netgear_firmware/files/results_YYYYMMDD_HHMMSS.json)",
     )
     p.add_argument(
         "--workers", type=int, default=5,
@@ -671,11 +735,11 @@ def main() -> None:
     )
     p.add_argument(
         "--timeout", type=int, default=20,
-        help="Per-router SSH timeout in seconds (default: 20)",
+        help="Per-device SSH timeout in seconds (default: 20)",
     )
     p.add_argument(
         "--firmware", type=str, default=None,
-        help="Only show routers whose firmware does not match this version (e.g. 12.0.20.7)",
+        help="Only show devices whose firmware does not match this version (e.g. 12.0.20.7)",
     )
     p.add_argument(
         "--verbose", action="store_true",
@@ -683,7 +747,7 @@ def main() -> None:
     )
     p.add_argument(
         "--include-raw", action="store_true",
-        help="Include raw SSH output in results.json for debugging",
+        help="Include raw SSH output in the JSON for debugging",
     )
     args = p.parse_args()
 
@@ -691,8 +755,8 @@ def main() -> None:
         logging.getLogger().setLevel(logging.DEBUG)
 
     print(f"{WHITE}")
-    print(f"  {BOLD}Netgear M4250 Firmware & CPU Temp Checker{RESET}{WHITE}")
-    print(f"  Query router firmware version and CPU temperature via SSH")
+    print(f"  {BOLD}Netgear M4250 Version & CPU Temp Checker{RESET}{WHITE}")
+    print(f"  Queries M4250 devices for firmware version and CPU temperature over SSH")
     print(f"  Input:   {args.csv}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
@@ -701,16 +765,14 @@ def main() -> None:
         print(f"  Filter:  firmware != {args.firmware}")
     print(f"{RESET}")
 
-    routers = load_csv(args.csv)
-    if not routers:
-        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} No routers found in {args.csv}{RESET}")
-        sys.exit(1)
+    routers = load_csv(str(args.csv))
 
-    print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} router(s){RESET}\n")
+    print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} device(s){RESET}\n")
 
     check_all_routers(
         routers,
         args.output,
+        csv_path=args.csv,
         include_raw=args.include_raw,
         max_workers=args.workers,
         timeout=args.timeout,

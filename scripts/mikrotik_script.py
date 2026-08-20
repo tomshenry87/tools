@@ -2,16 +2,18 @@
 """
 MikroTik Router Firmware Checker
 ==================================
-Reads router credentials from routers.csv (default), connects via SSH,
-queries /system/package/print for RouterOS version,
-/system/routerboard/print for board model and current firmware, and
-/system/health/print for PoE consumption and board temperature,
-writes results to results.json (default), and prints a summary table.
+Reads router credentials from secrets/mikrotik_firmware.csv (default),
+connects via SSH, queries /system/package/print for RouterOS version,
+/system/routerboard/print for board model and firmware, and
+/system/health/print for PoE consumption and board temperature.
+
+Writes results to mikrotik_version_check/files/results_<YYYYMMDD>_<HHMMSS>.json
+and prints a summary table.
 
 Usage:
     python3 mikrotik_firmware.py
     python3 mikrotik_firmware.py --verbose
-    python3 mikrotik_firmware.py --csv other_routers.csv --output other_results.json
+    python3 mikrotik_firmware.py --csv secrets/other.csv --output files/other.json
     python3 mikrotik_firmware.py --workers 10 --timeout 20
     python3 mikrotik_firmware.py --include-raw --verbose
     python3 mikrotik_firmware.py --firmware 7.14.2
@@ -50,18 +52,24 @@ except ImportError:
     sys.exit("ERROR: pip install tqdm")
 
 # ──────────────────────────────────────────────
-#  ANSI color palette
+#  ANSI palette — spec 3.1. No other colours.
 # ──────────────────────────────────────────────
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
 
 # ──────────────────────────────────────────────
-#  Logging — plain, no colors
+#  Constants
+# ──────────────────────────────────────────────
+DEFAULT_PORT = 22
+MANUFACTURER = "MikroTik"
+
+# ──────────────────────────────────────────────
+#  Logging — plain, no colours
 # ──────────────────────────────────────────────
 logging.basicConfig(
     level=logging.WARNING,
@@ -102,10 +110,89 @@ def get_health_fields(model: str | None) -> dict:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  CSV loader
+#  Shared helpers — spec 3.5, byte-identical
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def load_csv(csv_path: str) -> list[dict]:
-    devices: list[dict] = []
+def get_terminal_width() -> int:
+    try:
+        return shutil.get_terminal_size().columns
+    except Exception:
+        return 120
+
+
+def clean(val) -> str:
+    """Sanitise a value for table display — converts None/-1/empty to N/A."""
+    s = str(val) if val is not None else "N/A"
+    if s in ("None", "-1", ""):
+        return "N/A"
+    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
+        return "N/A"
+    return s
+
+
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  Error label truncation — spec 3.6
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script — RouterOS SSH failures:
+# authentication rejection, bad command name, paramiko transport errors.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"[Aa]uthentication failed",         "Auth failed"),
+    (r"[Aa]uthentication required",       "Auth required"),
+    (r"[Bb]ad command name",              "Bad command"),
+    (r"expected end of command",          "Bad command"),
+    (r"[Nn]o matching .* found",          "SSH negotiation"),
+    (r"[Ee]rror reading SSH protocol",    "SSH handshake"),
+    (r"[Ss]ocket is closed",              "SSH closed"),
+    (r"SSH session not active",           "SSH closed"),
+    (r"[Ee]mpty output",                  "Empty output"),
+    (r"[Cc]ould not parse",               "Parse error"),
+]
+
+
+def truncate_error(err, max_len: int = 30) -> str:
+    """Map verbose exception messages to short readable labels."""
+    if not err:
+        return ""
+    s = str(err)
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
+        if re.search(pat, s):
+            return label
+    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
+    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
+    s = re.sub(r'\s+', ' ', s).strip(': ')
+    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  CSV loader — spec 3.7
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def load_csv(csv_path: str) -> list:
+    devices = []
     p = Path(csv_path)
     if not p.exists():
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
@@ -122,27 +209,28 @@ def load_csv(csv_path: str) -> list[dict]:
             print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV is empty{RESET}")
             sys.exit(1)
         col_map = {n.strip().lower(): n for n in reader.fieldnames}
-        host_key = (
-            col_map.get("host") or col_map.get("hostname")
-            or col_map.get("ip") or col_map.get("address")
-        )
-        if not host_key:
+        if "host" not in col_map:
             print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
             sys.exit(1)
         for row in reader:
-            host = row.get(host_key, "").strip()
+            host = row.get(col_map["host"], "").strip()
             if not host or host.startswith("#"):
                 continue
             try:
-                port = int(row.get(col_map.get("port", ""), "") or 22)
-            except ValueError:
-                port = 22
+                port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
+            except (ValueError, TypeError):
+                port = DEFAULT_PORT
+            username = (row.get(col_map.get("username", ""), "") or "").strip() or "admin"
+            password = (row.get(col_map.get("password", ""), "") or "").strip()
             devices.append({
                 "host":     host,
-                "username": row.get(col_map.get("username", ""), "").strip() or "admin",
-                "password": row.get(col_map.get("password", ""), "").strip(),
                 "port":     port,
+                "username": username,
+                "password": password,
             })
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
+        sys.exit(1)
     return devices
 
 
@@ -156,56 +244,6 @@ def strip_ansi(text: str) -> str:
     text = re.sub(r"\x1b.", "", text)
     text = re.sub(r"[\x00-\x08\x0e-\x1f\x7f]", "", text)
     return text
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Table value helpers
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def clean(val) -> str:
-    s = str(val) if val is not None else "N/A"
-    if s in ("None", "-1", ""):
-        return "N/A"
-    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
-        return "N/A"
-    return s
-
-
-def truncate_error(err, max_len: int = 30) -> str:
-    if not err:
-        return ""
-    s = str(err)
-    for pat, label in [
-        # MikroTik / SSH-specific patterns first
-        (r"[Aa]uthentication failed",     "Auth failed"),
-        (r"[Aa]uthentication required",   "Auth required"),
-        (r"[Nn]o matching .* found",      "SSH negotiation"),
-        (r"[Ee]mpty output",              "Empty output"),
-        (r"[Cc]ould not parse",           "Parse error"),
-        # Generic network patterns
-        (r"[Cc]onnection timed out",      "Timed out"),
-        (r"[Cc]onnection refused",        "Conn refused"),
-        (r"[Nn]o response .* timeout",    "No response"),
-        (r"[Nn]o route to host",          "No route"),
-        (r"[Nn]etwork is unreachable",    "Net unreachable"),
-        (r"[Nn]ame or service not known", "DNS failed"),
-        (r"[Nn]etwork error",             "Network error"),
-        (r"[Mm]alformed",                 "Bad response"),
-    ]:
-        if re.search(pat, s):
-            return label
-    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
-    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
-    s = re.sub(r'\s+', ' ', s).strip(': ')
-    return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
-
-
-def status_icon(r: dict) -> str:
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
 
 
 def celsius_to_fahrenheit(c: float) -> float:
@@ -416,7 +454,7 @@ def check_router(
     host: str,
     username: str = "admin",
     password: str = "",
-    port: int = 22,
+    port: int = DEFAULT_PORT,
     timeout: int = 15,
     include_raw: bool = False,
 ) -> dict:
@@ -426,9 +464,12 @@ def check_router(
         "port":                  port,
         "query_timestamp":       ts,
         "status":                "error",
+        "manufacturer":          MANUFACTURER,
         "model":                 None,
+        "serial":                None,
+        "mac":                   None,
+        "firmware_version":      None,
         "routeros_version":      None,
-        "current_firmware":      None,
         "poe_out_consumption_w": None,
         "board_temperature1_c":  None,
         "board_temperature1_f":  None,
@@ -480,7 +521,11 @@ def check_router(
         if raw_rb.strip():
             rb = parse_routerboard(raw_rb)
             result["model"]            = rb["model"]
-            result["current_firmware"] = rb["current_firmware"]
+            result["firmware_version"] = rb["current_firmware"]
+
+        # Canonical firmware field falls back to the RouterOS version
+        if not result["firmware_version"]:
+            result["firmware_version"] = result["routeros_version"]
 
         # Query 3: health (best-effort)
         raw_health = get_command_output(client, "/system/health/print")
@@ -507,7 +552,7 @@ def check_router(
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Print results table
+#  Print results table — spec 3.4 / 3.8
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def print_results_table(
     results: list[dict],
@@ -517,19 +562,19 @@ def print_results_table(
     firmware_filter: str | None = None,
 ) -> None:
     headers = [
-        "Status", "Host", "Model", "RouterOS Version",
-        "Firmware", "Total PoE (W)", "Temp (°F)", "Error",
+        "Status", "Host", "Manufacturer", "Model", "Firmware",
+        "RouterOS Version", "Temp (°F)", "Total PoE (W)", "Error",
     ]
 
     # When --firmware is set, only show successfully queried devices
-    # whose current_firmware doesn't match the target version.
-    # Errors and unreachable devices are omitted from the table only —
-    # all results are still written to JSON.
+    # whose firmware_version doesn't match the target. Errors and
+    # unreachable devices are omitted from the table only — all
+    # results are still written to JSON.
     if firmware_filter:
         display_results = [
             r for r in results
             if r["status"] == "success"
-            and r.get("current_firmware") != firmware_filter
+            and r.get("firmware_version") != firmware_filter
         ]
     else:
         display_results = results
@@ -541,11 +586,12 @@ def print_results_table(
         rows.append([
             status_icon(r),
             f"{WHITE}{clean(r['host'])}{RESET}",
+            f"{WHITE}{clean(r.get('manufacturer'))}{RESET}",
             f"{WHITE}{clean(r.get('model'))}{RESET}",
+            f"{WHITE}{clean(r.get('firmware_version'))}{RESET}",
             f"{WHITE}{clean(r.get('routeros_version'))}{RESET}",
-            f"{WHITE}{clean(r.get('current_firmware'))}{RESET}",
-            f"{WHITE}{clean(f'{poe} W' if poe is not None else None)}{RESET}",
             f"{WHITE}{clean(f'{temp}°F' if temp is not None else None)}{RESET}",
+            f"{WHITE}{clean(f'{poe} W' if poe is not None else None)}{RESET}",
             f"{WHITE}{truncate_error(r.get('error'))}{RESET}",
         ])
 
@@ -569,38 +615,35 @@ def print_results_table(
         print(f"  {line}")
 
     # Counts always reflect full results, not just displayed rows
-    total     = len(results)
-    ok        = sum(1 for r in results if r["status"] == "success")
-    auth_errs = sum(1 for r in results if r["status"] == "auth_error")
-    failed    = sum(1 for r in results if r["status"] == "error")
-
-    # When filtering, also report how many matched vs mismatched
-    if firmware_filter:
-        matched    = sum(
-            1 for r in results
-            if r["status"] == "success" and r.get("current_firmware") == firmware_filter
-        )
-        mismatched = sum(
-            1 for r in results
-            if r["status"] == "success" and r.get("current_firmware") != firmware_filter
-        )
+    total = len(results)
+    ok    = sum(1 for r in results if r["status"] == "success")
+    auth  = sum(1 for r in results if r["status"] == "auth_error")
+    err   = sum(1 for r in results if r["status"] == "error")
 
     print()
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth_errs}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {failed}"
+        f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
     if firmware_filter:
+        matched = sum(
+            1 for r in results
+            if r["status"] == "success" and r.get("firmware_version") == firmware_filter
+        )
+        mismatched = sum(
+            1 for r in results
+            if r["status"] == "success" and r.get("firmware_version") != firmware_filter
+        )
         print(
             f"  {BOLD}Firmware Filter:{RESET}{WHITE} {firmware_filter}  |  "
-            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
-            f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Mismatch:{RESET}{WHITE} {mismatched}"
+            f"{GREEN}✓{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
+            f"{YELLOW}✗{RESET}{WHITE} {BOLD}Mismatch:{RESET}{WHITE} {mismatched}"
         )
 
-    # RouterOS version breakdown
+    # Device-specific metrics — RouterOS version breakdown
     version_counts = Counter(
         r["routeros_version"]
         for r in results
@@ -611,30 +654,13 @@ def print_results_table(
             f"{ver}: {cnt}" for ver, cnt in sorted(version_counts.items())
         )
         print(
-            f"  {BOLD}RouterOS Versions{RESET}{WHITE} \u2014 "
+            f"  {BOLD}RouterOS Versions{RESET}{WHITE} — "
             f"{breakdown}  |  Reported: {sum(version_counts.values())}/{total}"
         )
     else:
-        print(f"  {BOLD}RouterOS Versions{RESET}{WHITE} \u2014 No data available")
+        print(f"  {BOLD}RouterOS Versions{RESET}{WHITE} — No data available")
 
-    # PoE summary
-    poe_vals = [
-        r["poe_out_consumption_w"]
-        for r in results
-        if r.get("poe_out_consumption_w") is not None
-    ]
-    if poe_vals:
-        print(
-            f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 "
-            f"Avg: {sum(poe_vals)/len(poe_vals):.1f}  |  "
-            f"Min: {min(poe_vals)}  |  "
-            f"Max: {max(poe_vals)}  |  "
-            f"Reported: {len(poe_vals)}/{total}"
-        )
-    else:
-        print(f"  {BOLD}Total PoE (W){RESET}{WHITE} \u2014 No data available")
-
-    # Temperature summary
+    # Device-specific metrics — board temperature (Fahrenheit is the display unit)
     temp_vals = [
         r["board_temperature1_f"]
         for r in results
@@ -642,14 +668,31 @@ def print_results_table(
     ]
     if temp_vals:
         print(
-            f"  {BOLD}Board Temp (°F){RESET}{WHITE} \u2014 "
+            f"  {BOLD}Board Temp (°F){RESET}{WHITE} — "
             f"Avg: {sum(temp_vals)/len(temp_vals):.1f}  |  "
             f"Min: {min(temp_vals)}  |  "
             f"Max: {max(temp_vals)}  |  "
             f"Reported: {len(temp_vals)}/{total}"
         )
     else:
-        print(f"  {BOLD}Board Temp (°F){RESET}{WHITE} \u2014 No data available")
+        print(f"  {BOLD}Board Temp (°F){RESET}{WHITE} — No data available")
+
+    # Device-specific metrics — PoE consumption
+    poe_vals = [
+        r["poe_out_consumption_w"]
+        for r in results
+        if r.get("poe_out_consumption_w") is not None
+    ]
+    if poe_vals:
+        print(
+            f"  {BOLD}Total PoE (W){RESET}{WHITE} — "
+            f"Avg: {sum(poe_vals)/len(poe_vals):.1f}  |  "
+            f"Min: {min(poe_vals)}  |  "
+            f"Max: {max(poe_vals)}  |  "
+            f"Reported: {len(poe_vals)}/{total}"
+        )
+    else:
+        print(f"  {BOLD}Total PoE (W){RESET}{WHITE} — No data available")
 
     print()
     print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_path}{RESET}")
@@ -724,22 +767,22 @@ def check_all_routers(
 
     elapsed = time.monotonic() - t0
 
-    ok        = sum(1 for r in all_results if r["status"] == "success")
-    auth_errs = sum(1 for r in all_results if r["status"] == "auth_error")
-    errors    = sum(1 for r in all_results if r["status"] == "error")
+    ok   = sum(1 for r in all_results if r["status"] == "success")
+    auth = sum(1 for r in all_results if r["status"] == "auth_error")
+    err  = sum(1 for r in all_results if r["status"] == "error")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output = {
         "query_info": {
-            "csv_file":        str(csv_path.resolve()),
+            "csv_file":        str(Path(csv_path).resolve()),
             "timestamp":       start_ts.isoformat(),
             "protocol":        "SSH / RouterOS CLI",
             "mode":            f"firmware filter: {firmware_filter}" if firmware_filter else "package version query",
             "workers":         workers,
             "total":           len(all_results),
             "success":         ok,
-            "auth_errors":     auth_errs,
-            "errors":          errors,
+            "auth_errors":     auth,
+            "errors":          err,
             "elapsed_seconds": round(elapsed, 2),
         },
         "routers": all_results,
@@ -759,33 +802,31 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     default_ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    p.add_argument("--csv",         type=Path,  default=Path("secrets/mikrotik_firmware.csv"),                         help="Input CSV (default: secrets/mikrotik_firmware.csv)")
-    p.add_argument("--output",      type=Path,  default=Path(f"mikrotik_version_check/files/results_{default_ts}.json"),     help="Output JSON (default: mikrotik_version_check/files/results_<timestamp>.json)")
-    p.add_argument("--workers",     type=int,   default=5,                    help="Concurrent SSH workers (default: 5)")
-    p.add_argument("--timeout",     type=int,   default=15,                   help="Per-router timeout in seconds (default: 15)")
-    p.add_argument("--firmware",    type=str,   default=None,                 help="Only show devices whose firmware does not match this version (e.g. 7.14.2)")
-    p.add_argument("--verbose",     action="store_true",                      help="Enable DEBUG logging")
-    p.add_argument("--include-raw", action="store_true",                      help="Include raw SSH output in results.json")
+    p.add_argument("--csv",         type=Path,  default=Path("secrets/mikrotik_firmware.csv"),                            help="Input CSV (default: secrets/mikrotik_firmware.csv)")
+    p.add_argument("--output",      type=Path,  default=Path(f"mikrotik_version_check/files/results_{default_ts}.json"),  help="Output JSON (default: mikrotik_version_check/files/results_<timestamp>.json)")
+    p.add_argument("--workers",     type=int,   default=5,                                                                help="Concurrent SSH workers (default: 5)")
+    p.add_argument("--timeout",     type=int,   default=15,                                                               help="Per-router timeout in seconds (default: 15)")
+    p.add_argument("--firmware",    type=str,   default=None,                                                             help="Only show devices whose firmware does not match this version (e.g. 7.14.2)")
+    p.add_argument("--verbose",     action="store_true",                                                                  help="Enable DEBUG logging")
+    p.add_argument("--include-raw", action="store_true",                                                                  help="Include raw SSH output in the results JSON")
     args = p.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    # Header block — spec 3.2
     print(f"{WHITE}")
-    print(f"  {BOLD}MikroTik RouterOS Firmware Checker{RESET}{WHITE}")
-    print(f"  Connects via SSH and queries package versions, board firmware, and health")
+    print(f"  {BOLD}MikroTik Router Firmware Checker{RESET}{WHITE}")
+    print(f"  Queries RouterOS version, packages, and board health over SSH")
     print(f"  Input:   {args.csv}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
     if args.firmware:
-        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} {args.firmware} — showing mismatched devices only")
+        print(f"  Firmware Filter: {args.firmware} — showing mismatched devices only")
     print(f"{RESET}")
 
     routers = load_csv(str(args.csv))
-    if not routers:
-        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} No routers found in {args.csv}{RESET}")
-        sys.exit(1)
 
     print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} router(s){RESET}\n")
 

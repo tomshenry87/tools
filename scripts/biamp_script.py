@@ -2,20 +2,21 @@
 """
 Biamp Tesira Firmware / Device Info Query Tool
 
-Uses the Tesira Text Protocol (TTP) over raw TCP (default port 23).
+Queries Biamp Tesira audio DSPs for firmware version, identity, and fault status.
+Protocol: Tesira Text Protocol (TTP) over raw TCP, default port 23.
+
 Commands issued per device:
-  DEVICE get version          -> firmware version string
-  DEVICE get networkInfo      -> hostname and MAC address
-  DEVICE get serialNumber     -> serial number
-  DEVICE get uptimeSeconds    -> uptime in seconds
+  DEVICE get version           -> firmware version string
+  DEVICE get networkStatus     -> hostname and MAC address
+  DEVICE get serialNumber      -> serial number
+  DEVICE get activeFaultList   -> active fault indicators
 
 Protocol notes:
+  - Port 23 is Telnet; the device sends IAC negotiation bytes (0xFF...) before
+    the welcome banner and will not accept commands until they are answered.
   - Each command is terminated with \\n
-  - Successful responses begin with "+OK"
-  - Error responses begin with "-ERR"
-  - The device sends a welcome banner on connect; we discard it
-  - No authentication by default (auth level None)
-  - Responses arrive as a single line per command
+  - Successful responses begin with "+OK", errors with "-ERR"
+  - No authentication by default (IP control auth level None)
 """
 
 import csv
@@ -23,6 +24,7 @@ import json
 import re
 import sys
 import os
+import time
 import shutil
 import socket
 import argparse
@@ -44,15 +46,15 @@ except ImportError:
     sys.exit(1)
 
 # ---------------------------------------------------------------------------
-# ANSI color palette
+# ANSI colour palette (spec 3.1)
 # ---------------------------------------------------------------------------
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
 
 # ---------------------------------------------------------------------------
 # Defaults & constants
@@ -67,6 +69,8 @@ DEFAULT_TIMEOUT = 10
 DEFAULT_PORT    = 23
 DEFAULT_WORKERS = 5
 
+MANUFACTURER    = "Biamp"
+
 # Tesira TTP commands
 CMD_VERSION     = "DEVICE get version\n"
 CMD_SERIAL      = "DEVICE get serialNumber\n"
@@ -78,7 +82,7 @@ RECV_BUFSIZE    = 4096
 
 
 # ---------------------------------------------------------------------------
-# Utility helpers
+# Shared helpers — byte-identical across all scripts (spec 3.5)
 # ---------------------------------------------------------------------------
 def get_terminal_width() -> int:
     try:
@@ -97,26 +101,61 @@ def clean(val) -> str:
     return s
 
 
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+# ---------------------------------------------------------------------------
+# Error label truncation (spec 3.6)
+# ---------------------------------------------------------------------------
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+# TTP returns "-ERR <reason>" for command, syntax, and subscription failures.
+PROTOCOL_ERROR_PATTERNS = [
+    # Our own "no reply" exception text contains the literal "+OK/-ERR" — it must
+    # be matched before the -ERR catch-all below or it mislabels as a TTP error.
+    (r"No \+OK/-ERR response",        "No response"),
+    (r"(?i)-ERR.*authenticat",        "Auth required"),
+    (r"(?i)-ERR.*login",              "Auth required"),
+    (r"(?i)-ERR.*permission",         "Auth required"),
+    (r"(?i)-ERR.*is not supported",   "Unsupported attr"),
+    (r"(?i)-ERR.*invalid_parameter",  "Bad parameter"),
+    (r"(?i)-ERR.*already_subscribed", "Already subscribed"),
+    (r"(?i)-ERR.*not_subscribed",     "Not subscribed"),
+    (r"(?i)-ERR.*unrecognized",       "Bad command"),
+    (r"-ERR",                         "TTP error"),
+    (r"[Cc]losed by remote host",     "Closed by device"),
+    (r"[Nn]o welcome banner",         "No TTP banner"),
+]
+
+
 def truncate_error(err, max_len: int = 30) -> str:
     """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        (r"[Tt]imed out",                      "Timed out"),
-        (r"[Cc]onnection refused",              "Conn refused"),
-        (r"[Nn]o route to host",                "No route"),
-        (r"[Nn]etwork is unreachable",          "Net unreachable"),
-        (r"[Nn]ame or service not known",       "DNS failed"),
-        (r"[Nn]etwork error",                   "Network error"),
-        (r"-ERR.*[Aa]uth",                      "Auth required"),
-        (r"-ERR.*[Pp]ermission",                "Permission denied"),
-        (r"-ERR",                               "Command error"),
-        (r"[Nn]o welcome banner",               "Not a Tesira device"),
-        (r"[Nn]ot a Tesira",                    "Not supported"),
-        (r"[Mm]alformed",                       "Bad response"),
-        (r"[Ee]mpty response",                  "No response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
@@ -125,27 +164,29 @@ def truncate_error(err, max_len: int = 30) -> str:
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-def status_icon(r: dict) -> str:
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+AUTH_FAILURE_PATTERNS = [
+    r"(?i)-ERR.*authenticat",
+    r"(?i)-ERR.*login",
+    r"(?i)-ERR.*permission",
+    r"(?i)authentication required",
+    r"(?i)authentication failed",
+]
 
 
-
-def format_fault_status(status: str) -> str:
-    """Return a coloured fault status string for the table."""
-    if status == "OK":
-        return f"{GREEN}OK{RESET}{WHITE}"
-    elif status == "FAULT":
-        return f"{RED}FAULT{RESET}{WHITE}"
-    return "N/A"
+def is_auth_failure(msg) -> bool:
+    """
+    Status classification only — does this message indicate the TTP session
+    connected but the login was rejected? Used to map to "auth_error"
+    (spec 2.5). Does not affect command flow.
+    """
+    if not msg:
+        return False
+    s = str(msg)
+    return any(re.search(p, s) for p in AUTH_FAILURE_PATTERNS)
 
 
 # ---------------------------------------------------------------------------
-# CSV loader
+# CSV loader (spec 3.7)
 # ---------------------------------------------------------------------------
 def load_csv(csv_path: str) -> list:
     devices = []
@@ -176,6 +217,7 @@ def load_csv(csv_path: str) -> list:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
             except (ValueError, TypeError):
                 port = DEFAULT_PORT
+            # Parse this script's additional columns here — port.
             devices.append({"host": host, "port": port})
     if not devices:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
@@ -184,9 +226,8 @@ def load_csv(csv_path: str) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Tesira TTP socket helpers
+# Protocol layer — DO NOT CHANGE (spec section 4)
 # ---------------------------------------------------------------------------
-
 class TesiraConnection:
     """
     Manages a Telnet connection to a Biamp Tesira device.
@@ -385,6 +426,14 @@ def parse_network_status(raw: str) -> dict:
     return result
 
 
+def format_fault_status(status: str) -> str:
+    """Return a coloured fault status string for the table."""
+    if status == "OK":
+        return f"{GREEN}OK{RESET}{WHITE}"
+    elif status == "FAULT":
+        return f"{RED}FAULT{RESET}{WHITE}"
+    return "N/A"
+
 
 # ---------------------------------------------------------------------------
 # Main query
@@ -394,15 +443,17 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
     result = {
         "host":             host,
         "port":             port,
+        "query_timestamp":  datetime.now(timezone.utc).isoformat(),
         "status":           "error",
+        "error":            None,
+        "manufacturer":     MANUFACTURER,
+        "model":            "N/A",
         "firmware_version": "N/A",
+        "serial":           "N/A",
+        "mac":              "N/A",
         "device_name":      "N/A",
-        "mac_address":      "N/A",
         "fault_status":     "N/A",
         "fault_details":    [],
-        "serial":           "N/A",
-        "error":            None,
-        "query_timestamp":  datetime.now(timezone.utc).isoformat(),
     }
 
     conn = TesiraConnection(host, port, timeout)
@@ -414,15 +465,18 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
             resp = conn.send_command(CMD_VERSION)
             result["firmware_version"] = parse_ok_value(resp)
         except Exception as e:
-            result["firmware_version"] = "N/A"
+            if is_auth_failure(e):
+                result["status"] = "auth_error"
+                result["error"]  = str(e)
+                return result
 
-        # --- Network status (hostname, MAC, IP) ---
+        # --- Network status (hostname, MAC) ---
         try:
             resp = conn.send_command(CMD_NETSTATUS)
             raw  = parse_ok_value(resp)
             net  = parse_network_status(raw)
             result["device_name"] = net.get("hostname", "N/A")
-            result["mac_address"] = net.get("mac_address", "N/A")
+            result["mac"]         = net.get("mac_address", "N/A")
         except Exception:
             pass
 
@@ -432,8 +486,6 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
             result["serial"] = parse_ok_value(resp)
         except Exception:
             pass
-
-
 
         # --- Active fault list ---
         try:
@@ -463,6 +515,8 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
             result["error"] = msg
     except Exception as e:
         result["error"] = str(e)
+        if is_auth_failure(e):
+            result["status"] = "auth_error"
     finally:
         conn.close()
 
@@ -474,16 +528,16 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    ok  = sum(1 for r in results if r["status"] == "success")
-    err = sum(1 for r in results if r["status"] == "error")
+    ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
+    err  = sum(1 for r in results if r["status"] == "error")
 
     output = {
         "query_info": {
             "csv_file":        str(Path(args.input).resolve()) if not args.host else args.host,
             "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "protocol":        f"Biamp Tesira Text Protocol (TTP) on port {args.port}",
-            "mode":            "No authentication",
+            "protocol":        "Biamp Tesira Text Protocol (TTP) over TCP",
+            "mode":            "None (no authentication)",
             "workers":         args.workers,
             "total":           len(results),
             "success":         ok,
@@ -501,6 +555,8 @@ def print_results_table(results: list, output_file: str, elapsed: float,
                         workers: int, firmware_filter: str = None):
     """Render the results table following the project visual style guide."""
 
+    # Apply firmware filter — mismatched or errored rows only.
+    # The full results list is always saved to JSON regardless.
     if firmware_filter:
         display_results = [
             r for r in results
@@ -514,16 +570,19 @@ def print_results_table(results: list, output_file: str, elapsed: float,
         row = [
             status_icon(r),
             clean(r["host"]),
-            clean(r["device_name"]),
+            clean(r.get("manufacturer", "N/A")),
+            clean(r.get("model", "N/A")),
             clean(r["firmware_version"]),
+            clean(r.get("device_name", "N/A")),
             clean(r["serial"]),
-            clean(r.get("mac_address", "N/A")),
+            clean(r.get("mac", "N/A")),
             format_fault_status(r.get("fault_status", "N/A")),
             truncate_error(r.get("error") or ""),
         ]
         table_data.append(row)
 
-    headers = ["Status", "Host", "Device Name", "Firmware", "Serial", "MAC Address", "Faults", "Error"]
+    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
+               "Device Name", "Serial", "MAC Address", "Faults", "Error"]
 
     table = tabulate(table_data, headers=headers,
                      tablefmt="pretty", stralign="left", numalign="right")
@@ -532,9 +591,9 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw         = max(raw_width, 60)
 
-    title = "Biamp Tesira \u2014 Firmware & Device Info"
+    title = "Biamp Tesira DSP — Firmware & Fault Status"
     if firmware_filter:
-        title += f"  \u2014  Mismatched: {len(display_results)}/{len(results)}"
+        title += f"  —  Mismatched: {len(display_results)}/{len(results)}"
     pad = (bw - len(title)) // 2
 
     print(f"{WHITE}")
@@ -557,17 +616,33 @@ def print_results_table(results: list, output_file: str, elapsed: float,
         )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
-
+    # Device-specific metrics line — fault count across the fleet
+    fault_ok    = sum(1 for r in display_results if r.get("fault_status") == "OK")
+    fault_bad   = sum(1 for r in display_results if r.get("fault_status") == "FAULT")
+    reported    = fault_ok + fault_bad
+    if reported:
+        print(
+            f"  {BOLD}Faults —{RESET}{WHITE} "
+            f"{GREEN}OK{RESET}{WHITE}: {fault_ok}  |  "
+            f"{RED}FAULT{RESET}{WHITE}: {fault_bad}  |  "
+            f"Reported: {reported}/{total}"
+        )
+        if fault_bad:
+            for r in display_results:
+                if r.get("fault_status") == "FAULT" and r.get("fault_details"):
+                    print(f"    {RED}✗{RESET}{WHITE} {r['host']}: {r['fault_details'][0]}")
+    else:
+        print(f"  {BOLD}Faults —{RESET}{WHITE} No data available")
 
     print()
-    print(f"  {BOLD}Results saved:{RESET}{WHITE} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers)")
-    print(f"{RESET}")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
+    print()
 
 
 # ---------------------------------------------------------------------------
@@ -575,20 +650,21 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Query Biamp Tesira devices for firmware version and device info via TTP.",
+        description="Query Biamp Tesira DSPs for firmware version and fault status via TTP.",
         epilog="""
 Examples:
-  python biamp_fw_query.py
-  python biamp_fw_query.py -i my_devices.csv
-  python biamp_fw_query.py --host 192.168.1.50
-  python biamp_fw_query.py -i devices.csv -t 15 -o output.json -w 10
-  python biamp_fw_query.py --host 192.168.1.50 --raw
-  python biamp_fw_query.py --firmware 3.12.0.0
+  python biamp_script.py
+  python biamp_script.py -i my_devices.csv
+  python biamp_script.py --host baker-102-dsp.example.edu
+  python biamp_script.py -i devices.csv -t 15 -o output.json -w 10
+  python biamp_script.py --host baker-102-dsp.example.edu --raw
+  python biamp_script.py --firmware 5.5.0.2
 
 Protocol:
-  Connects via raw TCP to port 23 (Tesira Text Protocol).
-  No authentication — devices must have auth level set to None.
-  Commands issued: DEVICE get version, networkInfo, serialNumber, uptimeSeconds.
+  Telnet (TTP) on port 23. IAC negotiation is answered automatically.
+  No authentication — devices must have IP control auth level set to None.
+  Commands issued: DEVICE get version, networkStatus, serialNumber,
+  activeFaultList.
 
 Firmware filter:
   --firmware VERSION shows only devices NOT on that version in the terminal.
@@ -612,22 +688,20 @@ Firmware filter:
     parser.add_argument("--raw",            action="store_true", default=False,
         help="With --host: dump raw TTP responses for all commands.")
     parser.add_argument("--firmware",       default=None, metavar="VERSION",
-        help="Only show devices whose firmware does NOT match VERSION (e.g. --firmware 3.12.0.0). JSON always contains all results.")
+        help="Only show devices whose firmware does NOT match VERSION (e.g. --firmware 5.5.0.2). JSON always contains all results.")
 
     args = parser.parse_args()
 
     term_width = get_terminal_width()
-
-    import time
     start_time = time.monotonic()
 
     # -----------------------------------------------------------------------
-    # Header block
+    # Header block (spec 3.2)
     # -----------------------------------------------------------------------
     input_display = args.host if args.host else args.input
     print(f"{WHITE}")
-    print(f"  {BOLD}Biamp Tesira \u2014 Firmware & Device Info Query Tool{RESET}{WHITE}")
-    print(f"  Queries firmware, hostname, serial, MAC, and uptime via Tesira Text Protocol.")
+    print(f"  {BOLD}Biamp Tesira Firmware / Device Info Query Tool{RESET}{WHITE}")
+    print(f"  Queries Tesira DSPs for firmware version and fault status")
     print(f"  Input:   {input_display}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
@@ -644,9 +718,9 @@ Firmware filter:
     if args.host and args.raw:
         print(f"{WHITE}Raw TTP responses for {args.host}:{args.port}{RESET}\n")
         commands = [
-            ("DEVICE get version",     CMD_VERSION),
-            ("DEVICE get networkStatus", CMD_NETSTATUS),
-            ("DEVICE get serialNumber", CMD_SERIAL),
+            ("DEVICE get version",        CMD_VERSION),
+            ("DEVICE get networkStatus",  CMD_NETSTATUS),
+            ("DEVICE get serialNumber",   CMD_SERIAL),
             ("DEVICE get activeFaultList", CMD_FAULTS),
         ]
         conn = TesiraConnection(args.host, args.port, args.timeout)
@@ -669,10 +743,10 @@ Firmware filter:
     # -----------------------------------------------------------------------
     # Build device list
     # -----------------------------------------------------------------------
-    displays = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+    devices = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
 
     # -----------------------------------------------------------------------
-    # Progress bar + concurrent query loop
+    # Progress bar + concurrent query loop (spec 3.3)
     # -----------------------------------------------------------------------
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
@@ -692,10 +766,10 @@ Firmware filter:
             latest_host["value"] = d["host"]
         return query_device(d["host"], d["port"], timeout=args.timeout)
 
-    with tqdm(total=len(displays), bar_format=bar_fmt, ncols=term_width,
+    with tqdm(total=len(devices), bar_format=bar_fmt, ncols=term_width,
               dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
-            futures = {ex.submit(do_query, d): d for d in displays}
+            futures = {ex.submit(do_query, d): d for d in devices}
             for fut in as_completed(futures):
                 with results_lock:
                     results.append(fut.result())
@@ -707,7 +781,7 @@ Firmware filter:
     pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
 
     # Re-sort results to match original input order
-    host_order = {d["host"]: i for i, d in enumerate(displays)}
+    host_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
     print_results_table(results, args.output, elapsed, args.workers, args.firmware)

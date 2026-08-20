@@ -1,0 +1,30 @@
+{
+  "query_info": {
+    "csv_file": "netgear_firmware/files",
+    "timestamp": "2026-05-11T17:45:10.039193+00:00",
+    "protocol": "SSH / Netgear M4250 CLI",
+    "mode": "firmware+temp",
+    "workers": 5,
+    "total": 1,
+    "success": 0,
+    "errors": 1,
+    "elapsed_seconds": 20.04
+  },
+  "routers": [
+    {
+      "host": "dewey-010-1-oav.openav.dartmouth.edu",
+      "username": "admin",
+      "port": 22,
+      "query_timestamp": "2026-05-11T17:44:50.008036+00:00",
+      "status": "error",
+      "model": null,
+      "serial_number": null,
+      "firmware_version": null,
+      "cpu_temp": null,
+      "cpu_temp_value": null,
+      "poe_consumed": null,
+      "poe_consumed_value": null,
+      "error": "SSH/network error: timed out"
+    }
+  ]
+}

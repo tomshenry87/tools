@@ -1,0 +1,35 @@
+{
+  "query_info": {
+    "csv_file": null,
+    "timestamp": "2026-04-30T21:07:12.847514+00:00",
+    "protocol": "VISCA over IP (UDP) — Sony 8-byte header envelope",
+    "mode": "local UDP port 52381, RESET-then-inquire",
+    "workers": 1,
+    "total": 1,
+    "success": 1,
+    "auth_errors": 0,
+    "errors": 0,
+    "elapsed_seconds": 0.32
+  },
+  "cameras": [
+    {
+      "host": "silsby-113-camera-1.openav.dartmouth.edu",
+      "port": 52381,
+      "camera_name": "",
+      "camera_type": "auto",
+      "status": "success",
+      "manufacturer": "Unknown",
+      "model": "N/A",
+      "model_code": "N/A",
+      "firmware_version": "0052",
+      "rom_revision": "N/A",
+      "vendor_id": "0x0052",
+      "max_sockets": "N/A",
+      "software_version": "N/A",
+      "software_version_hex": "N/A",
+      "error": null,
+      "query_timestamp": "2026-04-30T21:07:12.559736+00:00",
+      "reset_status": "ok"
+    }
+  ]
+}

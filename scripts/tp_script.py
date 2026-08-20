@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
 """
-ELO Touch Panel (Android) ADB Query Tool
+KBRemote (UKR) Touch Panel Fleet Query Tool
 
-Queries ELO touch panels over network ADB (TCP/IP, default port 5555) for:
-  - Model        (ro.product.model)
-  - Manufacturer (ro.product.manufacturer)
-  - Serial       (ro.serialno)
-  - Android ver  (ro.build.version.release)
-  - SDK level    (ro.build.version.sdk)
-  - Build/FW     (ro.build.display.id / ro.build.id)
-  - Build date   (ro.build.date)
+Queries the entire ELO touch panel fleet via the Unified Kiosk Remote
+Management REST API. One authenticated HTTPS call returns every device.
 
-Workflow per host:
-  1. adb connect <host>:<port>
-  2. adb -s <host>:<port> shell getprop <key>   (batched)
-  3. adb disconnect <host>:<port>
+API: https://kioskapi.azure-api.net/klr/api/device
+Auth: single `api-key` header (no HMAC needed for UKR)
+Docs: https://help.android-kiosk.com/en/article/unified-kiosk-remote-management-api-api-endpoints-1v7xygp/
 
-The ADB server must be running locally. The script will start it via
-`adb start-server` on launch if it isn't already.
+Fields surfaced (per request):
+  Make       (brand)
+  Model      (model)
+  Serial     (serial)
+  MAC        (macAddress)
+  Kiosk Ver  (kioskVersion)
+  Android    (androidVersion)
+  Provisioned (provisioned)
+
+Plus lastSeen / online for staleness, name for the friendly host name.
+
+Credentials lookup order:
+  1. --api-key <key>           CLI flag
+  2. $KBREMOTE_API_KEY         environment variable
+  3. ~/.kbremote_api_key       text file containing the key
 """
 
 import csv
@@ -27,11 +33,14 @@ import sys
 import os
 import shutil
 import argparse
-import subprocess
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+try:
+    import requests
+except ImportError:
+    print("ERROR: 'requests' library is required. Install with: pip install requests")
+    sys.exit(1)
 
 try:
     from tabulate import tabulate
@@ -39,11 +48,8 @@ except ImportError:
     print("ERROR: 'tabulate' library is required. Install with: pip install tabulate")
     sys.exit(1)
 
-try:
-    from tqdm import tqdm
-except ImportError:
-    print("ERROR: 'tqdm' library is required. Install with: pip install tqdm")
-    sys.exit(1)
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ---------------------------------------------------------------------------
 # ANSI color palette
@@ -59,33 +65,19 @@ RESET  = "\033[0m"
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV      = "secrets/tp_firmware.csv"
 OUTPUT_DIR       = "tp_firmware/files"
 DEFAULT_OUTPUT   = os.path.join(
     OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+    f"kbremote_results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
 )
-DEFAULT_TIMEOUT  = 10
-DEFAULT_PORT     = 5555
-DEFAULT_WORKERS  = 5
-DEFAULT_ADB      = "adb"
-DEFAULT_PUBKEY   = os.path.expanduser("~/.android/adbkey.pub")
+DEFAULT_TIMEOUT  = 30
+DEFAULT_KEYFILE  = os.path.expanduser("~/.kbremote_api_key")
+DEFAULT_CSV      = "secrets/tp_firmware.csv"
+API_BASE         = "https://kioskapi.azure-api.net/klr/api"
+DEVICE_ENDPOINT  = f"{API_BASE}/device"
 
-# getprop keys we want to query. Kept as a list so we can issue them in a
-# single shell call per device and parse the output line-by-line.
-GETPROP_KEYS = [
-    "ro.product.model",
-    "ro.product.manufacturer",
-    "ro.product.brand",
-    "ro.product.device",
-    "ro.serialno",
-    "ro.build.version.release",
-    "ro.build.version.sdk",
-    "ro.build.display.id",
-    "ro.build.id",
-    "ro.build.date",
-    "ro.build.fingerprint",
-]
+# How many seconds since lastSeen before a device is considered "stale"
+STALE_AFTER_SECS = 86400  # 24 hours
 
 
 # ---------------------------------------------------------------------------
@@ -100,10 +92,10 @@ def get_terminal_width() -> int:
 
 def clean(val) -> str:
     """Sanitise a value for table display — converts None/-1/empty to N/A."""
-    s = str(val) if val is not None else "N/A"
-    if s in ("None", "-1", ""):
+    if val is None:
         return "N/A"
-    if s.startswith("ERROR") or s in ("Not available", "AUTH ERROR", "See diagnostic"):
+    s = str(val)
+    if s in ("None", "-1", "", "null"):
         return "N/A"
     return s
 
@@ -116,49 +108,71 @@ def truncate_error(err, max_len: int = 30) -> str:
     for pat, label in [
         (r"[Cc]onnection timed out",            "Timed out"),
         (r"[Cc]onnection refused",              "Conn refused"),
-        (r"[Nn]o response .* timeout",          "No response"),
         (r"[Nn]o route to host",                "No route"),
         (r"[Nn]etwork is unreachable",          "Net unreachable"),
         (r"[Nn]ame or service not known",       "DNS failed"),
-        (r"[Nn]etwork error",                   "Network error"),
-        (r"unable to connect",                  "Connect failed"),
-        (r"failed to connect",                  "Connect failed"),
-        (r"device unauthori[sz]ed",             "Unauthorized"),
-        (r"device offline",                     "Device offline"),
-        (r"device .* not found",                "Not connected"),
-        (r"more than one device",               "Ambiguous target"),
-        (r"adb .* not found",                   "adb missing"),
-        (r"[Aa]uthentication required",         "Auth required"),
+        (r"HTTP 401",                           "Auth failed"),
+        (r"HTTP 403",                           "Forbidden"),
+        (r"HTTP 404",                           "Not found"),
+        (r"HTTP 429",                           "Rate limited"),
+        (r"HTTP 5\d\d",                         "Server error"),
         (r"[Cc]ommand timed out",               "Cmd timeout"),
         (r"[Mm]alformed",                       "Bad response"),
     ]:
         if re.search(pat, s):
             return label
-    s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
-    s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
     s = re.sub(r'\s+', ' ', s).strip(': ')
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-def status_icon(r: dict) -> str:
-    """Return a coloured status icon string for a result dict."""
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+def parse_last_seen(s: str):
+    """Parse the API's ISO-ish timestamp into a tz-aware datetime."""
+    if not s:
+        return None
+    try:
+        # API returns e.g. "2021-09-08T10:33:51.7061598" with no timezone — treat as UTC
+        s2 = s.rstrip("Z")
+        # Strip sub-second precision past 6 digits which Python's fromisoformat dislikes
+        if "." in s2:
+            base, frac = s2.split(".", 1)
+            frac = frac[:6]
+            s2 = f"{base}.{frac}"
+        dt = datetime.fromisoformat(s2)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except Exception:
+        return None
+
+
+def humanize_age(seconds: float) -> str:
+    """Short human-readable age string."""
+    if seconds is None:
+        return "N/A"
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    if seconds < 3600:
+        return f"{int(seconds // 60)}m"
+    if seconds < 86400:
+        return f"{int(seconds // 3600)}h"
+    return f"{int(seconds // 86400)}d"
 
 
 # ---------------------------------------------------------------------------
-# CSV loader
+# CSV host loader (for --csv mode)
 # ---------------------------------------------------------------------------
-def load_csv(csv_path: str) -> list:
-    devices = []
+def load_csv_hosts(csv_path: str) -> list:
+    """
+    Read the same CSV format as the ADB script. Returns an ordered list of
+    host strings (preserving input order, deduped, case preserved on output
+    but matched case-insensitively downstream).
+    """
     p = Path(csv_path)
     if not p.exists():
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV not found: {csv_path}{RESET}")
         sys.exit(1)
+    seen = set()
+    hosts = []
     with open(p, "r", encoding="utf-8-sig") as f:
         sample = f.read(4096)
         f.seek(0)
@@ -175,344 +189,251 @@ def load_csv(csv_path: str) -> list:
             print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} CSV needs a 'host' column.{RESET}")
             sys.exit(1)
         for row in reader:
-            host = row.get(col_map["host"], "").strip()
+            host = (row.get(col_map["host"], "") or "").strip()
             if not host or host.startswith("#"):
                 continue
-            try:
-                port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
-            except (ValueError, TypeError):
-                port = DEFAULT_PORT
-            devices.append({"host": host, "port": port})
-    if not devices:
+            key = host.lower()
+            if key not in seen:
+                seen.add(key)
+                hosts.append(host)
+    if not hosts:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
         sys.exit(1)
-    return devices
+    return hosts
 
 
-# ---------------------------------------------------------------------------
-# ADB helpers
-# ---------------------------------------------------------------------------
-def run_adb(adb_bin: str, args: list, timeout: int) -> tuple:
+def filter_devices_by_hosts(devices: list, csv_hosts: list) -> tuple:
     """
-    Run an adb command. Returns (returncode, stdout, stderr).
-    Never raises on non-zero; only raises on timeout / binary missing.
+    Filter API devices down to those whose `name` matches a host in csv_hosts.
+    Matching is case-insensitive exact match.
+
+    Returns (matched_devices, unmatched_csv_hosts):
+      - matched_devices  : list of device dicts, ordered to match the CSV
+      - unmatched_csv_hosts : list of CSV hosts that didn't appear in the API
     """
-    try:
-        proc = subprocess.run(
-            [adb_bin] + args,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
-        return proc.returncode, proc.stdout or "", proc.stderr or ""
-    except FileNotFoundError:
-        raise Exception("adb binary not found — install Android platform-tools or pass --adb")
-    except subprocess.TimeoutExpired:
-        raise Exception("Command timed out")
+    # Build a case-insensitive index of API device names → device dicts.
+    # If duplicates exist on the API side, the first one wins (rare in practice).
+    api_index = {}
+    for d in devices:
+        nm = (d.get("name") or "").strip()
+        if nm and nm.lower() not in api_index:
+            api_index[nm.lower()] = d
 
-
-def adb_start_server(adb_bin: str, timeout: int = 10) -> None:
-    try:
-        run_adb(adb_bin, ["start-server"], timeout=timeout)
-    except Exception:
-        pass
-
-
-def adb_connect(adb_bin: str, target: str, timeout: int) -> tuple:
-    """Returns (success: bool, message: str)."""
-    rc, out, err = run_adb(adb_bin, ["connect", target], timeout=timeout)
-    combined = (out + err).strip().lower()
-
-    if "connected to" in combined or "already connected" in combined:
-        return True, "connected"
-    if "unable to connect" in combined:
-        return False, "unable to connect"
-    if "failed to connect" in combined:
-        return False, "failed to connect"
-    if "cannot connect" in combined:
-        return False, "cannot connect"
-    if rc != 0:
-        return False, combined or f"adb connect rc={rc}"
-    # Some adb builds print nothing but succeed — treat empty + rc=0 as OK
-    return True, "connected"
-
-
-def adb_disconnect(adb_bin: str, target: str, timeout: int = 5) -> None:
-    try:
-        run_adb(adb_bin, ["disconnect", target], timeout=timeout)
-    except Exception:
-        pass
-
-
-def adb_get_state(adb_bin: str, target: str, timeout: int) -> str:
-    """Returns the adb connection state string (device / offline / unauthorized / unknown)."""
-    rc, out, err = run_adb(adb_bin, ["-s", target, "get-state"], timeout=timeout)
-    if rc != 0:
-        blob = (out + err).strip().lower()
-        if "unauthorized" in blob:
-            return "unauthorized"
-        if "offline" in blob:
-            return "offline"
-        if "not found" in blob:
-            return "not found"
-        return blob or "unknown"
-    return out.strip() or "unknown"
-
-
-def adb_getprops(adb_bin: str, target: str, keys: list, timeout: int) -> dict:
-    """
-    Run `getprop <key>` once per key. Simpler and more portable than batching
-    with shell separators — ELO's production Android 14 shell rejects the
-    chained form with a syntax error, so we pay the per-call cost for reliability.
-
-    getprop prints just the value (or an empty string if the prop is unset),
-    so no parsing is needed beyond strip().
-    """
-    values = {}
-    for k in keys:
-        try:
-            rc, out, err = run_adb(
-                adb_bin,
-                ["-s", target, "shell", "getprop", k],
-                timeout=timeout,
-            )
-            if rc == 0:
-                values[k] = (out or "").strip()
-            else:
-                # A single missing prop shouldn't torpedo the whole device query
-                values[k] = ""
-        except Exception:
-            values[k] = ""
-    return values
-
-
-def push_pubkey(host: str, port: int, adb_bin: str, pubkey_text: str,
-                timeout: int = DEFAULT_TIMEOUT) -> dict:
-    """
-    Attempt to append pubkey_text to /data/misc/adb/adb_keys on the panel.
-
-    Requires an authorized ADB session AND a build that allows `adb root`
-    (userdebug/eng, or vendor builds that expose it). On production `user`
-    builds this will fail at the `adb root` step — that's reported cleanly.
-    Idempotent: if the key is already present, the append is a no-op.
-    """
-    target = f"{host}:{port}"
-    result = {
-        "host":    host,
-        "port":    port,
-        "status":  "error",
-        "message": "",
-    }
-
-    try:
-        ok, msg = adb_connect(adb_bin, target, timeout=timeout)
-        if not ok:
-            result["message"] = msg
-            return result
-
-        state = adb_get_state(adb_bin, target, timeout=timeout)
-        if state == "unauthorized":
-            result["status"]  = "auth_error"
-            result["message"] = "device unauthorized — tap Allow on panel first"
-            return result
-        if state != "device":
-            result["message"] = f"device {state}"
-            return result
-
-        # Try to escalate to root. On user builds this prints
-        # "adbd cannot run as root in production builds" and fails.
-        rc, out, err = run_adb(adb_bin, ["-s", target, "root"], timeout=timeout)
-        blob = (out + err).lower()
-        if "cannot run as root" in blob or "production" in blob:
-            result["message"] = "root not available (production build)"
-            return result
-        if rc != 0 and "already running as root" not in blob:
-            result["message"] = f"adb root failed: {(out + err).strip()[:80]}"
-            return result
-
-        # adb root restarts adbd — reconnect before the next command
-        import time as _time
-        _time.sleep(1.5)
-        adb_connect(adb_bin, target, timeout=timeout)
-
-        # Check if the key is already there before writing — keeps runs idempotent
-        # and avoids duplicate lines piling up across re-runs.
-        key_marker = pubkey_text.strip().split()[0][:40]  # first 40 chars of the base64 blob
-        rc, out, err = run_adb(
-            adb_bin,
-            ["-s", target, "shell",
-             f"grep -q '{key_marker}' /data/misc/adb/adb_keys 2>/dev/null && echo PRESENT || echo MISSING"],
-            timeout=timeout,
-        )
-        if "PRESENT" in (out or ""):
-            result["status"]  = "success"
-            result["message"] = "key already present (no change)"
-            return result
-
-        # Append key using a heredoc-style echo. Using single quotes around the
-        # whole key avoids issues with special characters in the comment field.
-        escaped = pubkey_text.strip().replace("'", "'\\''")
-        shell_cmd = (
-            f"mkdir -p /data/misc/adb && "
-            f"echo '{escaped}' >> /data/misc/adb/adb_keys && "
-            f"chmod 640 /data/misc/adb/adb_keys && "
-            f"chown system:shell /data/misc/adb/adb_keys 2>/dev/null; "
-            f"echo DONE"
-        )
-        rc, out, err = run_adb(adb_bin, ["-s", target, "shell", shell_cmd], timeout=timeout)
-        if "DONE" in (out or ""):
-            result["status"]  = "success"
-            result["message"] = "key appended to adb_keys"
+    matched   = []
+    unmatched = []
+    for h in csv_hosts:
+        d = api_index.get(h.lower())
+        if d:
+            matched.append(d)
         else:
-            result["message"] = f"write failed: {(out + err).strip()[:80]}"
+            unmatched.append(h)
+    return matched, unmatched
 
-    except Exception as e:
-        result["message"] = str(e)
-    finally:
-        adb_disconnect(adb_bin, target)
 
-    return result
+def status_icon_for(device: dict) -> str:
+    """
+    Return a coloured status icon based on the device's reported state.
+
+    Online: green check
+    Offline but recent (< STALE_AFTER_SECS): yellow check (still trustworthy)
+    Stale: red cross
+    Never seen / no data: red cross
+    """
+    if device.get("_query_error"):
+        return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+    if device.get("online"):
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    age = device.get("_age_seconds")
+    if age is not None and age < STALE_AFTER_SECS:
+        return f"{YELLOW}\u2717 OFFLINE{RESET}{WHITE}"
+    return f"{RED}\u2717 STALE{RESET}{WHITE}"
+
+
+def fmt_provisioned(val) -> str:
+    if val is True:
+        return f"{GREEN}\u2713 yes{RESET}{WHITE}"
+    if val is False:
+        return f"{RED}\u2717 no{RESET}{WHITE}"
+    return "N/A"
 
 
 # ---------------------------------------------------------------------------
-# Main query
+# Credentials
 # ---------------------------------------------------------------------------
-def query_panel(host: str, port: int, adb_bin: str,
-                timeout: int = DEFAULT_TIMEOUT,
-                skip_connect: bool = False) -> dict:
-    """Query a single ELO panel over ADB for identity + build info."""
-    target = f"{host}:{port}"
-    result = {
-        "host":                 host,
-        "port":                 port,
-        "status":               "error",
-        "model":                "N/A",
-        "manufacturer":         "N/A",
-        "brand":                "N/A",
-        "device":               "N/A",
-        "serial":               "N/A",
-        "android_version":      "N/A",
-        "sdk":                  "N/A",
-        "build_id":             "N/A",
-        "build_display_id":     "N/A",
-        "build_date":           "N/A",
-        "build_fingerprint":    "N/A",
-        "firmware_version":     "N/A",
-        "adb_state":            "N/A",
-        "error":                None,
-        "query_timestamp":      datetime.now(timezone.utc).isoformat(),
-    }
+def resolve_api_key(cli_value: str, keyfile_path: str) -> str:
+    """
+    Resolve the API key from (in order): CLI flag, env var, keyfile.
+    Errors out cleanly if none of the three is available.
+    """
+    if cli_value:
+        return cli_value.strip()
 
-    try:
-        if not skip_connect:
-            ok, msg = adb_connect(adb_bin, target, timeout=timeout)
-            if not ok:
-                result["error"] = msg
-                return result
+    env = os.environ.get("KBREMOTE_API_KEY", "").strip()
+    if env:
+        return env
 
-        state = adb_get_state(adb_bin, target, timeout=timeout)
-        result["adb_state"] = state
+    p = Path(keyfile_path)
+    if p.exists():
+        content = p.read_text().strip()
+        if content:
+            return content
 
-        if state == "unauthorized":
-            result["status"] = "auth_error"
-            result["error"]  = "device unauthorized — approve RSA fingerprint on panel"
-            return result
-        if state != "device":
-            result["error"] = f"device {state}"
-            return result
+    print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No KBRemote API key found.")
+    print(f"  Provide one of:")
+    print(f"    --api-key <key>           CLI flag")
+    print(f"    KBREMOTE_API_KEY=<key>    environment variable")
+    print(f"    {keyfile_path}            text file containing the key")
+    print(f"  Get a key at: https://klr.android-kiosk.com/ApiKey{RESET}")
+    sys.exit(1)
 
-        props = adb_getprops(adb_bin, target, GETPROP_KEYS, timeout=timeout)
 
-        result["model"]             = props.get("ro.product.model")           or "N/A"
-        result["manufacturer"]      = props.get("ro.product.manufacturer")    or "N/A"
-        result["brand"]             = props.get("ro.product.brand")           or "N/A"
-        result["device"]            = props.get("ro.product.device")          or "N/A"
-        result["serial"]            = props.get("ro.serialno")                or "N/A"
-        result["android_version"]   = props.get("ro.build.version.release")   or "N/A"
-        result["sdk"]               = props.get("ro.build.version.sdk")       or "N/A"
-        result["build_id"]          = props.get("ro.build.id")                or "N/A"
-        result["build_display_id"]  = props.get("ro.build.display.id")        or "N/A"
-        result["build_date"]        = props.get("ro.build.date")              or "N/A"
-        result["build_fingerprint"] = props.get("ro.build.fingerprint")       or "N/A"
+# ---------------------------------------------------------------------------
+# API call
+# ---------------------------------------------------------------------------
+def fetch_devices(api_key: str, timeout: int = DEFAULT_TIMEOUT,
+                  identifier: str = None) -> list:
+    """
+    Single GET /api/device call. Returns a list of device dicts.
 
-        # Primary firmware identifier: display.id (human-readable build label)
-        # Fall back to build.id if display.id is missing.
-        fw = result["build_display_id"]
-        if not fw or fw == "N/A":
-            fw = result["build_id"]
-        result["firmware_version"] = fw or "N/A"
+    If `identifier` is given, returns just that one device (still wrapped in a list).
+    """
+    url = DEVICE_ENDPOINT
+    params = {}
+    if identifier:
+        params["identifier"] = identifier
 
-        result["status"] = "success"
+    headers = {"api-key": api_key, "Accept": "application/json"}
+    resp = requests.get(url, headers=headers, params=params, timeout=timeout, verify=True)
 
-    except Exception as e:
-        result["error"] = str(e)
+    if resp.status_code == 401:
+        raise Exception("HTTP 401 — API key rejected (check key is correct and active)")
+    if resp.status_code == 403:
+        raise Exception("HTTP 403 — API key lacks permission")
+    if resp.status_code == 404:
+        raise Exception("HTTP 404 — endpoint not found")
+    if resp.status_code == 429:
+        raise Exception("HTTP 429 — rate limited; wait and retry")
+    if resp.status_code >= 500:
+        raise Exception(f"HTTP {resp.status_code} — server error")
+    resp.raise_for_status()
 
-    finally:
-        if not skip_connect:
-            adb_disconnect(adb_bin, target)
+    data = resp.json()
+    # Single-identifier responses may come back as an object instead of a list
+    if isinstance(data, dict) and "identifier" in data:
+        return [data]
+    if isinstance(data, list):
+        return data
+    # Some endpoints wrap in {success, message, devices: [...]} — handle both shapes
+    if isinstance(data, dict) and "devices" in data:
+        return data["devices"]
+    return []
 
-    return result
+
+# ---------------------------------------------------------------------------
+# Enrichment
+# ---------------------------------------------------------------------------
+def enrich_devices(devices: list) -> list:
+    """
+    Add derived fields each row needs for display:
+      _age_seconds  — seconds since lastSeen
+      _age_human    — "5m", "3h", "2d" style string
+    """
+    now = datetime.now(timezone.utc)
+    for d in devices:
+        last_seen = parse_last_seen(d.get("lastSeen"))
+        if last_seen:
+            age = (now - last_seen).total_seconds()
+            d["_age_seconds"] = age
+            d["_age_human"]   = humanize_age(age)
+        else:
+            d["_age_seconds"] = None
+            d["_age_human"]   = "N/A"
+    return devices
 
 
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-def save_results_json(results: list, filepath: str, args, elapsed: float):
+def save_results_json(devices: list, filepath: str, args, elapsed: float,
+                      unmatched_csv_hosts: list = None):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    ok   = sum(1 for r in results if r["status"] == "success")
-    auth = sum(1 for r in results if r["status"] == "auth_error")
-    err  = sum(1 for r in results if r["status"] == "error")
+    online = sum(1 for d in devices if d.get("online"))
+    offline_recent = sum(
+        1 for d in devices
+        if not d.get("online")
+        and d.get("_age_seconds") is not None
+        and d["_age_seconds"] < STALE_AFTER_SECS
+    )
+    stale = len(devices) - online - offline_recent
+
+    # Don't bloat the JSON with screenshot payloads
+    cleaned = []
+    for d in devices:
+        c = {k: v for k, v in d.items() if k != "applicationScreenshot"}
+        cleaned.append(c)
+
     output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()),
-            "timestamp":       datetime.now(timezone.utc).isoformat(),
-            "protocol":        "Android Debug Bridge (ADB) over TCP/IP",
-            "mode":            "connect + getprop + disconnect" if not args.no_connect else "getprop only (pre-connected)",
-            "workers":         args.workers,
-            "total":           len(results),
-            "success":         ok,
-            "auth_errors":     auth,
-            "errors":          err,
-            "elapsed_seconds": round(elapsed, 2),
+            "source":            "KBRemote UKR API",
+            "endpoint":          DEVICE_ENDPOINT,
+            "timestamp":         datetime.now(timezone.utc).isoformat(),
+            "csv_filter":        args.csv if (getattr(args, "csv", None) and not getattr(args, "all", False) and not getattr(args, "identifier", None)) else None,
+            "total":             len(devices),
+            "online":            online,
+            "offline_recent":    offline_recent,
+            "stale":             stale,
+            "stale_threshold_s": STALE_AFTER_SECS,
+            "elapsed_seconds":   round(elapsed, 2),
         },
-        "panels": results,
+        "panels":              cleaned,
+        "unmatched_csv_hosts": unmatched_csv_hosts or [],
     }
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
 
-def print_results_table(results: list, output_file: str, elapsed: float,
-                        workers: int, firmware_filter: str = None):
+def print_results_table(devices: list, output_file: str, elapsed: float,
+                        kiosk_filter: str = None, android_filter: str = None,
+                        sort_by: str = "name"):
     """Render the results table following the project visual style guide."""
 
-    # Apply firmware filter — mismatched or errored rows only.
-    # The full results list is always saved to JSON regardless.
-    if firmware_filter:
-        display_results = [
-            r for r in results
-            if r.get("firmware_version", "N/A") != firmware_filter
-        ]
-    else:
-        display_results = results
+    # Apply filters — mismatched rows shown only. Full data always in JSON.
+    display = devices
+    filter_descriptions = []
+    if kiosk_filter:
+        display = [d for d in display if d.get("kioskVersion") != kiosk_filter]
+        filter_descriptions.append(f"Kiosk \u2260 {kiosk_filter}")
+    if android_filter:
+        display = [d for d in display if str(d.get("androidVersion")) != android_filter]
+        filter_descriptions.append(f"Android \u2260 {android_filter}")
+
+    # Sort for predictable output
+    if sort_by == "name":
+        display = sorted(display, key=lambda d: (d.get("name") or "").lower())
+    elif sort_by == "lastseen":
+        # Most recently seen first, never-seen last
+        display = sorted(display, key=lambda d: d.get("_age_seconds") or float("inf"))
+    elif sort_by == "kiosk":
+        display = sorted(display, key=lambda d: (d.get("kioskVersion") or "", (d.get("name") or "").lower()))
 
     table_data = []
-    for r in display_results:
+    for d in display:
         row = [
-            status_icon(r),
-            clean(r["host"]),
-            clean(r["manufacturer"]),
-            clean(r["model"]),
-            clean(r["firmware_version"]),
-            clean(r["serial"]),
-            clean(r["android_version"]),
-            clean(r["adb_state"]),
-            truncate_error(r.get("error")),
+            status_icon_for(d),
+            clean(d.get("name")),
+            clean(d.get("brand")),
+            clean(d.get("model")),
+            clean(d.get("serial")),
+            clean(d.get("macAddress")),
+            clean(d.get("kioskVersion")),
+            clean(d.get("androidVersion")),
+            fmt_provisioned(d.get("provisioned")),
+            clean(d.get("_age_human")),
         ]
         table_data.append(row)
 
-    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
-               "Serial", "Android", "ADB State", "Error"]
+    headers = ["Status", "Name", "Make", "Model", "Serial",
+               "MAC", "Kiosk Ver", "Android", "Provisioned", "Last Seen"]
 
     table = tabulate(table_data, headers=headers,
                      tablefmt="pretty", stralign="left", numalign="right")
@@ -521,10 +442,10 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
     bw         = max(raw_width, 60)
 
-    title = "ELO Touch Panel \u2014 ADB Query Results"
-    if firmware_filter:
-        title += f"  \u2014  Mismatched: {len(display_results)}/{len(results)}"
-    pad   = (bw - len(title)) // 2
+    title = "KBRemote (UKR) \u2014 Fleet Query Results"
+    if filter_descriptions:
+        title += f"  \u2014  {' & '.join(filter_descriptions)}: {len(display)}/{len(devices)}"
+    pad = (bw - len(title)) // 2
 
     print(f"{WHITE}")
     print(f"  {'=' * bw}")
@@ -533,43 +454,75 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     for line in table.split("\n"):
         print(f"  {line}")
 
-    total = len(display_results)
-    ok    = sum(1 for r in display_results if r["status"] == "success")
-    auth  = sum(1 for r in display_results if r["status"] == "auth_error")
-    err   = sum(1 for r in display_results if r["status"] == "error")
+    # Recompute counts across the displayed (post-filter) set
+    total = len(display)
+    online = sum(1 for d in display if d.get("online"))
+    offline_recent = sum(
+        1 for d in display
+        if not d.get("online")
+        and d.get("_age_seconds") is not None
+        and d["_age_seconds"] < STALE_AFTER_SECS
+    )
+    stale = total - online - offline_recent
 
     print()
-    if firmware_filter:
+    if filter_descriptions:
         print(
-            f"  {BOLD}Firmware filter:{RESET}{WHITE} {firmware_filter}  |  "
-            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {len(results)} panels"
+            f"  {BOLD}Filter:{RESET}{WHITE} {' & '.join(filter_descriptions)}  |  "
+            f"{BOLD}Showing:{RESET}{WHITE} {len(display)} of {len(devices)} panels"
         )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Online:{RESET}{WHITE} {online}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Offline (recent):{RESET}{WHITE} {offline_recent}  |  "
+        f"{RED}\u2717{RESET}{WHITE} {BOLD}Stale:{RESET}{WHITE} {stale}"
     )
+
+    # Kiosk version distribution
+    kv_counts = {}
+    for d in display:
+        kv = d.get("kioskVersion") or "N/A"
+        kv_counts[kv] = kv_counts.get(kv, 0) + 1
+    reported_kv = sum(c for k, c in kv_counts.items() if k != "N/A")
+    if reported_kv:
+        parts = "  |  ".join(
+            f"{BOLD}{k}:{RESET}{WHITE} {c}"
+            for k, c in sorted(kv_counts.items(), key=lambda kv: (-kv[1], kv[0]))
+            if k != "N/A"
+        )
+        print(f"  {BOLD}Kiosk versions \u2014{RESET}{WHITE} {parts}  |  {BOLD}Reported:{RESET}{WHITE} {reported_kv}/{total}")
+    else:
+        print(f"  {BOLD}Kiosk versions \u2014{RESET}{WHITE} No data available")
 
     # Android version distribution
     av_counts = {}
-    for r in display_results:
-        av = r.get("android_version", "N/A")
+    for d in display:
+        av = str(d.get("androidVersion") or "N/A")
         av_counts[av] = av_counts.get(av, 0) + 1
-
-    reported = sum(v for k, v in av_counts.items() if k != "N/A")
-    if reported:
+    reported_av = sum(c for k, c in av_counts.items() if k != "N/A")
+    if reported_av:
         parts = "  |  ".join(
-            f"{BOLD}Android {v}:{RESET}{WHITE} {c}"
-            for v, c in sorted(av_counts.items()) if v != "N/A"
+            f"{BOLD}Android {k}:{RESET}{WHITE} {c}"
+            for k, c in sorted(av_counts.items())
+            if k != "N/A"
         )
-        print(f"  {BOLD}Android versions \u2014{RESET}{WHITE} {parts}  |  {BOLD}Reported:{RESET}{WHITE} {reported}/{total}")
+        print(f"  {BOLD}Android versions \u2014{RESET}{WHITE} {parts}  |  {BOLD}Reported:{RESET}{WHITE} {reported_av}/{total}")
     else:
         print(f"  {BOLD}Android versions \u2014{RESET}{WHITE} No data available")
 
+    # Provisioning status
+    prov_yes = sum(1 for d in display if d.get("provisioned") is True)
+    prov_no  = sum(1 for d in display if d.get("provisioned") is False)
+    if prov_yes or prov_no:
+        print(
+            f"  {BOLD}Provisioning \u2014{RESET}{WHITE} "
+            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Provisioned:{RESET}{WHITE} {prov_yes}  |  "
+            f"{RED}\u2717{RESET}{WHITE} {BOLD}Unprovisioned:{RESET}{WHITE} {prov_no}"
+        )
+
     print()
     print(f"  {BOLD}Results saved:{RESET}{WHITE} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers)")
+    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.2f}s")
     print(f"{RESET}")
 
 
@@ -578,286 +531,157 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Query ELO Android touch panels for firmware / build info via ADB over TCP/IP.",
+        description="Query the ELO touch panel fleet via the KBRemote UKR REST API.",
         epilog="""
 Examples:
-  python elo_adb_query.py
-  python elo_adb_query.py -i my_panels.csv
-  python elo_adb_query.py --host 192.168.1.50
-  python elo_adb_query.py --host 192.168.1.50 -p 5555 --raw
-  python elo_adb_query.py -i tp_firmware.csv -t 15 -o output.json -w 10
-  python elo_adb_query.py --firmware FDF4.160707.001
+  python tp_kbremote_query.py                              # default: filter to hosts in secrets/tp_firmware.csv
+  python tp_kbremote_query.py --csv my_panels.csv          # use a different CSV
+  python tp_kbremote_query.py --all                        # show every device in the account
+  python tp_kbremote_query.py --identifier b60e7c95-d160-439d-8dc6-4c7e1648bd1a
+  python tp_kbremote_query.py --kiosk 1.4.6                # show CSV panels NOT on this Kiosk version
+  python tp_kbremote_query.py --android 14                 # show CSV panels NOT on Android 14
+  python tp_kbremote_query.py --sort lastseen              # most recently seen first
+  python tp_kbremote_query.py --all --kiosk "1.4.6 (Build 131)"  # whole fleet, mismatched only
+  python tp_kbremote_query.py --raw                        # print full JSON
 
-Prerequisites:
-  - Android platform-tools installed and `adb` on PATH (or pass --adb).
-  - Each panel has ADB over TCP/IP enabled (default port 5555).
-  - The first connection to a new panel may require approval of the host's
-    RSA fingerprint on the panel itself (shown as AUTH ERR).
+Credentials:
+  The API key is read from (in order):
+    1. --api-key <key>           CLI flag
+    2. $KBREMOTE_API_KEY         environment variable
+    3. ~/.kbremote_api_key       text file with one line: the key
 
-Firmware Version:
-  Uses ro.build.display.id (human-readable build label), falling back to
-  ro.build.id if display.id is not set.
+  Get a key at: https://klr.android-kiosk.com/ApiKey
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("-i", "--input",        default=DEFAULT_CSV,
-        help=f"CSV file with 'host'/'port' columns (default: {DEFAULT_CSV})")
-    parser.add_argument("--host",               default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("-p", "--port",         type=int, default=DEFAULT_PORT,
-        help=f"Port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-o", "--output",       default=DEFAULT_OUTPUT,
+    parser.add_argument("--api-key",    default=None,
+        help="KBRemote API key (overrides env var and keyfile)")
+    parser.add_argument("--keyfile",    default=DEFAULT_KEYFILE,
+        help=f"Path to file containing the API key (default: {DEFAULT_KEYFILE})")
+    parser.add_argument("-o", "--output", default=DEFAULT_OUTPUT,
         help=f"Output JSON file (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("-t", "--timeout",      type=int, default=DEFAULT_TIMEOUT,
-        help=f"Per-command timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-w", "--workers",      type=int, default=DEFAULT_WORKERS,
-        help=f"Number of concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--adb",                default=DEFAULT_ADB,
-        help=f"Path to adb binary (default: {DEFAULT_ADB} — uses PATH)")
-    parser.add_argument("--no-connect",         action="store_true", default=False,
-        help="Skip adb connect/disconnect (assume panels are already connected)")
-    parser.add_argument("--raw",                action="store_true", default=False,
-        help="With --host: dump the full getprop output for the device.")
-    parser.add_argument("--firmware",           default=None, metavar="VERSION",
-        help="Only show panels whose firmware does NOT match VERSION in the terminal table. JSON output always contains all results.")
-    parser.add_argument("--show-key",           action="store_true", default=False,
-        help=f"Print the ADB public key at {DEFAULT_PUBKEY} and exit. Useful for pasting into each panel's 'ADB authorized keys' developer setting.")
-    parser.add_argument("--push-key",           action="store_true", default=False,
-        help="For each panel in the CSV, try to append the local adbkey.pub to /data/misc/adb/adb_keys. Requires adb root (userdebug builds only). Will report per-panel success/failure.")
-    parser.add_argument("--pubkey",             default=DEFAULT_PUBKEY, metavar="PATH",
-        help=f"Path to the adb public key file (default: {DEFAULT_PUBKEY})")
+    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
+        help=f"HTTP request timeout in seconds (default: {DEFAULT_TIMEOUT})")
+    parser.add_argument("--identifier", default=None,
+        help="Query a single device by its KBRemote identifier (UUID) instead of the full fleet")
+    parser.add_argument("--csv",        default=DEFAULT_CSV, metavar="PATH",
+        help=f"CSV file of hosts to filter results to (default: {DEFAULT_CSV}). Matching is exact, case-insensitive, against the device's KBRemote name. Unmatched CSV hosts are reported as a warning. Use --all to disable filtering.")
+    parser.add_argument("--all",        action="store_true", default=False,
+        help="Show every device in the KBRemote account (disables the CSV filter).")
+    parser.add_argument("--kiosk",      default=None, metavar="VERSION",
+        help="Only show panels whose kioskVersion does NOT match VERSION. JSON output always contains all results.")
+    parser.add_argument("--android",    default=None, metavar="VERSION",
+        help="Only show panels whose androidVersion does NOT match VERSION. JSON output always contains all results.")
+    parser.add_argument("--sort",       default="name", choices=["name", "lastseen", "kiosk"],
+        help="Sort order for the table (default: name)")
+    parser.add_argument("--raw",        action="store_true", default=False,
+        help="Print the raw JSON response (with --identifier prints one device, without prints all)")
 
     args = parser.parse_args()
-
-    term_width = get_terminal_width()
 
     import time
     start_time = time.monotonic()
 
-    # -----------------------------------------------------------------------
-    # --show-key mode (no adb / no network needed)
-    # -----------------------------------------------------------------------
-    if args.show_key:
-        pubkey_path = Path(args.pubkey)
-        if not pubkey_path.exists():
-            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Public key not found at {pubkey_path}")
-            print(f"  Generate one by running any adb command, or pass --pubkey <path>.{RESET}")
-            sys.exit(1)
-        key_text = pubkey_path.read_text().strip()
-        bw = max(len(key_text) + 4, 60)
-
-        print(f"{WHITE}")
-        print(f"  {'=' * bw}")
-        title = "ADB Public Key \u2014 Paste into panel developer settings"
-        pad = (bw - len(title)) // 2
-        print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
-        print(f"  {'=' * bw}")
-        print()
-        print(f"  {BOLD}Source:{RESET}{WHITE} {pubkey_path}")
-        print(f"  {BOLD}Length:{RESET}{WHITE} {len(key_text)} chars")
-        print()
-        print(f"  {BOLD}Key \u2014 copy the entire line below:{RESET}{WHITE}")
-        print()
-        print(key_text)
-        print()
-        print(f"  {BOLD}Instructions:{RESET}{WHITE}")
-        print(f"    1. On each panel, open Settings \u2192 Developer options")
-        print(f"    2. Find 'ADB authorized keys' (or similar \u2014 naming varies by build)")
-        print(f"    3. Paste the key above and save")
-        print(f"    4. Re-run this script without --show-key to verify")
-        print(f"{RESET}")
-        return
-
-    # Ensure adb server is running before we fan out worker threads — avoids
-    # a thundering-herd where every worker tries to spawn the daemon at once.
-    adb_start_server(args.adb, timeout=args.timeout)
+    api_key = resolve_api_key(args.api_key, args.keyfile)
 
     # -----------------------------------------------------------------------
     # Header block
     # -----------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
-    print(f"  {BOLD}ELO Touch Panel — ADB Query Tool{RESET}{WHITE}")
-    print(f"  Queries Android build info via `adb connect` + `getprop`.")
-    print(f"  Input:   {input_display}")
-    print(f"  Output:  {args.output}")
-    print(f"  Workers: {args.workers}")
-    print(f"  Timeout: {args.timeout}s")
-    print(f"  ADB:     {args.adb}")
-    print(f"  Mode:    {'pre-connected (no auto-connect)' if args.no_connect else 'auto connect + disconnect'}")
-    if args.firmware:
-        print(f"  Filter:  Showing panels not on firmware {args.firmware}")
+    print(f"  {BOLD}KBRemote (UKR) \u2014 Fleet Query Tool{RESET}{WHITE}")
+    print(f"  Queries every panel in your KBRemote account in one API call.")
+    print(f"  Endpoint: {DEVICE_ENDPOINT}")
+    print(f"  Output:   {args.output}")
+    print(f"  Timeout:  {args.timeout}s")
+    print(f"  Auth:     api-key header (key length {len(api_key)} chars)")
+    if args.identifier:
+        print(f"  Scope:    single device {args.identifier}")
+    elif args.all:
+        print(f"  Scope:    full fleet (--all)")
+    else:
+        print(f"  Scope:    hosts in {args.csv}")
+    if args.kiosk:
+        print(f"  Filter:   Kiosk version \u2260 {args.kiosk}")
+    if args.android:
+        print(f"  Filter:   Android version \u2260 {args.android}")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
-    # --push-key mode
+    # Load CSV host list (default behavior — unless --all or --identifier)
     # -----------------------------------------------------------------------
-    if args.push_key:
-        pubkey_path = Path(args.pubkey)
-        if not pubkey_path.exists():
-            print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Public key not found at {pubkey_path}{RESET}")
-            sys.exit(1)
-        pubkey_text = pubkey_path.read_text().strip()
-
-        panels = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
-
-        print(f"{WHITE}")
-        print(f"  {BOLD}Push-Key Mode{RESET}{WHITE}")
-        print(f"  Appending {pubkey_path} to /data/misc/adb/adb_keys on each panel.")
-        print(f"  Requires `adb root` (userdebug/eng builds). Will skip user builds.")
-        print(f"{RESET}")
-
-        bar_fmt = (
-            f"  {WHITE}Pushing{RESET} "
-            f"{CYAN}{{bar}}{RESET}"
-            f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
-            f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
-            f"  {WHITE}{{postfix}}{RESET}"
-        )
-
-        push_results = []
-        results_lock = threading.Lock()
-        active_lock  = threading.Lock()
-        latest_host  = {"value": ""}
-
-        def do_push(d):
-            with active_lock:
-                latest_host["value"] = d["host"]
-            return push_pubkey(d["host"], d["port"], adb_bin=args.adb,
-                               pubkey_text=pubkey_text, timeout=args.timeout)
-
-        with tqdm(total=len(panels), bar_format=bar_fmt, ncols=term_width,
-                  dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
-            with ThreadPoolExecutor(max_workers=args.workers) as ex:
-                futures = {ex.submit(do_push, d): d for d in panels}
-                for fut in as_completed(futures):
-                    with results_lock:
-                        push_results.append(fut.result())
-                    with active_lock:
-                        pbar.set_postfix_str(latest_host["value"], refresh=False)
-                    pbar.update(1)
-
-        elapsed = time.monotonic() - start_time
-        pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
-
-        host_order = {d["host"]: i for i, d in enumerate(panels)}
-        push_results.sort(key=lambda r: host_order.get(r["host"], 0))
-
-        def push_icon(r):
-            s = r.get("status", "error")
-            if s == "success":     return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-            if s == "auth_error":  return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-            return f"{RED}\u2717 FAIL{RESET}{WHITE}"
-
-        table = tabulate(
-            [[push_icon(r), clean(r["host"]), truncate_error(r["message"], max_len=50)]
-             for r in push_results],
-            headers=["Status", "Host", "Message"],
-            tablefmt="pretty", stralign="left"
-        )
-        first_line = table.split("\n")[0]
-        bw = max(len(re.sub(r'\033\[[0-9;]*m', '', first_line)), 60)
-        title = "ADB Push-Key \u2014 Results"
-
-        print(f"{WHITE}")
-        print(f"  {'=' * bw}")
-        print(f"  {' ' * ((bw - len(title)) // 2)}{BOLD}{title}{RESET}{WHITE}")
-        print(f"  {'=' * bw}")
-        for line in table.split("\n"):
-            print(f"  {line}")
-
-        ok   = sum(1 for r in push_results if r["status"] == "success")
-        auth = sum(1 for r in push_results if r["status"] == "auth_error")
-        err  = sum(1 for r in push_results if r["status"] == "error")
-        print()
-        print(
-            f"  {BOLD}Total:{RESET}{WHITE} {len(push_results)}  |  "
-            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-            f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-            f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
-        )
-        print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({args.workers} workers)")
-        print(f"{RESET}")
-        return
+    csv_hosts = None
+    if not args.all and not args.identifier:
+        csv_hosts = load_csv_hosts(args.csv)
 
     # -----------------------------------------------------------------------
-    # Single-host --raw dump
+    # Fetch
     # -----------------------------------------------------------------------
-    if args.host and args.raw:
-        target = f"{args.host}:{args.port}"
-        print(f"{WHITE}Raw getprop dump for {target}:{RESET}\n")
-        try:
-            if not args.no_connect:
-                ok, msg = adb_connect(args.adb, target, timeout=args.timeout)
-                print(f"{WHITE}--- adb connect --- {GREEN if ok else RED}{msg}{RESET}")
-                if not ok:
-                    return
-            state = adb_get_state(args.adb, target, timeout=args.timeout)
-            print(f"{WHITE}--- adb get-state --- {state}{RESET}\n")
-            rc, out, err = run_adb(args.adb, ["-s", target, "shell", "getprop"], timeout=args.timeout)
-            if rc == 0:
-                print(out)
-            else:
-                print(f"{RED}ERROR:{RESET} {err or out}")
-        except Exception as e:
-            print(f"{RED}ERROR:{RESET} {e}")
-        finally:
-            if not args.no_connect:
-                adb_disconnect(args.adb, target)
-        return
-
-    # -----------------------------------------------------------------------
-    # Build panel list
-    # -----------------------------------------------------------------------
-    panels = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
-
-    # -----------------------------------------------------------------------
-    # Progress bar + concurrent query loop
-    # -----------------------------------------------------------------------
-    bar_fmt = (
-        f"  {WHITE}Scanning{RESET} "
-        f"{CYAN}{{bar}}{RESET}"
-        f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
-        f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
-        f"  {WHITE}{{postfix}}{RESET}"
-    )
-
-    results      = []
-    results_lock = threading.Lock()
-    active_lock  = threading.Lock()
-    latest_host  = {"value": ""}
-
-    def do_query(d):
-        with active_lock:
-            latest_host["value"] = d["host"]
-        return query_panel(
-            d["host"], d["port"],
-            adb_bin=args.adb,
-            timeout=args.timeout,
-            skip_connect=args.no_connect,
-        )
-
-    with tqdm(total=len(panels), bar_format=bar_fmt, ncols=term_width,
-              dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
-        with ThreadPoolExecutor(max_workers=args.workers) as ex:
-            futures = {ex.submit(do_query, d): d for d in panels}
-            for fut in as_completed(futures):
-                with results_lock:
-                    results.append(fut.result())
-                with active_lock:
-                    pbar.set_postfix_str(latest_host["value"], refresh=False)
-                pbar.update(1)
+    try:
+        devices = fetch_devices(api_key, timeout=args.timeout, identifier=args.identifier)
+    except requests.exceptions.Timeout:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Request timed out after {args.timeout}s{RESET}")
+        sys.exit(1)
+    except requests.exceptions.ConnectionError as e:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Cannot connect to API: {e}{RESET}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} {e}{RESET}")
+        sys.exit(1)
 
     elapsed = time.monotonic() - start_time
-    pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
 
-    # Re-sort results to match original CSV input order
-    host_order = {d["host"]: i for i, d in enumerate(panels)}
-    results.sort(key=lambda r: host_order.get(r["host"], 0))
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Warning:{RESET}{WHITE} API returned no devices.{RESET}")
+        sys.exit(0)
 
-    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
-    save_results_json(results, args.output, args, elapsed)
+    devices = enrich_devices(devices)
+
+    # -----------------------------------------------------------------------
+    # Apply CSV host filter (after enrich so age fields are still computed)
+    # -----------------------------------------------------------------------
+    unmatched_csv_hosts = []
+    if csv_hosts is not None:
+        api_total = len(devices)
+        devices, unmatched_csv_hosts = filter_devices_by_hosts(devices, csv_hosts)
+        print(f"{WHITE}")
+        print(
+            f"  {BOLD}CSV scope:{RESET}{WHITE} {len(csv_hosts)} hosts in CSV  |  "
+            f"{BOLD}Matched:{RESET}{WHITE} {len(devices)}  |  "
+            f"{BOLD}Unmatched:{RESET}{WHITE} {len(unmatched_csv_hosts)}  |  "
+            f"{BOLD}API total:{RESET}{WHITE} {api_total}"
+        )
+        if unmatched_csv_hosts:
+            print(f"  {YELLOW}{BOLD}Hosts in CSV with no matching KBRemote device:{RESET}{WHITE}")
+            for h in unmatched_csv_hosts:
+                print(f"    \u2022 {h}")
+        print(f"{RESET}")
+
+    if not devices:
+        print(f"\n  {WHITE}{BOLD}Warning:{RESET}{WHITE} No devices left after CSV filter.{RESET}")
+        sys.exit(0)
+
+    # -----------------------------------------------------------------------
+    # --raw mode
+    # -----------------------------------------------------------------------
+    if args.raw:
+        # Strip screenshot blobs which are huge and unreadable
+        cleaned = [{k: v for k, v in d.items() if k != "applicationScreenshot"} for d in devices]
+        print(json.dumps(cleaned, indent=2, ensure_ascii=False))
+        return
+
+    # -----------------------------------------------------------------------
+    # Render table + save JSON
+    # -----------------------------------------------------------------------
+    print_results_table(
+        devices,
+        args.output,
+        elapsed,
+        kiosk_filter=args.kiosk,
+        android_filter=args.android,
+        sort_by=args.sort,
+    )
+    save_results_json(devices, args.output, args, elapsed, unmatched_csv_hosts=unmatched_csv_hosts)
 
 
 if __name__ == "__main__":

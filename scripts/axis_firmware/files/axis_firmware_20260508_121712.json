@@ -1,0 +1,2209 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/secrets/axis_firmware.csv",
+    "timestamp": "2026-05-08T16:17:25.169153+00:00",
+    "protocol": "VAPIX 3 (HTTPS/Digest)",
+    "mode": "firmware+temperature",
+    "workers": 5,
+    "total": 73,
+    "success": 66,
+    "auth_errors": 3,
+    "errors": 4,
+    "elapsed_seconds": 13.12
+  },
+  "cameras": [
+    {
+      "host": "4-currier-101b-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.058107+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F522544",
+      "mac_address": "B8:A4:4F:52:25:44",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "45.56",
+      "temperature_f": "114.01",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "45.56",
+          "temperature_f": "114.01"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "50.62",
+          "temperature_f": "123.12"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "45.78",
+          "temperature_f": "114.41"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-101e-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.061232+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F52568B",
+      "mac_address": "B8:A4:4F:52:56:8B",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "46.31",
+      "temperature_f": "115.36",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "46.31",
+          "temperature_f": "115.36"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "51.50",
+          "temperature_f": "124.70"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.12",
+          "temperature_f": "115.03"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-213-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.063632+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F525684",
+      "mac_address": "B8:A4:4F:52:56:84",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "48.38",
+      "temperature_f": "119.07",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "48.38",
+          "temperature_f": "119.07"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "53.38",
+          "temperature_f": "128.07"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.44",
+          "temperature_f": "119.19"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-214-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.065822+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F59DC55",
+      "mac_address": "B8:A4:4F:59:DC:55",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "50.94",
+      "temperature_f": "123.69",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "50.94",
+          "temperature_f": "123.69"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "55.31",
+          "temperature_f": "131.56"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "50.54",
+          "temperature_f": "122.97"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-215-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.069223+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F59DD8C",
+      "mac_address": "B8:A4:4F:59:DD:8C",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "51.00",
+      "temperature_f": "123.80",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "51.00",
+          "temperature_f": "123.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "56.19",
+          "temperature_f": "133.14"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "51.12",
+          "temperature_f": "124.02"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-223-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.478708+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F5357A4",
+      "mac_address": "B8:A4:4F:53:57:A4",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "47.00",
+      "temperature_f": "116.60",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "47.00",
+          "temperature_f": "116.60"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "52.38",
+          "temperature_f": "126.27"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "47.29",
+          "temperature_f": "117.12"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-227-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.487239+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F616767",
+      "mac_address": "B8:A4:4F:61:67:67",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "48.56",
+      "temperature_f": "119.41",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "48.56",
+          "temperature_f": "119.41"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "53.25",
+          "temperature_f": "127.85"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.44",
+          "temperature_f": "119.19"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-232-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.493147+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F535799",
+      "mac_address": "B8:A4:4F:53:57:99",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "50.12",
+      "temperature_f": "122.22",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "50.12",
+          "temperature_f": "122.22"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "55.19",
+          "temperature_f": "131.34"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "49.94",
+          "temperature_f": "121.89"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-collaboration-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.506635+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F525663",
+      "mac_address": "B8:A4:4F:52:56:63",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "42.31",
+      "temperature_f": "108.16",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "42.31",
+          "temperature_f": "108.16"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "46.50",
+          "temperature_f": "115.70"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "42.62",
+          "temperature_f": "108.72"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "4-currier-lounge-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.524326+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F535860",
+      "mac_address": "B8:A4:4F:53:58:60",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "43.31",
+      "temperature_f": "109.96",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "43.31",
+          "temperature_f": "109.96"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "48.94",
+          "temperature_f": "120.09"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "43.31",
+          "temperature_f": "109.96"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "baker-213-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.880167+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FC02C45",
+      "mac_address": "B8:A4:4F:C0:2C:45",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "47.69",
+      "temperature_f": "117.85",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "52.00",
+          "temperature_f": "125.60"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "47.69",
+          "temperature_f": "117.85"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.69",
+          "temperature_f": "116.05"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "baker-219-ceiling-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.897669+00:00",
+      "status": "auth_error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Auth failed"
+    },
+    {
+      "host": "baker-227-camera-1.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.909864+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F837ED6",
+      "mac_address": "B8:A4:4F:83:7E:D6",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "45.79",
+      "temperature_f": "114.41",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "49.00",
+          "temperature_f": "120.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "45.79",
+          "temperature_f": "114.41"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "45.07",
+          "temperature_f": "113.13"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "baker-234-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.927351+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FCCEE7B",
+      "mac_address": "B8:A4:4F:CC:EE:7B",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "45.43",
+      "temperature_f": "113.77",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "48.00",
+          "temperature_f": "118.40"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "45.43",
+          "temperature_f": "113.77"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "45.93",
+          "temperature_f": "114.67"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "bartlett-105a-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:12.941477+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FCCEB9F",
+      "mac_address": "B8:A4:4F:CC:EB:9F",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "43.00",
+      "temperature_f": "109.40",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "45.00",
+          "temperature_f": "113.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "43.00",
+          "temperature_f": "109.40"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "42.43",
+          "temperature_f": "108.37"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "bartlett-105-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:13.164039+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FC6E70D",
+      "mac_address": "B8:A4:4F:C6:E7:0D",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "43.71",
+      "temperature_f": "110.69",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "46.00",
+          "temperature_f": "114.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "43.71",
+          "temperature_f": "110.69"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "43.50",
+          "temperature_f": "110.30"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "berry-180-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:13.716938+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F97C33B",
+      "mac_address": "B8:A4:4F:97:C3:3B",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "50.79",
+      "temperature_f": "123.43",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Front",
+          "temperature_c": "50.79",
+          "temperature_f": "123.43"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "carson-060-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:13.777457+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F91FF27",
+      "mac_address": "B8:A4:4F:91:FF:27",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.07",
+      "temperature_f": "105.93",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "43.00",
+          "temperature_f": "109.40"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.07",
+          "temperature_f": "105.93"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.80",
+          "temperature_f": "105.44"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "carson-061-1-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:13.789982+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F837E03",
+      "mac_address": "B8:A4:4F:83:7E:03",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "33.12",
+      "temperature_f": "91.62",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "35.00",
+          "temperature_f": "95.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "33.12",
+          "temperature_f": "91.62"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "32.40",
+          "temperature_f": "90.32"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "carson-l01-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:13.831817+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F8E5031",
+      "mac_address": "B8:A4:4F:8E:50:31",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "39.14",
+      "temperature_f": "102.46",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "41.00",
+          "temperature_f": "105.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "39.14",
+          "temperature_f": "102.46"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "39.43",
+          "temperature_f": "102.97"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "carson-l02-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.087512+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F949670",
+      "mac_address": "B8:A4:4F:94:96:70",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.07",
+      "temperature_f": "105.93",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "45.00",
+          "temperature_f": "113.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.07",
+          "temperature_f": "105.93"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "41.07",
+          "temperature_f": "105.93"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "dewey-101-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.108553+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FF48016",
+      "mac_address": "B8:A4:4F:F4:80:16",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "38.60",
+      "temperature_f": "101.48",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "40.00",
+          "temperature_f": "104.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "38.60",
+          "temperature_f": "101.48"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "38.53",
+          "temperature_f": "101.36"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "e001a-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.693633+00:00",
+      "status": "error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Unreachable"
+    },
+    {
+      "host": "fairchild-101-camera-2.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.698672+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F7EFDE6",
+      "mac_address": "B8:A4:4F:7E:FD:E6",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "47.08",
+      "temperature_f": "116.75",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "47.08",
+          "temperature_f": "116.75"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "fairchild-217a-webcam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.707607+00:00",
+      "status": "error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Unreachable"
+    },
+    {
+      "host": "haldeman-028-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.714615+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F9B2C62",
+      "mac_address": "B8:A4:4F:9B:2C:62",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "44.34",
+      "temperature_f": "111.82",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Front",
+          "temperature_c": "44.34",
+          "temperature_f": "111.82"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "haldeman-046-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:14.739685+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FBCC0EA",
+      "mac_address": "B8:A4:4F:BC:C0:EA",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.79",
+      "temperature_f": "107.21",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "45.00",
+          "temperature_f": "113.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.79",
+          "temperature_f": "107.21"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.93",
+          "temperature_f": "105.68"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "hopkins-051-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.005738+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FB1F69A",
+      "mac_address": "B8:A4:4F:B1:F6:9A",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "40.87",
+      "temperature_f": "105.56",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "44.00",
+          "temperature_f": "111.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "40.87",
+          "temperature_f": "105.56"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.40",
+          "temperature_f": "104.72"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "hopkins-052-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.034429+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FB1F5AD",
+      "mac_address": "B8:A4:4F:B1:F5:AD",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "31.06",
+      "temperature_f": "87.91",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "34.00",
+          "temperature_f": "93.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "31.06",
+          "temperature_f": "87.91"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "32.60",
+          "temperature_f": "90.68"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "hopkins-054-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.127328+00:00",
+      "status": "error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Timed out"
+    },
+    {
+      "host": "hopkins-138-camera-3.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.132495+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FB1E05B",
+      "mac_address": "B8:A4:4F:B1:E0:5B",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.21",
+      "temperature_f": "106.19",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "44.00",
+          "temperature_f": "111.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.21",
+          "temperature_f": "106.19"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.87",
+          "temperature_f": "105.56"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-004-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.588135+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F692FC8",
+      "mac_address": "B8:A4:4F:69:2F:C8",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "46.83",
+      "temperature_f": "116.30",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.83",
+          "temperature_f": "116.30"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-006-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.874454+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F692F51",
+      "mac_address": "B8:A4:4F:69:2F:51",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "48.38",
+      "temperature_f": "119.07",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.38",
+          "temperature_f": "119.07"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-007-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.915982+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F6166BF",
+      "mac_address": "B8:A4:4F:61:66:BF",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "46.31",
+      "temperature_f": "115.36",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "46.31",
+          "temperature_f": "115.36"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "51.06",
+          "temperature_f": "123.91"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.88",
+          "temperature_f": "116.38"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-008-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.962977+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F77C84D",
+      "mac_address": "B8:A4:4F:77:C8:4D",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "38.67",
+      "temperature_f": "101.60",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "41.00",
+          "temperature_f": "105.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "38.67",
+          "temperature_f": "101.60"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "38.40",
+          "temperature_f": "101.12"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-105-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:15.981313+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F692F5E",
+      "mac_address": "B8:A4:4F:69:2F:5E",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "45.69",
+      "temperature_f": "114.24",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "45.69",
+          "temperature_f": "114.24"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-108-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.292640+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F692E36",
+      "mac_address": "B8:A4:4F:69:2E:36",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "46.17",
+      "temperature_f": "115.10",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.17",
+          "temperature_f": "115.10"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "kemeny-307-webcam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.326837+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F4A9B34",
+      "mac_address": "B8:A4:4F:4A:9B:34",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "48.81",
+      "temperature_f": "119.86",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "48.81",
+          "temperature_f": "119.86"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "54.50",
+          "temperature_f": "130.10"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.84",
+          "temperature_f": "119.92"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "lsc-100-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.377218+00:00",
+      "status": "auth_error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Auth failed"
+    },
+    {
+      "host": "lsc-105-1-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.727403+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F750324",
+      "mac_address": "B8:A4:4F:75:03:24",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "38.47",
+      "temperature_f": "101.24",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "41.00",
+          "temperature_f": "105.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "38.47",
+          "temperature_f": "101.24"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "38.40",
+          "temperature_f": "101.12"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "lsc-135-camera-3.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.734200+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FC6F3B5",
+      "mac_address": "B8:A4:4F:C6:F3:B5",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "43.07",
+      "temperature_f": "109.53",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "47.00",
+          "temperature_f": "116.60"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "43.07",
+          "temperature_f": "109.53"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "43.21",
+          "temperature_f": "109.79"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "lsc-200-1-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.819491+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F8E3F1F",
+      "mac_address": "B8:A4:4F:8E:3F:1F",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.21",
+      "temperature_f": "106.19",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "44.00",
+          "temperature_f": "111.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.21",
+          "temperature_f": "106.19"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "41.21",
+          "temperature_f": "106.19"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "lsc-201-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:16.906376+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F8E3B6F",
+      "mac_address": "B8:A4:4F:8E:3B:6F",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "40.67",
+      "temperature_f": "105.20",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "43.00",
+          "temperature_f": "109.40"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "40.67",
+          "temperature_f": "105.20"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.13",
+          "temperature_f": "104.24"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "lsc-205-1-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:17.608132+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F838B2E",
+      "mac_address": "B8:A4:4F:83:8B:2E",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "40.07",
+      "temperature_f": "104.12",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "44.00",
+          "temperature_f": "111.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "40.07",
+          "temperature_f": "104.12"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.07",
+          "temperature_f": "104.12"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "moore-110-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:17.638206+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F9B2C6D",
+      "mac_address": "B8:A4:4F:9B:2C:6D",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "42.91",
+      "temperature_f": "109.23",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Front",
+          "temperature_c": "42.91",
+          "temperature_f": "109.23"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "moore-150-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:17.725901+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F87F9CA",
+      "mac_address": "B8:A4:4F:87:F9:CA",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "48.06",
+      "temperature_f": "118.51",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.06",
+          "temperature_f": "118.51"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "moore-202-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:17.808454+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F9B2C61",
+      "mac_address": "B8:A4:4F:9B:2C:61",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "43.62",
+      "temperature_f": "110.53",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Front",
+          "temperature_c": "43.62",
+          "temperature_f": "110.53"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "osher-3a-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.032340+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F4A9AE7",
+      "mac_address": "B8:A4:4F:4A:9A:E7",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "48.12",
+      "temperature_f": "118.62",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "48.12",
+          "temperature_f": "118.62"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "53.31",
+          "temperature_f": "127.96"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.03",
+          "temperature_f": "118.46"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "robinson-322-webcam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.119930+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F4A9B60",
+      "mac_address": "B8:A4:4F:4A:9B:60",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "47.75",
+      "temperature_f": "117.95",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "47.75",
+          "temperature_f": "117.95"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "53.06",
+          "temperature_f": "127.51"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "48.09",
+          "temperature_f": "118.57"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-001-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.200774+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F92095C",
+      "mac_address": "B8:A4:4F:92:09:5C",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "40.60",
+      "temperature_f": "105.08",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "43.00",
+          "temperature_f": "109.40"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "40.60",
+          "temperature_f": "105.08"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "40.60",
+          "temperature_f": "105.08"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-002-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.401598+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F8E5118",
+      "mac_address": "B8:A4:4F:8E:51:18",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "44.31",
+      "temperature_f": "111.75",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "47.00",
+          "temperature_f": "116.60"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "44.31",
+          "temperature_f": "111.75"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "43.93",
+          "temperature_f": "111.07"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-003-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.499258+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F8E348D",
+      "mac_address": "B8:A4:4F:8E:34:8D",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.93",
+      "temperature_f": "107.47",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "45.00",
+          "temperature_f": "113.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.93",
+          "temperature_f": "107.47"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "41.43",
+          "temperature_f": "106.57"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-100-webcam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.534260+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F52519D",
+      "mac_address": "B8:A4:4F:52:51:9D",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "45.62",
+      "temperature_f": "114.12",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "45.62",
+          "temperature_f": "114.12"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "50.56",
+          "temperature_f": "123.01"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "45.62",
+          "temperature_f": "114.12"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-208-camera-3.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:18.916125+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F8E3B85",
+      "mac_address": "B8:A4:4F:8E:3B:85",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.79",
+      "temperature_f": "107.21",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "45.00",
+          "temperature_f": "113.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.79",
+          "temperature_f": "107.21"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "41.43",
+          "temperature_f": "106.57"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "rockefeller-209-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:19.114037+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FDE825D",
+      "mac_address": "B8:A4:4F:DE:82:5D",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "34.38",
+      "temperature_f": "93.88",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "37.00",
+          "temperature_f": "98.60"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "34.38",
+          "temperature_f": "93.88"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "33.94",
+          "temperature_f": "93.09"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-029a-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:19.231634+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F59DD6E",
+      "mac_address": "B8:A4:4F:59:DD:6E",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "45.38",
+      "temperature_f": "113.67",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "45.38",
+          "temperature_f": "113.67"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "50.81",
+          "temperature_f": "123.46"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "45.44",
+          "temperature_f": "113.79"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-029b-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:19.344372+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F59D8D0",
+      "mac_address": "B8:A4:4F:59:D8:D0",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "49.06",
+      "temperature_f": "120.31",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "49.06",
+          "temperature_f": "120.31"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "54.50",
+          "temperature_f": "130.10"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "49.19",
+          "temperature_f": "120.54"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-113-ceiling-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:19.609817+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F74F313",
+      "mac_address": "B8:A4:4F:74:F3:13",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.71",
+      "temperature_f": "107.09",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "44.00",
+          "temperature_f": "111.20"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.71",
+          "temperature_f": "107.09"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "42.00",
+          "temperature_f": "107.60"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-119-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:19.728852+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FF2B71A",
+      "mac_address": "B8:A4:4F:F2:B7:1A",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "38.07",
+      "temperature_f": "100.52",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "41.00",
+          "temperature_f": "105.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "38.07",
+          "temperature_f": "100.52"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "37.13",
+          "temperature_f": "98.84"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-213-ceiling-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:19.824104+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F77C464",
+      "mac_address": "B8:A4:4F:77:C4:64",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "42.86",
+      "temperature_f": "109.14",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "46.00",
+          "temperature_f": "114.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "42.86",
+          "temperature_f": "109.14"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "42.71",
+          "temperature_f": "108.89"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-215-ceiling-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:20.018440+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F77C66A",
+      "mac_address": "B8:A4:4F:77:C6:6A",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "42.21",
+      "temperature_f": "107.99",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "45.00",
+          "temperature_f": "113.00"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "42.21",
+          "temperature_f": "107.99"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "41.79",
+          "temperature_f": "107.21"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-310-ceiling-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:20.512591+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F77BA73",
+      "mac_address": "B8:A4:4F:77:BA:73",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "42.86",
+      "temperature_f": "109.14",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "46.00",
+          "temperature_f": "114.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "42.86",
+          "temperature_f": "109.14"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "42.14",
+          "temperature_f": "107.86"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "silsby-312-ceiling-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:20.557671+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44F77C7D7",
+      "mac_address": "B8:A4:4F:77:C7:D7",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "41.57",
+      "temperature_f": "106.83",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "43.00",
+          "temperature_f": "109.40"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "41.57",
+          "temperature_f": "106.83"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "41.36",
+          "temperature_f": "106.44"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "steele-007-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:20.738556+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F7EFDCE",
+      "mac_address": "B8:A4:4F:7E:FD:CE",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "44.91",
+      "temperature_f": "112.83",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "44.91",
+          "temperature_f": "112.83"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "sudikoff-003-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:20.937345+00:00",
+      "status": "success",
+      "firmware_version": "9.80.2.2",
+      "model": "M3068-P",
+      "serial_number": "B8A44F59FAD8",
+      "mac_address": "B8:A4:4F:59:FA:D8",
+      "build_date": "Jul 09 2020 07:54",
+      "temperature_c": "46.75",
+      "temperature_f": "116.15",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "46.75",
+          "temperature_f": "116.15"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "51.56",
+          "temperature_f": "124.81"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.75",
+          "temperature_f": "116.15"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "sudikoff-045-support-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.130168+00:00",
+      "status": "error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Unreachable"
+    },
+    {
+      "host": "sudikoff-143-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.136633+00:00",
+      "status": "success",
+      "firmware_version": "9.80.2.2",
+      "model": "M3068-P",
+      "serial_number": "B8A44F59F125",
+      "mac_address": "B8:A4:4F:59:F1:25",
+      "build_date": "Jul 09 2020 07:54",
+      "temperature_c": "44.50",
+      "temperature_f": "112.10",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "44.50",
+          "temperature_f": "112.10"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "CPU",
+          "temperature_c": "50.19",
+          "temperature_f": "122.34"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "44.53",
+          "temperature_f": "112.16"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "wilder-111-camera.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.353505+00:00",
+      "status": "auth_error",
+      "firmware_version": "N/A",
+      "model": "N/A",
+      "serial_number": "N/A",
+      "mac_address": "N/A",
+      "build_date": "N/A",
+      "temperature_c": "N/A",
+      "temperature_f": "N/A",
+      "sensor_name": "N/A",
+      "all_sensors": [],
+      "error": "Auth failed"
+    },
+    {
+      "host": "wilder-115-support-cam.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.360252+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M3068-P",
+      "serial_number": "B8A44F7EFDC2",
+      "mac_address": "B8:A4:4F:7E:FD:C2",
+      "build_date": "Jan 17 2026 18:18",
+      "temperature_c": "49.91",
+      "temperature_f": "121.83",
+      "sensor_name": "Front",
+      "all_sensors": [
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "49.91",
+          "temperature_f": "121.83"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "wilson-205-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.476486+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FC02318",
+      "mac_address": "B8:A4:4F:C0:23:18",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "47.08",
+      "temperature_f": "116.74",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "52.00",
+          "temperature_f": "125.60"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "47.08",
+          "temperature_f": "116.74"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "46.62",
+          "temperature_f": "115.91"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "wilson-219-camera-4.openav.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.578729+00:00",
+      "status": "success",
+      "firmware_version": "11.11.192",
+      "model": "M4328-P",
+      "serial_number": "B8A44FC02C4B",
+      "mac_address": "B8:A4:4F:C0:2C:4B",
+      "build_date": "Jan 17 2026 18:20",
+      "temperature_c": "38.80",
+      "temperature_f": "101.84",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "CPU",
+          "temperature_c": "41.00",
+          "temperature_f": "105.80"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Main",
+          "temperature_c": "38.80",
+          "temperature_f": "101.84"
+        },
+        {
+          "sensor_id": "S2",
+          "sensor_name": "Front",
+          "temperature_c": "38.67",
+          "temperature_f": "101.60"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "cts-carp-103-webcam.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.619371+00:00",
+      "status": "success",
+      "firmware_version": "8.40.4.1",
+      "model": "M3048-P",
+      "serial_number": "ACCC8EEE2188",
+      "mac_address": "AC:CC:8E:EE:21:88",
+      "build_date": "Oct 29 2020 11:48",
+      "temperature_c": "53.21",
+      "temperature_f": "127.79",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "53.21",
+          "temperature_f": "127.79"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Sensor",
+          "temperature_c": "58.78",
+          "temperature_f": "137.80"
+        }
+      ],
+      "error": null
+    },
+    {
+      "host": "cts-dana-114-webcam.dartmouth.edu",
+      "query_timestamp": "2026-05-08T16:17:21.790178+00:00",
+      "status": "success",
+      "firmware_version": "8.40.4.1",
+      "model": "M3048-P",
+      "serial_number": "ACCC8ED9D5DA",
+      "mac_address": "AC:CC:8E:D9:D5:DA",
+      "build_date": "Oct 29 2020 11:48",
+      "temperature_c": "32.13",
+      "temperature_f": "89.84",
+      "sensor_name": "Main",
+      "all_sensors": [
+        {
+          "sensor_id": "S0",
+          "sensor_name": "Main",
+          "temperature_c": "32.13",
+          "temperature_f": "89.84"
+        },
+        {
+          "sensor_id": "S1",
+          "sensor_name": "Sensor",
+          "temperature_c": "41.34",
+          "temperature_f": "106.42"
+        }
+      ],
+      "error": null
+    }
+  ]
+}

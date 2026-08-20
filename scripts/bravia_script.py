@@ -2,14 +2,14 @@
 """
 Sony Bravia BZ40H/BZ40L Firmware Version Query Tool
 
-Uses the Sony BRAVIA REST API (JSON-RPC) documented in:
-  - Sony BRAVIA Professional Display IP Control API
+Uses the Sony BRAVIA REST API (JSON-RPC):
   - Endpoint: /sony/system
   - Method: getSystemInformation (v1.7 with fallback to v1.4, v1.0)
   - Method: getInterfaceInformation (v1.0)
+  - Method: getNetworkSettings (v1.0)
   - Method: getPowerSavingMode (v1.0)
 
-Supports two authentication modes:
+Authentication modes:
   - None: No authentication (X-Auth-PSK header omitted)
   - PSK:  Pre-Shared Key via X-Auth-PSK header
   - Fallback: Retries with PSK "1234" on HTTP 403 when no PSK is configured
@@ -21,6 +21,7 @@ import re
 import sys
 import os
 import shutil
+import time
 import argparse
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -30,7 +31,7 @@ from pathlib import Path
 try:
     import requests
 except ImportError:
-    print("ERROR: 'requests' library is required. Install with: pip install requests")
+    print("ERROR: 'requests' library is required. Install with: pip3 install requests")
     sys.exit(1)
 
 from requests.exceptions import Timeout, ConnectionError as RequestsConnectionError
@@ -38,44 +39,43 @@ from requests.exceptions import Timeout, ConnectionError as RequestsConnectionEr
 try:
     from tabulate import tabulate
 except ImportError:
-    print("ERROR: 'tabulate' library is required. Install with: pip install tabulate")
+    print("ERROR: 'tabulate' library is required. Install with: pip3 install tabulate")
     sys.exit(1)
 
 try:
     from tqdm import tqdm
 except ImportError:
-    print("ERROR: 'tqdm' library is required. Install with: pip install tqdm")
+    print("ERROR: 'tqdm' library is required. Install with: pip3 install tqdm")
     sys.exit(1)
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ---------------------------------------------------------------------------
-# ANSI color palette
+# ANSI palette (spec 3.1) — no other colours
 # ---------------------------------------------------------------------------
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
 
 # ---------------------------------------------------------------------------
-# Defaults & constants
+# Paths & defaults
 # ---------------------------------------------------------------------------
-DEFAULT_CSV      = "secrets/bravia_firmware.csv"
-OUTPUT_DIR       = "bravia_firmware/files"
-DEFAULT_OUTPUT   = os.path.join(
-    OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+SCRIPT_DIR       = Path(__file__).resolve().parent
+DEFAULT_CSV      = str(SCRIPT_DIR / "secrets" / "bravia_firmware.csv")
+OUTPUT_DIR       = SCRIPT_DIR / "bravia_firmware" / "files"
+
 DEFAULT_PSK      = None
+FALLBACK_PSK     = "1234"
 DEFAULT_TIMEOUT  = 10
 DEFAULT_PORT     = 80
 DEFAULT_WORKERS  = 5
 API_ENDPOINT     = "/sony/system"
-FALLBACK_PSK     = "1234"
+MANUFACTURER     = "Sony"
 
 SYSTEM_INFO_VERSIONS = ["1.7", "1.4", "1.0"]
 
@@ -87,8 +87,14 @@ POWER_SAVING_LABELS = {
 }
 
 
+def default_output_path() -> str:
+    """scripts/bravia_firmware/files/results_<YYYYMMDD>_<HHMMSS>.json"""
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return str(OUTPUT_DIR / f"results_{stamp}.json")
+
+
 # ---------------------------------------------------------------------------
-# Utility helpers
+# Shared helpers (spec 3.5) — byte-identical across all scripts
 # ---------------------------------------------------------------------------
 def get_terminal_width() -> int:
     try:
@@ -107,26 +113,56 @@ def clean(val) -> str:
     return s
 
 
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}✓ OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}✗ AUTH ERR{RESET}{WHITE}"
+    return f"{RED}✗ ERROR{RESET}{WHITE}"
+
+
+# ---------------------------------------------------------------------------
+# Error labels (spec 3.6) — protocol patterns first, then base
+# ---------------------------------------------------------------------------
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+# Sony JSON-RPC error envelopes and PSK rejection responses.
+PROTOCOL_ERROR_PATTERNS = [
+    (r"HTTP 403",                     "Auth failed"),
+    (r"HTTP 404",                     "IP ctrl disabled"),
+    (r"API Error 3\b",                "Illegal argument"),
+    (r"API Error 5\b",                "Illegal state"),
+    (r"API Error 7\b",                "Display off"),
+    (r"API Error 12\b",               "Not implemented"),
+    (r"API Error 14\b",               "Unsupported ver"),
+    (r"API Error 15\b",               "Unsupported op"),
+    (r"API Error 40005\b",            "Display busy"),
+    (r"[Aa]ll API versions failed",   "API unsupported"),
+]
+
+
 def truncate_error(err, max_len: int = 30) -> str:
     """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        (r"[Cc]onnection timed out",          "Timed out"),
-        (r"[Cc]onnection refused",             "Conn refused"),
-        (r"[Nn]o response .* timeout",         "No response"),
-        (r"[Nn]o route to host",               "No route"),
-        (r"[Nn]etwork is unreachable",         "Net unreachable"),
-        (r"[Nn]ame or service not known",      "DNS failed"),
-        (r"[Nn]etwork error",                  "Network error"),
-        (r"[Aa]uthentication required",        "Auth required"),
-        (r"HTTP 403",                          "Auth failed"),
-        (r"HTTP 404",                          "IP ctrl disabled"),
-        (r"[Aa]ll API versions failed",        "API unsupported"),
-        (r"[Nn]ot a .* device",               "Not supported"),
-        (r"[Mm]alformed",                      "Bad response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
@@ -135,42 +171,18 @@ def truncate_error(err, max_len: int = 30) -> str:
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
 
 
-def status_icon(r: dict) -> str:
-    """Return a coloured status icon string for a result dict."""
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "auth_error":
-        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
-
-
+# ---------------------------------------------------------------------------
+# Presentation helpers
+# ---------------------------------------------------------------------------
 def format_power_saving_mode(mode: str) -> str:
+    """Human-readable label for a getPowerSavingMode value (display only)."""
     if not mode or mode == "N/A":
         return "N/A"
     return POWER_SAVING_LABELS.get(mode, mode)
 
 
-def parse_fw_version(raw: str) -> str:
-    """
-    Parse a raw Sony fwVersion string to a short readable version.
-    e.g. "PKG1.6.0.81.60.1.00.0960BBA" -> "6.0.81.60"
-    Falls back to the raw string if the format is unexpected.
-    """
-    if not raw or raw == "N/A":
-        return raw
-    try:
-        stripped = raw.lstrip("PKGpkg")
-        parts = stripped.split(".")
-        if len(parts) >= 5:
-            return ".".join(parts[1:5])
-    except Exception:
-        pass
-    return raw
-
-
 # ---------------------------------------------------------------------------
-# CSV loader
+# CSV loader (spec 3.7)
 # ---------------------------------------------------------------------------
 def load_csv(csv_path: str) -> list:
     devices = []
@@ -201,7 +213,8 @@ def load_csv(csv_path: str) -> list:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
             except (ValueError, TypeError):
                 port = DEFAULT_PORT
-            devices.append({"host": host, "port": port})
+            psk = (row.get(col_map.get("psk", ""), "") or "").strip() or None
+            devices.append({"host": host, "port": port, "psk": psk})
     if not devices:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
         sys.exit(1)
@@ -209,7 +222,7 @@ def load_csv(csv_path: str) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Sony REST API helpers
+# Sony REST API — PROTOCOL LOGIC, DO NOT MODIFY (spec 4)
 # ---------------------------------------------------------------------------
 def build_headers(psk: str = None) -> dict:
     h = {"Content-Type": "application/json"}
@@ -326,30 +339,52 @@ def set_auth_none(host: str, port: int, psk: str,
         return False, str(e)
 
 
+def parse_fw_version(raw: str) -> str:
+    """
+    Parse a raw Sony fwVersion string to a short readable version.
+    e.g. "PKG1.6.0.81.60.1.00.0960BBA" -> "6.0.81.60"
+    Falls back to the raw string if the format is unexpected.
+    """
+    if not raw or raw == "N/A":
+        return raw
+    try:
+        stripped = raw.lstrip("PKGpkg")
+        parts = stripped.split(".")
+        if len(parts) >= 5:
+            return ".".join(parts[1:5])
+    except Exception:
+        pass
+    return raw
+
+
 # ---------------------------------------------------------------------------
-# Main query
+# Per-device query
 # ---------------------------------------------------------------------------
 def query_display(host: str, port: int, psk: str = None,
                   timeout: int = DEFAULT_TIMEOUT) -> dict:
-    """Query a single Sony Bravia display for firmware and power saving mode."""
+    """Query a single Sony Bravia display. Returns a spec-conformant record."""
     result = {
+        # Common fields (spec 2.3)
         "host":                 host,
         "port":                 port,
+        "query_timestamp":      datetime.now(timezone.utc).isoformat(),
         "status":               "error",
+        "error":                None,
+        "firmware_version":     "N/A",
         "model":                "N/A",
         "serial":               "N/A",
-        "firmware_version":     "N/A",
-        "firmware_version_raw": "N/A",
-        "mac_address":          "N/A",
+        "mac":                  "N/A",
+        "manufacturer":         MANUFACTURER,
+        # Device-specific fields (spec 2.4)
         "device_name":          "N/A",
-        "interface_version":    "N/A",
-        "product_name":         "N/A",
-        "generation":           "N/A",
-        "api_version_used":     "N/A",
         "power_saving_mode":    "N/A",
+        # Supplementary diagnostics
+        "firmware_version_raw": "N/A",
+        "generation":           "N/A",
+        "product":              "N/A",
+        "interface_version":    "N/A",
+        "api_version_used":     "N/A",
         "auth_note":            None,
-        "error":                None,
-        "query_timestamp":      datetime.now(timezone.utc).isoformat(),
     }
 
     effective_psk = psk
@@ -368,10 +403,10 @@ def query_display(host: str, port: int, psk: str = None,
         result["api_version_used"] = api_version
         result["model"]            = sys_info.get("model",      "N/A")
         result["serial"]           = sys_info.get("serial",     "N/A")
-        result["mac_address"]      = sys_info.get("macAddr",    "N/A")
+        result["mac"]              = sys_info.get("macAddr",    "N/A")
         result["device_name"]      = sys_info.get("name",       "N/A")
         result["generation"]       = sys_info.get("generation", "N/A")
-        result["product_name"]     = sys_info.get("product",    "N/A")
+        result["product"]          = sys_info.get("product",    "N/A")
 
         if api_version == "1.7":
             raw_fw = sys_info.get("fwVersion", "N/A") or "N/A"
@@ -387,17 +422,17 @@ def query_display(host: str, port: int, psk: str = None,
             iface = get_interface_information(host, port, effective_psk, timeout)
             if iface:
                 result["interface_version"] = iface.get("interfaceVersion", "N/A")
-                if result["product_name"] == "N/A":
-                    result["product_name"] = iface.get("productName", "N/A")
+                if result["product"] == "N/A":
+                    result["product"] = iface.get("productName", "N/A")
         except Exception:
             pass
 
-        if not result["mac_address"] or result["mac_address"] == "N/A":
+        if not result["mac"] or result["mac"] == "N/A":
             try:
                 for iface in get_network_settings(host, port, effective_psk, timeout):
                     hw = iface.get("hwAddr", "")
                     if hw:
-                        result["mac_address"] = hw
+                        result["mac"] = hw
                         break
             except Exception:
                 pass
@@ -424,13 +459,16 @@ def query_display(host: str, port: int, psk: str = None,
 
 
 # ---------------------------------------------------------------------------
-# Output
+# JSON output (spec 2.1, 2.7)
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
+
+    out = Path(filepath)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
     output = {
         "query_info": {
             "csv_file":        str(Path(args.input).resolve()),
@@ -446,55 +484,53 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
         },
         "displays": results,
     }
-    with open(filepath, "w", encoding="utf-8") as f:
+    with open(out, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
 
+# ---------------------------------------------------------------------------
+# Terminal output (spec 3.4, 3.8)
+# ---------------------------------------------------------------------------
 def print_results_table(results: list, output_file: str, elapsed: float,
                         workers: int, firmware_filter: str = None):
-    """Render the results table following the project visual style guide."""
+    """Render the results table. JSON always retains the full result set."""
 
-    # Apply firmware filter — mismatched or errored rows only.
-    # The full results list is always saved to JSON regardless.
     if firmware_filter:
-        display_results = [
-            r for r in results
-            if r.get("firmware_version", "N/A") != firmware_filter
-        ]
+        shown = [r for r in results if r.get("firmware_version", "N/A") != firmware_filter]
     else:
-        display_results = results
+        shown = results
 
     table_data = []
-    for r in display_results:
-        row = [
+    for r in shown:
+        note = r.get("auth_note")
+        err_cell = truncate_error(r.get("error")) or (f"[{note}]" if note else "")
+        table_data.append([
             status_icon(r),
             clean(r["host"]),
+            clean(r["manufacturer"]),
             clean(r["model"]),
             clean(r["firmware_version"]),
             clean(r["serial"]),
-            clean(r["mac_address"]),
+            clean(r["mac"]),
             clean(r["api_version_used"]),
             format_power_saving_mode(clean(r.get("power_saving_mode", "N/A"))),
-            truncate_error(r.get("error") or (
-                f"[{r['auth_note']}]" if r.get("auth_note") else ""
-            )),
-        ]
-        table_data.append(row)
+            err_cell,
+        ])
 
-    headers = ["Status", "Host", "Model", "Firmware", "Serial",
-               "MAC Address", "API Ver", "Pwr Save", "Error"]
+    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
+               "Serial", "MAC", "API Ver", "Pwr Save", "Error"]
 
     table = tabulate(table_data, headers=headers,
                      tablefmt="pretty", stralign="left", numalign="right")
 
     first_line = table.split("\n")[0]
-    raw_width  = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
-    bw         = max(raw_width, 60)
+    raw_width = len(re.sub(r'\033\[[0-9;]*m', '', first_line))
+    bw = max(raw_width, 60)
 
-    title = "Sony Bravia BZ40H/BZ40L \u2014 Firmware Query Results"
+    title = "Sony Bravia BZ40H/BZ40L Firmware Query Results"
     if firmware_filter:
-        title += f"  \u2014  Mismatched: {len(display_results)}/{len(results)}"
-    pad   = (bw - len(title)) // 2
+        title += f"  —  Mismatched: {len(shown)}/{len(results)}"
+    pad = max((bw - len(title)) // 2, 0)
 
     print(f"{WHITE}")
     print(f"  {'=' * bw}")
@@ -503,42 +539,42 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     for line in table.split("\n"):
         print(f"  {line}")
 
-    total = len(display_results)
-    ok    = sum(1 for r in display_results if r["status"] == "success")
-    auth  = sum(1 for r in display_results if r["status"] == "auth_error")
-    err   = sum(1 for r in display_results if r["status"] == "error")
+    total = len(shown)
+    ok    = sum(1 for r in shown if r["status"] == "success")
+    auth  = sum(1 for r in shown if r["status"] == "auth_error")
+    err   = sum(1 for r in shown if r["status"] == "error")
 
     print()
     if firmware_filter:
         print(
             f"  {BOLD}Firmware filter:{RESET}{WHITE} {firmware_filter}  |  "
-            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {len(results)} displays"
+            f"{BOLD}Showing:{RESET}{WHITE} {len(shown)} of {len(results)} displays"
         )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
-        f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
-        f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+        f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+        f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
+        f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
-    psm_counts = {}
-    for r in display_results:
+    # Device-specific metrics line — displays by power saving mode
+    counts = {}
+    for r in shown:
         mode = r.get("power_saving_mode", "N/A")
-        psm_counts[mode] = psm_counts.get(mode, 0) + 1
-
-    reported = sum(v for k, v in psm_counts.items() if k != "N/A")
+        if mode and mode != "N/A":
+            counts[mode] = counts.get(mode, 0) + 1
+    reported = sum(counts.values())
     if reported:
         parts = "  |  ".join(
-            f"{BOLD}{POWER_SAVING_LABELS.get(m, m)}:{RESET}{WHITE} {c}"
-            for m, c in sorted(psm_counts.items()) if m != "N/A"
+            f"{POWER_SAVING_LABELS.get(m, m)}: {c}" for m, c in sorted(counts.items())
         )
-        print(f"  {BOLD}Power Saving \u2014{RESET}{WHITE} {parts}  |  {BOLD}Reported:{RESET}{WHITE} {reported}/{total}")
+        print(f"  {BOLD}Power Saving{RESET}{WHITE} — {parts}  |  Reported: {reported}/{total}")
     else:
-        print(f"  {BOLD}Power Saving \u2014{RESET}{WHITE} No data available")
+        print(f"  {BOLD}Power Saving{RESET}{WHITE} — No data available")
 
     print()
-    print(f"  {BOLD}Results saved:{RESET}{WHITE} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers)")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print(f"{RESET}")
 
 
@@ -547,131 +583,133 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Query Sony Bravia BZ40H/BZ40L displays for firmware version via Sony REST API.",
+        description="Query Sony Bravia BZ40H/BZ40L displays for firmware version via the Sony REST API.",
         epilog="""
 Examples:
-  python sony_fw_query.py
-  python sony_fw_query.py -i my_displays.csv
-  python sony_fw_query.py -k MyPreSharedKey
-  python sony_fw_query.py -i displays.csv -k 0000 -t 15 -o output.json -w 10
-  python sony_fw_query.py --set-auth-none -k 0000
-  python sony_fw_query.py --set-auth-none -k 0000 --host 192.168.1.100
-  python sony_fw_query.py --host 192.168.1.100 --raw
+  python3 bravia_firmware.py
+  python3 bravia_firmware.py -k 0000
+  python3 bravia_firmware.py -i /path/to/other.csv -t 15 -w 8
+  python3 bravia_firmware.py --firmware 6.0.81.60
+  python3 bravia_firmware.py --host 192.168.1.100 --raw
+  python3 bravia_firmware.py --set-auth-none -k 0000
 
 Authentication:
-  By default no PSK is sent. On HTTP 403 the script automatically retries
-  with the fallback PSK "1234" and notes this in the output.
+  By default no PSK is sent. On HTTP 403 the script retries once with the
+  fallback PSK "1234"; auth_error is only reported after every attempt fails.
 
 Firmware Version:
-  v1.7 devices: fwVersion field, parsed to short form (e.g. 6.0.81.60).
+  v1.7 devices: fwVersion parsed to short form (e.g. 6.0.81.60).
   v1.0/v1.4 devices: generation field used as best available identifier.
 
 Power Saving Mode:
-  getPowerSavingMode (v1.0) — auth level None, works with or without PSK.
-  Values: off | low | high | pictureOff
+  getPowerSavingMode (v1.0) — values: off | low | high | pictureOff
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("-i", "--input",        default=DEFAULT_CSV,
-        help=f"CSV file with 'host'/'port' columns (default: {DEFAULT_CSV})")
-    parser.add_argument("--host",               default=None,
+    parser.add_argument("-i", "--input",   default=DEFAULT_CSV,
+        help="CSV file with 'host'/'port' columns (default: secrets/bravia_firmware.csv)")
+    parser.add_argument("--host",          default=None,
         help="Query a single host instead of reading a CSV")
-    parser.add_argument("-o", "--output",       default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("-k", "--psk",          default=DEFAULT_PSK,
+    parser.add_argument("-o", "--output",  default=None,
+        help="Output JSON file (default: bravia_firmware/files/results_<YYYYMMDD>_<HHMMSS>.json)")
+    parser.add_argument("-k", "--psk",     default=DEFAULT_PSK,
         help="Pre-Shared Key (default: no authentication)")
-    parser.add_argument("-t", "--timeout",      type=int, default=DEFAULT_TIMEOUT,
+    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
         help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",         type=int, default=DEFAULT_PORT,
+    parser.add_argument("-p", "--port",    type=int, default=DEFAULT_PORT,
         help=f"Port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers",      type=int, default=DEFAULT_WORKERS,
+    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
         help=f"Number of concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--set-auth-none",      action="store_true", default=False,
-        help="Use the PSK (-k) to set each display's IP control auth to None.")
-    parser.add_argument("--raw",                action="store_true", default=False,
-        help="With --host: dump raw getSystemInformation responses for all API versions.")
-    parser.add_argument("--firmware",           default=None, metavar="VERSION",
-        help="Only show displays whose firmware does NOT match VERSION in the terminal table (e.g. --firmware 6.0.81.60). JSON output always contains all results.")
+    parser.add_argument("--firmware",      default=None, metavar="VERSION",
+        help="Only show displays whose firmware does NOT match VERSION in the table")
+    parser.add_argument("--set-auth-none", action="store_true", default=False,
+        help="Use the PSK (-k) to set each display's IP control auth to None")
+    parser.add_argument("--raw",           action="store_true", default=False,
+        help="With --host: dump raw getSystemInformation responses for all API versions")
 
     args = parser.parse_args()
+
+    if args.output is None:
+        args.output = default_output_path()
 
     if args.set_auth_none and not args.psk:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} --set-auth-none requires -k <psk>{RESET}")
         sys.exit(1)
 
-    term_width = get_terminal_width()
-
-    import time
+    term_width = shutil.get_terminal_size((120, 24)).columns
     start_time = time.monotonic()
 
     # -----------------------------------------------------------------------
     # --set-auth-none mode
     # -----------------------------------------------------------------------
     if args.set_auth_none:
-        displays = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+        devices = ([{"host": args.host, "port": args.port, "psk": None}]
+                   if args.host else load_csv(args.input))
 
         print(f"{WHITE}")
-        print(f"  {BOLD}Sony Bravia — Set Authentication to None{RESET}{WHITE}")
-        print(f"  Sets IP Control auth to None using the provided PSK.")
-        print(f"  Input:   {args.input}")
-        print(f"  Output:  {args.output}")
+        print(f"  {BOLD}Sony Bravia BZ40H/BZ40L Firmware Version Query Tool{RESET}{WHITE}")
+        print(f"  Sets IP Control authentication to None via the Sony REST API")
+        print(f"  Input:   {args.host if args.host else args.input}")
+        print(f"  Output:  (terminal only)")
         print(f"  Workers: {args.workers}")
         print(f"  Timeout: {args.timeout}s")
         print(f"  PSK:     {args.psk}")
         print(f"{RESET}")
 
         bar_fmt = (
-            f"  {WHITE}Connecting{RESET} "
+            f"  {WHITE}Scanning{RESET} "
             f"{CYAN}{{bar}}{RESET}"
             f" {WHITE}{{n_fmt}}/{{total_fmt}}{RESET}"
             f" {WHITE}[{{elapsed}}<{{remaining}}]{RESET}"
             f"  {WHITE}{{postfix}}{RESET}"
         )
 
-        auth_results = []
-        results_lock = threading.Lock()
-        active_lock  = threading.Lock()
-        latest_host  = {"value": ""}
+        auth_results  = []
+        results_lock  = threading.Lock()
+        active_lock   = threading.Lock()
+        latest_host   = {"value": ""}
 
         def do_set_auth(d):
             with active_lock:
                 latest_host["value"] = d["host"]
-            success, message = set_auth_none(d["host"], d["port"], psk=args.psk, timeout=args.timeout)
+            success, message = set_auth_none(d["host"], d["port"],
+                                             psk=args.psk, timeout=args.timeout)
             return {"host": d["host"], "success": success, "message": message}
 
-        with tqdm(total=len(displays), bar_format=bar_fmt, ncols=term_width,
+        with tqdm(total=len(devices), bar_format=bar_fmt, ncols=term_width,
                   dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
             with ThreadPoolExecutor(max_workers=args.workers) as ex:
-                futures = {ex.submit(do_set_auth, d): d for d in displays}
+                futures = [ex.submit(do_set_auth, d) for d in devices]
                 for fut in as_completed(futures):
                     with results_lock:
                         auth_results.append(fut.result())
                     with active_lock:
                         pbar.set_postfix_str(latest_host["value"], refresh=False)
                     pbar.update(1)
+            elapsed = time.monotonic() - start_time
+            pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
+                                 refresh=True)
 
-        elapsed = time.monotonic() - start_time
-        pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
-
-        # Sort output to match input order
-        host_order = {d["host"]: i for i, d in enumerate(displays)}
-        auth_results.sort(key=lambda r: host_order.get(r["host"], 0))
+        order = {d["host"]: i for i, d in enumerate(devices)}
+        auth_results.sort(key=lambda r: order.get(r["host"], 0))
 
         table = tabulate(
-            [["✓ OK" if r["success"] else "✗ FAIL", r["host"], r["message"]]
+            [[f"{GREEN}✓ OK{RESET}{WHITE}" if r["success"] else f"{RED}✗ ERROR{RESET}{WHITE}",
+              r["host"], truncate_error(r["message"]) if not r["success"] else r["message"]]
              for r in auth_results],
             headers=["Status", "Host", "Message"],
-            tablefmt="pretty", stralign="left"
+            tablefmt="pretty", stralign="left", numalign="right"
         )
 
         first_line = table.split("\n")[0]
         bw = max(len(re.sub(r'\033\[[0-9;]*m', '', first_line)), 60)
-        title = "Set Authentication to None \u2014 Results"
+        title = "Set Authentication to None — Results"
+        pad = max((bw - len(title)) // 2, 0)
 
         print(f"{WHITE}")
         print(f"  {'=' * bw}")
-        print(f"  {' ' * ((bw - len(title)) // 2)}{BOLD}{title}{RESET}{WHITE}")
+        print(f"  {' ' * pad}{BOLD}{title}{RESET}{WHITE}")
         print(f"  {'=' * bw}")
         for line in table.split("\n"):
             print(f"  {line}")
@@ -681,21 +719,23 @@ Power Saving Mode:
         print()
         print(
             f"  {BOLD}Total:{RESET}{WHITE} {len(auth_results)}  |  "
-            f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-            f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
+            f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
+            f"{YELLOW}✗{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} 0  |  "
+            f"{RED}✗{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
         )
-        print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({args.workers} workers)")
+        print()
+        print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} (terminal only){RESET}")
+        print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({args.workers} workers){RESET}")
         print(f"{RESET}")
         return
 
     # -----------------------------------------------------------------------
-    # Header block
+    # Header block (spec 3.2)
     # -----------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
-    print(f"  {BOLD}Sony Bravia BZ40H/BZ40L — Firmware Query Tool{RESET}{WHITE}")
-    print(f"  Queries firmware version and power saving mode via Sony REST API.")
-    print(f"  Input:   {input_display}")
+    print(f"  {BOLD}Sony Bravia BZ40H/BZ40L Firmware Version Query Tool{RESET}{WHITE}")
+    print(f"  Queries Bravia professional displays via the Sony REST API")
+    print(f"  Input:   {args.host if args.host else args.input}")
     print(f"  Output:  {args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
@@ -709,32 +749,33 @@ Power Saving Mode:
     # Single-host --raw dump
     # -----------------------------------------------------------------------
     if args.host and args.raw:
-        print(f"{WHITE}Raw getSystemInformation responses:{RESET}\n")
+        print(f"{WHITE}  Raw getSystemInformation responses:{RESET}\n")
         for v in SYSTEM_INFO_VERSIONS:
             try:
                 r = call_sony_api(args.host, args.port, "getSystemInformation", [], v,
                                   psk=args.psk, timeout=args.timeout)
-                print(f"{WHITE}--- v{v} ---{RESET}")
+                print(f"{WHITE}  --- v{v} ---{RESET}")
                 print(json.dumps(r, indent=2))
             except Exception as e:
-                print(f"{WHITE}--- v{v} --- {RED}ERROR:{RESET} {e}")
+                print(f"{WHITE}  --- v{v} --- {RED}ERROR:{RESET}{WHITE} {e}{RESET}")
             print()
         try:
             r = call_sony_api(args.host, args.port, "getInterfaceInformation", [], "1.0",
                               request_id=2, psk=args.psk, timeout=args.timeout)
-            print(f"{WHITE}--- getInterfaceInformation v1.0 ---{RESET}")
+            print(f"{WHITE}  --- getInterfaceInformation v1.0 ---{RESET}")
             print(json.dumps(r, indent=2))
         except Exception as e:
-            print(f"{WHITE}--- getInterfaceInformation v1.0 --- {RED}ERROR:{RESET} {e}")
+            print(f"{WHITE}  --- getInterfaceInformation v1.0 --- {RED}ERROR:{RESET}{WHITE} {e}{RESET}")
         return
 
     # -----------------------------------------------------------------------
-    # Build display list
+    # Build device list
     # -----------------------------------------------------------------------
-    displays = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+    devices = ([{"host": args.host, "port": args.port, "psk": None}]
+               if args.host else load_csv(args.input))
 
     # -----------------------------------------------------------------------
-    # Progress bar + concurrent query loop
+    # Progress bar + concurrent query loop (spec 3.3)
     # -----------------------------------------------------------------------
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
@@ -752,28 +793,28 @@ Power Saving Mode:
     def do_query(d):
         with active_lock:
             latest_host["value"] = d["host"]
-        return query_display(d["host"], d["port"], psk=args.psk, timeout=args.timeout)
+        return query_display(d["host"], d["port"],
+                             psk=(args.psk or d.get("psk")), timeout=args.timeout)
 
-    with tqdm(total=len(displays), bar_format=bar_fmt, ncols=term_width,
+    with tqdm(total=len(devices), bar_format=bar_fmt, ncols=term_width,
               dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
-            futures = {ex.submit(do_query, d): d for d in displays}
+            futures = [ex.submit(do_query, d) for d in devices]
             for fut in as_completed(futures):
                 with results_lock:
                     results.append(fut.result())
                 with active_lock:
                     pbar.set_postfix_str(latest_host["value"], refresh=False)
                 pbar.update(1)
+        elapsed = time.monotonic() - start_time
+        pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
+                             refresh=True)
 
-    elapsed = time.monotonic() - start_time
-    pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
+    order = {d["host"]: i for i, d in enumerate(devices)}
+    results.sort(key=lambda r: order.get(r["host"], 0))
 
-    # Re-sort results to match original CSV input order
-    host_order = {d["host"]: i for i, d in enumerate(displays)}
-    results.sort(key=lambda r: host_order.get(r["host"], 0))
-
-    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
     save_results_json(results, args.output, args, elapsed)
+    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
 
 
 if __name__ == "__main__":

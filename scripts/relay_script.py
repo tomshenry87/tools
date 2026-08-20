@@ -13,6 +13,8 @@ Queries each device for:
   - Relay port states         (getstate for each RELAY/RELAYSENSOR port)
 
 Supports querying GC-100, iTach, Flex, and Global Connect product families.
+
+The Unified TCP API has no authentication on these units.
 """
 
 import csv
@@ -43,19 +45,21 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # ANSI color palette
 # ---------------------------------------------------------------------------
-CYAN   = "\033[96m"
-GREEN  = "\033[92m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-WHITE  = "\033[97m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN   = "\033[96m"   # Progress bar fill — reserved, nothing else
+GREEN  = "\033[92m"   # Success states
+RED    = "\033[91m"   # Failure / error states
+YELLOW = "\033[93m"   # Auth-error states
+WHITE  = "\033[97m"   # All body text, table content, labels
+BOLD   = "\033[1m"    # Section headers, label emphasis
+RESET  = "\033[0m"    # Always close every colour block
 
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV     = "secrets/relay_firmware.csv"
-OUTPUT_DIR      = "relay_firmware/files"
+SCRIPT_DIR      = Path(__file__).resolve().parent
+
+DEFAULT_CSV     = str(SCRIPT_DIR / "secrets" / "relay_firmware.csv")
+OUTPUT_DIR      = str(SCRIPT_DIR / "relay_firmware" / "files")
 DEFAULT_OUTPUT  = os.path.join(
     OUTPUT_DIR,
     f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
@@ -63,6 +67,8 @@ DEFAULT_OUTPUT  = os.path.join(
 DEFAULT_TIMEOUT = 10
 DEFAULT_PORT    = 4998
 DEFAULT_WORKERS = 5
+
+MANUFACTURER    = "Global Caché"
 
 RELAY_PORT_TYPES = {"RELAY", "RELAYSENSOR"}
 
@@ -93,45 +99,58 @@ def clean(val) -> str:
     return s
 
 
+def status_icon(r: dict) -> str:
+    """Return a coloured status icon string for a result dict."""
+    s = r.get("status", "error")
+    if s == "success":
+        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
+    elif s == "auth_error":
+        return f"{YELLOW}\u2717 AUTH ERR{RESET}{WHITE}"
+    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
+
+
+# Protocol-specific patterns for this script, matched BEFORE the base list.
+# NOTE: the Global Caché relay code (RO001-RO004) pattern is placed ahead of the
+# generic ERR.*00x patterns. "ERR RO001" is matched by `ERR.*001`, so with the
+# generic patterns first a relay error would be mislabelled "Unknown command".
+PROTOCOL_ERROR_PATTERNS = [
+    (r"ERR\s+RO00[1-4]",              "Relay error"),
+    (r"ERR.*001",                     "Unknown command"),
+    (r"ERR.*002",                     "Invalid syntax"),
+    (r"ERR.*003",                     "Invalid address"),
+    (r"ERR.*005",                     "Not supported"),
+    (r"[Nn]o relay ports",            "No relay ports"),
+]
+
+BASE_ERROR_PATTERNS = [
+    (r"[Cc]onnection timed out",      "Timed out"),
+    (r"[Tt]imed? out",                "Timed out"),
+    (r"[Cc]onnection refused",        "Conn refused"),
+    (r"[Nn]o response",               "No response"),
+    (r"[Nn]o data received",          "No response"),
+    (r"[Nn]o route to host",          "No route"),
+    (r"[Nn]etwork is unreachable",    "Net unreachable"),
+    (r"[Nn]ame or service not known", "DNS failed"),
+    (r"[Nn]etwork error",             "Network error"),
+    (r"[Uu]nexpected response",       "Bad response"),
+    (r"[Ii]nvalid response",          "Bad response"),
+    (r"[Mm]alformed",                 "Bad response"),
+    (r"[Nn]ot a .* device",           "Not supported"),
+]
+
+
 def truncate_error(err, max_len: int = 30) -> str:
     """Map verbose exception messages to short readable labels."""
     if not err:
         return ""
     s = str(err)
-    for pat, label in [
-        (r"[Tt]imed? out",                    "Timed out"),
-        (r"[Cc]onnection refused",             "Conn refused"),
-        (r"[Nn]o response",                    "No response"),
-        (r"[Nn]o route to host",               "No route"),
-        (r"[Nn]etwork is unreachable",         "Net unreachable"),
-        (r"[Nn]ame or service not known",      "DNS failed"),
-        (r"[Nn]etwork error",                  "Network error"),
-        (r"ERR.*001",                          "Unknown command"),
-        (r"ERR.*002",                          "Invalid syntax"),
-        (r"ERR.*003",                          "Invalid address"),
-        (r"ERR.*005",                          "Not supported"),
-        (r"ERR\s+RO00[1-4]",                   "Relay error"),
-        (r"[Nn]o relay ports",                 "No relay ports"),
-        (r"[Nn]ot a .* device",               "Not supported"),
-        (r"[Mm]alformed",                      "Bad response"),
-        (r"[Ii]nvalid response",               "Bad response"),
-    ]:
+    for pat, label in PROTOCOL_ERROR_PATTERNS + BASE_ERROR_PATTERNS:
         if re.search(pat, s):
             return label
     s = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+', '', s)
     s = re.sub(r'\[Errno\s*-?\d+\]\s*', '', s)
     s = re.sub(r'\s+', ' ', s).strip(': ')
     return (s[:max_len - 3] + "...") if len(s) > max_len else (s or "Error")
-
-
-def status_icon(r: dict) -> str:
-    """Return a coloured status icon string for a result dict."""
-    s = r.get("status", "error")
-    if s == "success":
-        return f"{GREEN}\u2713 OK{RESET}{WHITE}"
-    elif s == "partial":
-        return f"{YELLOW}\u2713 PARTIAL{RESET}{WHITE}"
-    return f"{RED}\u2717 ERROR{RESET}{WHITE}"
 
 
 def format_relay_states(states: list) -> str:
@@ -179,6 +198,7 @@ def load_csv(csv_path: str) -> list:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
             except (ValueError, TypeError):
                 port = DEFAULT_PORT
+            # Parse this script's additional columns here — port.
             devices.append({"host": host, "port": port})
     if not devices:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No valid entries found in CSV.{RESET}")
@@ -187,7 +207,7 @@ def load_csv(csv_path: str) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Global Caché TCP API helpers
+# Global Caché TCP API helpers  —  PROTOCOL LOGIC, DO NOT MODIFY
 # ---------------------------------------------------------------------------
 def tcp_command(host: str, port: int, command: str,
                 timeout: int = DEFAULT_TIMEOUT,
@@ -365,24 +385,27 @@ def query_device(host: str, port: int,
                  timeout: int = DEFAULT_TIMEOUT) -> dict:
     """Query a single Global Caché device for version and relay states."""
     result = {
-        "host":              host,
-        "port":              port,
-        "status":            "error",
-        "firmware_version":  "N/A",
-        "product_family":    "N/A",
-        "relay_module_count": 0,
-        "relay_port_count":  0,
-        "relay_states":      [],
-        "modules":           [],
-        "error":             None,
-        "query_timestamp":   datetime.now(timezone.utc).isoformat(),
+        "host":               host,
+        "port":               port,
+        "query_timestamp":    datetime.now(timezone.utc).isoformat(),
+        "status":             "error",
+        "error":              None,
+        "manufacturer":       MANUFACTURER,
+        "model":              None,
+        "firmware_version":   None,
+        "serial":             None,
+        "mac":                None,
+        "relay_module_count": None,
+        "relay_port_count":   None,
+        "relay_states":       [],
+        "modules":            [],
     }
 
     try:
         # 1. Firmware version
         version = get_version(host, port, timeout)
         result["firmware_version"] = version
-        result["product_family"]   = detect_product_family(version)
+        result["model"]            = detect_product_family(version)
 
         # 2. Device capabilities
         modules = get_devices(host, port, timeout)
@@ -396,11 +419,19 @@ def query_device(host: str, port: int,
         if relay_modules:
             states = query_relay_states(host, port, relay_modules, timeout)
             result["relay_states"] = states
-            # Partial success if some state queries errored
-            any_err = any(s.get("state") == "ERR" for s in states)
-            result["status"] = "partial" if any_err else "success"
+            failed = [s for s in states if s.get("state") == "ERR"]
+            if states and len(failed) == len(states):
+                # Every port failed — the device is not usefully reporting.
+                result["status"] = "error"
+                result["error"]  = "Relay state query failed on all ports"
+            else:
+                # Reachable and reporting. Individual port failures are
+                # recorded inside relay_states rather than downgrading the
+                # whole device, which would count it offline on the dashboard.
+                result["status"] = "success"
+                result["error"]  = None
         else:
-            result["status"] = "success"
+            result["status"] = "error"
             result["error"]  = "No relay ports found"
 
     except OSError as e:
@@ -428,19 +459,19 @@ def query_device(host: str, port: int,
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
     os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
-    ok      = sum(1 for r in results if r["status"] == "success")
-    partial = sum(1 for r in results if r["status"] == "partial")
-    err     = sum(1 for r in results if r["status"] == "error")
-    output  = {
+    ok   = sum(1 for r in results if r["status"] == "success")
+    auth = sum(1 for r in results if r["status"] == "auth_error")
+    err  = sum(1 for r in results if r["status"] == "error")
+    output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()) if not args.host else args.host,
+            "csv_file":        None if args.host else str(Path(args.input).resolve()),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "Global Caché Unified TCP API v1.1 (raw TCP port 4998)",
             "mode":            "single-host" if args.host else "csv-batch",
             "workers":         args.workers,
             "total":           len(results),
             "success":         ok,
-            "partial":         partial,
+            "auth_errors":     auth,
             "errors":          err,
             "elapsed_seconds": round(elapsed, 2),
         },
@@ -460,17 +491,18 @@ def print_results_table(results: list, output_file: str, elapsed: float,
         row = [
             status_icon(r),
             clean(r["host"]),
-            clean(r["product_family"]),
+            clean(r["manufacturer"]),
+            clean(r["model"]),
             clean(r["firmware_version"]),
-            clean(str(r["relay_module_count"]) if r["relay_module_count"] else "N/A"),
-            clean(str(r["relay_port_count"]) if r["relay_port_count"] else "N/A"),
-            relay_summary if relay_summary != "N/A" else "N/A",
+            clean(r["relay_module_count"]),
+            clean(r["relay_port_count"]),
+            relay_summary,
             truncate_error(r.get("error") or ""),
         ]
         table_data.append(row)
 
-    headers = ["Status", "Host", "Family", "Firmware",
-               "Relay Mods", "Ports", "Port States (mod:state)", "Error"]
+    headers = ["Status", "Host", "Manufacturer", "Model", "Firmware",
+               "Relay Mods", "Ports", "Port States (mod:port:state)", "Error"]
 
     table = tabulate(table_data, headers=headers,
                      tablefmt="pretty", stralign="left", numalign="right")
@@ -489,45 +521,52 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     for line in table.split("\n"):
         print(f"  {line}")
 
-    total   = len(results)
-    ok      = sum(1 for r in results if r["status"] == "success")
-    partial = sum(1 for r in results if r["status"] == "partial")
-    err     = sum(1 for r in results if r["status"] == "error")
+    total = len(results)
+    ok    = sum(1 for r in results if r["status"] == "success")
+    auth  = sum(1 for r in results if r["status"] == "auth_error")
+    err   = sum(1 for r in results if r["status"] == "error")
 
     print()
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
-        f"{YELLOW}\u2713{RESET}{WHITE} {BOLD}Partial:{RESET}{WHITE} {partial}  |  "
+        f"{YELLOW}\u2717{RESET}{WHITE} {BOLD}Auth Errors:{RESET}{WHITE} {auth}  |  "
         f"{RED}\u2717{RESET}{WHITE} {BOLD}Failed:{RESET}{WHITE} {err}"
     )
 
-    # Relay state summary
+    # Device-specific metrics line — total relay ports discovered fleet-wide
+    total_relay_ports = sum(
+        r["relay_port_count"] for r in results
+        if isinstance(r.get("relay_port_count"), int)
+    )
+    devices_with_relays = sum(
+        1 for r in results
+        if isinstance(r.get("relay_port_count"), int) and r["relay_port_count"] > 0
+    )
+
     state_counts = {}
     for r in results:
         for s in r.get("relay_states", []):
-            sv = s.get("state", "?")
-            label = RELAY_STATE_LABELS.get(str(sv), str(sv))
+            label = RELAY_STATE_LABELS.get(str(s.get("state")), str(s.get("state")))
             state_counts[label] = state_counts.get(label, 0) + 1
+    reported = sum(v for k, v in state_counts.items() if k not in ("ERR", "None", "?"))
 
-    total_relay_ports = sum(r.get("relay_port_count", 0) for r in results)
-    reported = sum(v for k, v in state_counts.items() if k not in ("ERR", "?"))
-
-    if state_counts:
+    if total_relay_ports:
         parts = "  |  ".join(
-            f"{BOLD}{k}:{RESET}{WHITE} {v}"
-            for k, v in sorted(state_counts.items())
+            f"{BOLD}{k}:{RESET}{WHITE} {v}" for k, v in sorted(state_counts.items())
         )
         print(
-            f"  {BOLD}Relay States \u2014{RESET}{WHITE} {parts}  |  "
-            f"{BOLD}Reported:{RESET}{WHITE} {reported}/{total_relay_ports}"
+            f"  {BOLD}Relay Ports \u2014{RESET}{WHITE} "
+            f"Discovered: {total_relay_ports}  |  "
+            f"Devices: {devices_with_relays}/{total}  |  "
+            f"{parts}  |  Reported: {reported}/{total_relay_ports}"
         )
     else:
-        print(f"  {BOLD}Relay States \u2014{RESET}{WHITE} No data available")
+        print(f"  {BOLD}Relay Ports \u2014{RESET}{WHITE} No data available")
 
     print()
-    print(f"  {BOLD}Results saved:{RESET}{WHITE} {output_file}")
-    print(f"  {BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers)")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print(f"{RESET}")
 
 
@@ -589,13 +628,13 @@ Relay States:
     # -----------------------------------------------------------------------
     input_display = args.host if args.host else args.input
     print(f"{WHITE}")
-    print(f"  {BOLD}Global Caché — Relay Query Tool{RESET}{WHITE}")
-    print(f"  Queries firmware version and relay port states via Unified TCP API.")
-    print(f"  Input:    {input_display}")
-    print(f"  Output:   {args.output}")
-    print(f"  Workers:  {args.workers}")
-    print(f"  Timeout:  {args.timeout}s")
-    print(f"  API Port: {args.port if args.host else DEFAULT_PORT} (TCP)")
+    print(f"  {BOLD}Global Caché Relay Query Tool{RESET}{WHITE}")
+    print(f"  Queries Global Caché modules for firmware and relay port states")
+    print(f"  Input:   {input_display}")
+    print(f"  Output:  {args.output}")
+    print(f"  Workers: {args.workers}")
+    print(f"  Timeout: {args.timeout}s")
+    print(f"  API:     TCP port {args.port if args.host else DEFAULT_PORT} (no authentication)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
@@ -634,7 +673,7 @@ Relay States:
     # -----------------------------------------------------------------------
     # Build device list
     # -----------------------------------------------------------------------
-    displays = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+    devices = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
 
     # -----------------------------------------------------------------------
     # Progress bar + concurrent query loop
@@ -657,10 +696,10 @@ Relay States:
             latest_host["value"] = d["host"]
         return query_device(d["host"], d["port"], timeout=args.timeout)
 
-    with tqdm(total=len(displays), bar_format=bar_fmt, ncols=term_width,
+    with tqdm(total=len(devices), bar_format=bar_fmt, ncols=term_width,
               dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
-            futures = {ex.submit(do_query, d): d for d in displays}
+            futures = {ex.submit(do_query, d): d for d in devices}
             for fut in as_completed(futures):
                 with results_lock:
                     results.append(fut.result())
@@ -672,7 +711,7 @@ Relay States:
     pbar.set_postfix_str(f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s", refresh=True)
 
     # Re-sort results to match original input order
-    host_order = {d["host"]: i for i, d in enumerate(displays)}
+    host_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
     print_results_table(results, args.output, elapsed, args.workers)

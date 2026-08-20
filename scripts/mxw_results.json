@@ -1,0 +1,49 @@
+{
+  "query_info": {
+    "csv_file": "/home/admin/tools/scripts/mxw_firmware.csv",
+    "timestamp": "2026-05-11T18:11:33.426372+00:00",
+    "protocol": "Shure MXW Command Strings v1",
+    "mode": "tcp-command-strings",
+    "workers": 5,
+    "total": 1,
+    "success": 1,
+    "errors": 0,
+    "elapsed_seconds": 2.42
+  },
+  "transceivers": [
+    {
+      "host": "10.8.134.226",
+      "port": 2202,
+      "query_timestamp": "2026-05-11T18:11:31.033277+00:00",
+      "manufacturer": "Shure",
+      "model": "MXWAPT2",
+      "firmware": null,
+      "device_id": "MXWAPT2-3f4a",
+      "channel_count": 2,
+      "channels_linked": 2,
+      "channels": [
+        {
+          "channel": 1,
+          "tx_available": "YES",
+          "tx_type": "MXW1",
+          "tx_status": "ON_CHARGER",
+          "batt_charge": 100,
+          "batt_health": 100
+        },
+        {
+          "channel": 2,
+          "tx_available": "YES",
+          "tx_type": "MXW1",
+          "tx_status": "ON_CHARGER",
+          "batt_charge": 100,
+          "batt_health": 93
+        }
+      ],
+      "min_batt_charge": 100,
+      "min_batt_health": 93,
+      "state": "ON_CHARGER",
+      "status": "success",
+      "error": null
+    }
+  ]
+}
