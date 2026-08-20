@@ -1,4 +1,0 @@
-host,port
-10.8.134.226,2202
-# Add more APTs below, one per line. Lines starting with # are skipped.
-# host,port columns are required/optional respectively.
