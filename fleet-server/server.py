@@ -59,6 +59,7 @@ ARRAY_KEY_TO_TYPE = {
     "ups": "ups",
     "relays": "relay",
     "dsp": "dsp",
+    "panels": "touch_panel",
 }
 
 

@@ -8,7 +8,7 @@
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f7f7f7}body.dark{background:#1a1a1a}#root{min-height:100vh}#loading{color:#707070;font-family:'Inter',sans-serif;text-align:center;padding:60px;font-size:16px}</style>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 </head>
 <body>
 <div id="root"><div id="loading">Loading Firmware Dashboard...</div></div>
@@ -17,8 +17,8 @@ const {useState,useMemo,useCallback,useRef,useEffect}=React;
 
 const LIGHT={bg:"#f7f7f7",surface:"#ffffff",surfaceAlt:"#f0f0f0",surfaceHi:"#e2e2e2",border:"#e2e2e2",borderHi:"#ccc",text:"#1a1a1a",textBright:"#000000",textMuted:"#707070",textDim:"#999",accent:"#00693e",accentDim:"rgba(0,105,62,0.08)",accentGlow:"rgba(0,105,62,0.15)",green:"#00693e",greenDim:"rgba(0,105,62,0.08)",amber:"#b45309",amberDim:"rgba(180,83,9,0.08)",red:"#9d162e",redDim:"rgba(157,22,46,0.06)",teal:"#003c73",tealDim:"rgba(0,60,115,0.08)",indigo:"#8a6996",indigoDim:"rgba(138,105,150,0.08)",pink:"#d94415",pinkDim:"rgba(217,68,21,0.08)",orange:"#b45309",orangeDim:"rgba(180,83,9,0.08)",cyan:"#267aba",cyanDim:"rgba(38,122,186,0.08)"};
 const DARK={bg:"#1a1a1a",surface:"#242424",surfaceAlt:"#2e2e2e",surfaceHi:"#3a3a3a",border:"#3a3a3a",borderHi:"#4a4a4a",text:"#e2e2e2",textBright:"#f7f7f7",textMuted:"#999",textDim:"#666",accent:"#00693e",accentDim:"rgba(0,105,62,0.15)",accentGlow:"rgba(0,105,62,0.25)",green:"#4ade80",greenDim:"rgba(74,222,128,0.12)",amber:"#fbbf24",amberDim:"rgba(251,191,36,0.12)",red:"#f87171",redDim:"rgba(248,113,113,0.10)",teal:"#67b8e3",tealDim:"rgba(103,184,227,0.12)",indigo:"#b89cc7",indigoDim:"rgba(184,156,199,0.12)",pink:"#f0764a",pinkDim:"rgba(240,118,74,0.12)",orange:"#fbbf24",orangeDim:"rgba(251,191,36,0.12)",cyan:"#5ba3d9",cyanDim:"rgba(91,163,217,0.12)"};
-const DTYPES_LIGHT={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#267aba",bg:"rgba(38,122,186,0.08)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#00693e",bg:"rgba(0,105,62,0.08)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#8a6996",bg:"rgba(138,105,150,0.08)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#d94415",bg:"rgba(217,68,21,0.08)"},router:{icon:"\u{1F310}",label:"Router",color:"#b45309",bg:"rgba(180,83,9,0.08)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#003c73",bg:"rgba(0,60,115,0.08)"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#643c20",bg:"rgba(100,60,32,0.08)"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#9d162e",bg:"rgba(157,22,46,0.08)"},relay:{icon:"\u{1F504}",label:"Relay",color:"#4a7c59",bg:"rgba(74,124,89,0.08)"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#5b4a8a",bg:"rgba(91,74,138,0.08)"},unknown:{icon:"?",label:"Device",color:"#707070",bg:"rgba(112,112,112,0.08)"}};
-const DTYPES_DARK={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3",bg:"rgba(103,184,227,0.12)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80",bg:"rgba(74,222,128,0.12)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7",bg:"rgba(184,156,199,0.12)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a",bg:"rgba(240,118,74,0.12)"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24",bg:"rgba(251,191,36,0.12)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9",bg:"rgba(91,163,217,0.12)"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e",bg:"rgba(196,149,110,0.12)"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171",bg:"rgba(248,113,113,0.12)"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a",bg:"rgba(111,207,138,0.12)"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb",bg:"rgba(167,139,219,0.12)"},unknown:{icon:"?",label:"Device",color:"#999",bg:"rgba(153,153,153,0.1)"}};
+const DTYPES_LIGHT={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#267aba",bg:"rgba(38,122,186,0.08)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#00693e",bg:"rgba(0,105,62,0.08)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#8a6996",bg:"rgba(138,105,150,0.08)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#d94415",bg:"rgba(217,68,21,0.08)"},router:{icon:"\u{1F310}",label:"Router",color:"#b45309",bg:"rgba(180,83,9,0.08)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#003c73",bg:"rgba(0,60,115,0.08)"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#643c20",bg:"rgba(100,60,32,0.08)"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#9d162e",bg:"rgba(157,22,46,0.08)"},relay:{icon:"\u{1F504}",label:"Relay",color:"#4a7c59",bg:"rgba(74,124,89,0.08)"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#5b4a8a",bg:"rgba(91,74,138,0.08)"},touch_panel:{icon:"\u{1F4F1}",label:"Touch Panel",color:"#0a7d8c",bg:"rgba(10,125,140,0.08)"},unknown:{icon:"?",label:"Device",color:"#707070",bg:"rgba(112,112,112,0.08)"}};
+const DTYPES_DARK={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3",bg:"rgba(103,184,227,0.12)"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80",bg:"rgba(74,222,128,0.12)"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7",bg:"rgba(184,156,199,0.12)"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a",bg:"rgba(240,118,74,0.12)"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24",bg:"rgba(251,191,36,0.12)"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9",bg:"rgba(91,163,217,0.12)"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e",bg:"rgba(196,149,110,0.12)"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171",bg:"rgba(248,113,113,0.12)"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a",bg:"rgba(111,207,138,0.12)"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb",bg:"rgba(167,139,219,0.12)"},touch_panel:{icon:"\u{1F4F1}",label:"Touch Panel",color:"#22d3ee",bg:"rgba(34,211,238,0.12)"},unknown:{icon:"?",label:"Device",color:"#999",bg:"rgba(153,153,153,0.1)"}};
 const CHART_COLORS=["#267aba","#00693e","#8a6996","#d94415","#b45309","#003c73","#643c20","#9d162e"];
 const M="'Inter','Helvetica Neue',sans-serif";
 const S="'Inter','Helvetica Neue',sans-serif";
@@ -28,10 +28,130 @@ var DTYPES=DTYPES_LIGHT;
 function extractBR(host){if(!host)return{building:"Unknown",room:"?"};var p=host.split(".")[0].split("-");if(p[0]==="cts")p=p.slice(1);if(p.length<2)return{building:(p[0]||"?").charAt(0).toUpperCase()+(p[0]||"").slice(1),room:"?"};var bldg,rm;if(/^\d+$/.test(p[0])&&p.length>=3){bldg=p[0]+"-"+p[1].charAt(0).toUpperCase()+p[1].slice(1);rm=p[2]||"?";}else{bldg=p[0].charAt(0).toUpperCase()+p[0].slice(1);rm=p[1]||"?";}var renames={"4-Currier":"Currier04","Osher":"Court01"};if(renames[bldg])bldg=renames[bldg];return{building:bldg,room:rm};}
 function hostShort(h){var s=h.split(".")[0];return s.replace(/^cts-/,"");}
 
+function exportCsv(devices,targetFw,filters){
+  var naC1="N/A (Class 1)";
+  var typeLabels={camera:"Camera",switch:"Switch",projector:"Projector",display:"Display",router:"Router",pdu:"PDU",microphone:"Microphone",ups:"UPS",relay:"Relay",dsp:"DSP",touch_panel:"Touch Panel",unknown:"Device"};
+  var esc=function(v){if(v==null)return"";var s=String(v);if(s.indexOf(",")>=0||s.indexOf('"')>=0||s.indexOf("\n")>=0)return '"'+s.replace(/"/g,'""')+'"';return s;};
+  var headers=["Building","Room","Type","Host","Model","Firmware","FW Status","Status","Error","Serial","MAC"];
+  var rows=[headers.join(",")];
+  devices.forEach(function(d){
+    var t=targetFw[d._type];var hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
+    var fwOk=!hasT||d.firmware==="N/A"||d.firmware===naC1||t.includes(d.firmware);
+    var fwStatus=d.status!=="success"?"Offline":!hasT?"No Target":fwOk?"OK":"Outdated";
+    rows.push([
+      esc(d.building),esc(d.room),esc(typeLabels[d._type]||d._type),
+      esc(hostShort(d.host)),esc(d.model!=="N/A"?d.model:""),esc(d.firmware!=="N/A"?d.firmware:""),
+      esc(fwStatus),esc(d.status==="success"?"Online":d.status),esc(d.error||""),
+      esc(d.serial!=="N/A"?d.serial:""),esc(d.mac!=="N/A"?d.mac:"")
+    ].join(","));
+  });
+  var csv=rows.join("\n");
+  var now=new Date();
+  var pad=function(n){return String(n).padStart(2,"0");};
+  var fname="firmware-report_"+now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate())+"_"+pad(now.getHours())+pad(now.getMinutes())+".csv";
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+}
+
+function printTable(devices,targetFw,filters){
+  var naC1="N/A (Class 1)";
+  var typeLabels={camera:"Camera",switch:"Switch",projector:"Projector",display:"Display",router:"Router",pdu:"PDU",microphone:"Microphone",ups:"UPS",relay:"Relay",dsp:"DSP",touch_panel:"Touch Panel",unknown:"Device"};
+  var now=new Date();
+  var dateStr=now.toLocaleString();
+  var activeFilters=[];
+  if(filters.fType&&filters.fType!=="all")activeFilters.push("Type: "+(typeLabels[filters.fType]||filters.fType));
+  if(filters.fStatus&&filters.fStatus!=="all")activeFilters.push("Status: "+(filters.fStatus==="success"?"Online":"Errors"));
+  if(filters.fFwStatus&&filters.fFwStatus!=="all"){var fwLabels={ok:"OK",outdated:"Outdated",offline:"Offline",no_target:"No Target"};activeFilters.push("FW Status: "+fwLabels[filters.fFwStatus]);}
+  if(filters.fBldg&&filters.fBldg!=="all")activeFilters.push("Building: "+filters.fBldg);
+  if(filters.search)activeFilters.push('Search: "'+filters.search+'"');
+  var stats={total:devices.length,online:0,outdated:0,offline:0};
+  devices.forEach(function(d){
+    if(d.status!=="success"){stats.offline++;return;}
+    stats.online++;
+    var t=targetFw[d._type];
+    if(t&&Array.isArray(t)&&t.length>0&&!t.includes("*")){
+      if(d.firmware!=="N/A"&&d.firmware!==naC1&&!t.includes(d.firmware))stats.outdated++;
+    }
+  });
+  var esc=function(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+  var rows=devices.map(function(d){
+    var t=targetFw[d._type];var hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
+    var fwOk=!hasT||d.firmware==="N/A"||d.firmware===naC1||t.includes(d.firmware);
+    var fwClass=hasT&&!fwOk&&d.firmware!=="N/A"?"outdated":"";
+    var statusClass=d.status==="success"?"ok":d.status==="auth_error"?"warn":"err";
+    var statusText=d.status==="success"?"Online":(d.error||d.status);
+    var fwStatusText=d.status!=="success"?"Offline":!hasT?"No Target":fwOk?"OK":"Outdated";
+    return '<tr>'+
+      '<td>'+esc(d.building)+'</td>'+
+      '<td>'+esc(d.room)+'</td>'+
+      '<td>'+esc(typeLabels[d._type]||d._type)+'</td>'+
+      '<td class="host">'+esc(hostShort(d.host))+'</td>'+
+      '<td>'+esc(d.model!=="N/A"?d.model:"—")+'</td>'+
+      '<td class="'+fwClass+'">'+esc(d.firmware!=="N/A"?d.firmware:"—")+'</td>'+
+      '<td class="'+(fwStatusText==="OK"?"ok":fwStatusText==="Outdated"?"outdated":fwStatusText==="Offline"?"err":"")+'">'+fwStatusText+'</td>'+
+      '<td class="'+statusClass+'">'+esc(statusText)+'</td>'+
+      '<td>'+esc(d.serial!=="N/A"?d.serial:"—")+'</td>'+
+    '</tr>';
+  }).join("");
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Firmware Report - '+dateStr+'</title>'+
+    '<style>'+
+    '@page{size:letter landscape;margin:0.5in}'+
+    'body{font-family:"Helvetica Neue",Arial,sans-serif;color:#222;margin:0;padding:20px}'+
+    '.header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #00693e;padding-bottom:12px;margin-bottom:16px}'+
+    'h1{font-family:"EB Garamond",Georgia,serif;font-size:24px;color:#00693e;margin:0}'+
+    '.sub{font-size:12px;color:#666;margin-top:4px}'+
+    '.meta{text-align:right;font-size:11px;color:#666}'+
+    '.stats{display:flex;gap:24px;margin-bottom:14px;padding:10px 14px;background:#f5f5f5;border-radius:4px}'+
+    '.stat{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px}'+
+    '.stat strong{display:block;font-size:20px;color:#222;margin-top:2px}'+
+    '.stat.ok strong{color:#15803d}'+
+    '.stat.warn strong{color:#b45309}'+
+    '.stat.err strong{color:#b91c1c}'+
+    '.filters{font-size:11px;color:#555;margin-bottom:12px;padding:6px 10px;background:#f9f9f9;border-left:3px solid #00693e}'+
+    'table{width:100%;border-collapse:collapse;font-size:10px}'+
+    'th{background:#00693e;color:#fff;text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}'+
+    'td{padding:5px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top}'+
+    'tr:nth-child(even){background:#fafafa}'+
+    '.host{font-family:"Menlo","Courier New",monospace;font-size:9px;color:#555}'+
+    '.outdated{color:#b45309;font-weight:600}'+
+    '.ok{color:#15803d}'+
+    '.warn{color:#b45309}'+
+    '.err{color:#b91c1c}'+
+    '.footer{margin-top:14px;font-size:10px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:8px}'+
+    '@media print{.no-print{display:none}}'+
+    '</style></head><body>'+
+    '<div class="header">'+
+      '<div><h1>Firmware Dashboard Report</h1><div class="sub">Dartmouth Design &amp; Engineering</div></div>'+
+      '<div class="meta">Generated: '+esc(dateStr)+'<br>'+devices.length+' device'+(devices.length!==1?"s":"")+'</div>'+
+    '</div>'+
+    '<div class="stats">'+
+      '<div class="stat">Total<strong>'+stats.total+'</strong></div>'+
+      '<div class="stat ok">Online<strong>'+stats.online+'</strong></div>'+
+      '<div class="stat warn">Outdated<strong>'+stats.outdated+'</strong></div>'+
+      '<div class="stat err">Offline<strong>'+stats.offline+'</strong></div>'+
+    '</div>'+
+    (activeFilters.length?'<div class="filters"><strong>Filters applied:</strong> '+activeFilters.map(esc).join(" · ")+'</div>':"")+
+    '<table>'+
+      '<thead><tr><th>Building</th><th>Room</th><th>Type</th><th>Host</th><th>Model</th><th>Firmware</th><th>FW Status</th><th>Status</th><th>Serial</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+    '</table>'+
+    '<div class="footer">firmware-dashboard.openav.dartmouth.edu</div>'+
+    '</body></html>';
+  var w=window.open("","_blank");
+  if(!w){alert("Please allow pop-ups to print.");return;}
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.focus();w.print();},250);
+}
+
 function norm(raw){
   const host=raw.host||"";const{building,room}=extractBR(host);const type=raw._type||"unknown";
   var fw=raw.firmware_version||raw.firmware||raw.routeros_version||"N/A";
   if(type==="ups")fw=raw.agent_firmware||"N/A";
+  if(type==="touch_panel")fw=raw.android_version||raw.androidVersion||"N/A";
   const d={host,building,room,status:raw.status||"unknown",error:raw.error||null,_type:type,_source:raw._source||"",model:raw.model||raw.product_name||raw.product_family||"N/A",serial:raw.serial||raw.serial_number||"N/A",mac:raw.mac||raw.mac_address||"N/A",firmware:fw};
   if(type==="camera"){d.temp_c=raw.temperature_c||raw.temp_c||null;d.build_date=raw.build_date||null;}
   else if(type==="projector"){d.manufacturer=raw.manufacturer||"";d.lamp_hours=raw.lamp_hours_total??null;d.power_status=raw.power_status||"";}
@@ -42,6 +162,7 @@ function norm(raw){
   else if(type==="ups"){d.battery_status=raw.battery_status||"N/A";d.battery_pct=raw.battery_capacity_pct??null;d.runtime=raw.runtime_remaining||"N/A";d.replace_indicator=raw.replace_indicator||"N/A";}
   else if(type==="relay"){d.relay_ports=raw.relay_port_count??null;d.relay_states=raw.relay_states||[];}
   else if(type==="dsp"){d.device_name=raw.device_name||"";d.fault_status=raw.fault_status||"N/A";d.fault_details=raw.fault_details||[];}
+  else if(type==="touch_panel"){d.manufacturer=raw.manufacturer||"";d.android_version=raw.android_version||"N/A";d.adb_state=raw.adb_state||"N/A";}
   return d;
 }
 
@@ -67,6 +188,7 @@ function DDetail({d}){
     case"ups":{const batColor=d.battery_status==="normal"?T.green:d.battery_status==="low"?T.red:T.amber;const replColor=d.replace_indicator==="ok"?T.green:d.replace_indicator==="replace"?T.red:T.textMuted;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{d.battery_pct!=null&&<span style={{fontFamily:S,fontSize:13,fontWeight:600,color:batColor}}>{d.battery_pct}%</span>}{d.runtime!=="N/A"&&<span style={{fontFamily:S,fontSize:13,color:T.textMuted}}>{d.runtime}</span>}{d.battery_status!=="N/A"&&<Badge color={batColor} bg={d.battery_status==="normal"?T.greenDim:T.redDim}>{d.battery_status}</Badge>}{d.replace_indicator==="replace"&&<Badge color={T.red} bg={T.redDim}>replace battery</Badge>}</div>;}
     case"relay":{return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}{d.relay_ports&&<span style={{fontFamily:S,fontSize:13,color:T.textMuted}}>{d.relay_ports} ports</span>}</div>;}
     case"dsp":{const faultColor=d.fault_status==="OK"?T.green:d.fault_status==="FAULT"?T.red:T.textMuted;return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>{common}{fw}<Badge color={faultColor} bg={d.fault_status==="OK"?T.greenDim:d.fault_status==="FAULT"?T.redDim:"transparent"}>{d.fault_status}</Badge>{d.fault_details&&d.fault_details.length>0&&<span style={{fontSize:12,color:T.red}}>{d.fault_details[0]}</span>}</div>;}
+    case"touch_panel":{return <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><span style={{color:T.textMuted,fontSize:13,fontFamily:M}}>{d.manufacturer} {d.model!=="N/A"?d.model:""}</span>{fw}{d.android_version!=="N/A"&&<Badge color={T.textMuted} bg="rgba(92,110,136,0.1)">Android {d.android_version}</Badge>}{d.adb_state==="unauthorized"&&<Badge color={T.amber} bg={T.amberDim}>unauthorized</Badge>}</div>;}
     default:return <div style={{display:"flex",gap:10,alignItems:"center"}}>{common}{fw}</div>;
   }
 }
@@ -357,6 +479,8 @@ function FleetConsole(){
           <select value={fBldg} onChange={e=>setFBldg(e.target.value)} style={selStyle}><option value="all">All Buildings</option>{bldgOpts.map(b=><option key={b} value={b}>{b}</option>)}</select>
           <div style={{flex:1}}/><input placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} style={{background:T.surfaceAlt,border:`1px solid ${T.border}`,borderRadius:3,padding:"5px 10px",color:T.text,fontFamily:M,fontSize:13,outline:"none",width:140}}/>
           <span style={{fontSize:13,color:T.textDim,fontFamily:M}}>{filtered.length}/{allDevs.length}</span>
+          {view==="table"&&<button onClick={()=>exportCsv(sorted,targetFw,{fType,fStatus,fFwStatus,fBldg,search})} style={{padding:"5px 12px",borderRadius:4,border:`1px solid ${T.border}`,background:T.surfaceAlt,color:T.text,fontFamily:S,fontSize:13,fontWeight:500,cursor:"pointer"}}>⬇ CSV</button>}
+          {view==="table"&&<button onClick={()=>printTable(sorted,targetFw,{fType,fStatus,fFwStatus,fBldg,search})} style={{padding:"5px 12px",borderRadius:4,border:`1px solid ${T.border}`,background:T.surfaceAlt,color:T.text,fontFamily:S,fontSize:13,fontWeight:500,cursor:"pointer"}}>🖨 Print</button>}
         </div>}
 
         {/* ATTENTION */}
@@ -512,11 +636,12 @@ function FleetConsole(){
 
         {/* CHARTS */}
         {view==="charts"&&<div>
-          <FwStatusPie devices={allDevs} targetFw={targetFw} large={true}/>
+          <FwStatusPie devices={allDevs.filter(d=>d.firmware!=="N/A")} targetFw={targetFw} large={true}/>
           <div style={{marginTop:16,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(460px,1fr))",gap:16}}>
           {typeOpts.map(type=>{
             const cfg=DTYPES[type];
-            const devsOfType=allDevs.filter(d=>d._type===type);
+            const devsOfType=allDevs.filter(d=>d._type===type&&d.firmware!=="N/A");
+            if(devsOfType.length===0)return null;
             const fwMap={};
             devsOfType.forEach(d=>{const fw=d.firmware||"N/A";fwMap[fw]=(fwMap[fw]||0)+1;});
             const fwList=Object.entries(fwMap).sort((a,b)=>b[1]-a[1]);

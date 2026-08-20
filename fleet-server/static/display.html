@@ -17,7 +17,7 @@ html,body{background:#0a0a0a;overflow:hidden;width:100vw;height:100vh}
 </style>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 </head>
 <body>
 <div id="root"><div id="loading">Loading...</div></div>
@@ -25,7 +25,7 @@ html,body{background:#0a0a0a;overflow:hidden;width:100vw;height:100vh}
 const {useState,useMemo,useCallback,useEffect}=React;
 
 const T={bg:"#0a0a0a",surface:"#141414",surfaceAlt:"#1c1c1c",border:"#252525",text:"#e0e0e0",textBright:"#fff",textMuted:"#777",textDim:"#444",green:"#4ade80",amber:"#fbbf24",red:"#f87171",accent:"#00693e"};
-const DTYPES={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb"},unknown:{icon:"?",label:"Device",color:"#888"}};
+const DTYPES={camera:{icon:"\u{1F4F7}",label:"Camera",color:"#67b8e3"},switch:{icon:"\u{1F500}",label:"Switch",color:"#4ade80"},projector:{icon:"\u{1F4FD}",label:"Projector",color:"#b89cc7"},display:{icon:"\u{1F5A5}",label:"Display",color:"#f0764a"},router:{icon:"\u{1F310}",label:"Router",color:"#fbbf24"},pdu:{icon:"\u{1F50C}",label:"PDU",color:"#5ba3d9"},microphone:{icon:"\u{1F399}",label:"Microphone",color:"#c4956e"},ups:{icon:"\u{1F50B}",label:"UPS",color:"#f87171"},relay:{icon:"\u{1F504}",label:"Relay",color:"#6fcf8a"},dsp:{icon:"\u{1F3B5}",label:"DSP",color:"#a78bdb"},touch_panel:{icon:"\u{1F4F1}",label:"Touch Panel",color:"#22d3ee"},unknown:{icon:"?",label:"Device",color:"#888"}};
 const CC=["#67b8e3","#4ade80","#b89cc7","#f0764a","#fbbf24","#5ba3d9","#c4956e","#f87171","#6fcf8a","#a78bdb"];
 const S="'Inter','Helvetica Neue',sans-serif";
 const SLIDE_MS=12000;
@@ -37,6 +37,7 @@ function norm(raw){
   var host=raw.host||"";var br=extractBR(host);var type=raw._type||"unknown";
   var fw=raw.firmware_version||raw.firmware||raw.routeros_version||"N/A";
   if(type==="ups")fw=raw.agent_firmware||"N/A";
+  if(type==="touch_panel")fw=raw.android_version||raw.androidVersion||"N/A";
   return{host:host,building:br.building,room:br.room,status:raw.status||"unknown",_type:type,firmware:fw};
 }
 
@@ -95,19 +96,21 @@ function Display(){
   var fwStats=useMemo(function(){
     var naC="N/A (Class 1)";var ok=0,outdated=0,offline=0,noTarget=0;
     allDevs.forEach(function(d){
+      if(d.firmware==="N/A")return;
       if(d.status!=="success"){offline++;return;}
       var t=targetFw[d._type];var hasT=t&&Array.isArray(t)&&t.length>0&&!t.includes("*");
       if(!hasT){noTarget++;return;}
-      if(d.firmware==="N/A"||d.firmware===naC||t.includes(d.firmware))ok++;else outdated++;
+      if(d.firmware===naC||t.includes(d.firmware))ok++;else outdated++;
     });
     return{ok:ok,outdated:outdated,offline:offline,noTarget:noTarget};
   },[allDevs,targetFw]);
 
   var slides=useMemo(function(){
     var s=[{type:"overview"}];
-    for(var i=0;i<typeOpts.length;i+=PER_SLIDE){s.push({type:"charts",types:typeOpts.slice(i,i+PER_SLIDE)});}
+    var chartTypes=typeOpts.filter(function(t){return allDevs.some(function(d){return d._type===t&&d.firmware!=="N/A";});});
+    for(var i=0;i<chartTypes.length;i+=PER_SLIDE){s.push({type:"charts",types:chartTypes.slice(i,i+PER_SLIDE)});}
     return s;
-  },[typeOpts]);
+  },[typeOpts,allDevs]);
 
   useEffect(function(){
     if(slides.length<=1)return;
@@ -160,7 +163,7 @@ function Display(){
           <div style={{flex:"0 0 52%",background:T.surface,borderRadius:"1.2vh",padding:"2vh 2vw",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"glowPulse 4s infinite"}}>
             <div style={{fontSize:"2.2vh",fontWeight:700,color:T.textBright,fontFamily:"'EB Garamond',Georgia,serif",letterSpacing:1,marginBottom:"1.5vh"}}>Firmware Status</div>
             <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",width:"100%",minHeight:0}}>
-              <Pie size={Math.min(window.innerHeight*0.62,window.innerWidth*0.3)} centerNum={stats.total} centerSub="devices" slices={[
+              <Pie size={Math.min(window.innerHeight*0.62,window.innerWidth*0.3)} centerNum={fwStats.ok+fwStats.outdated+fwStats.offline+fwStats.noTarget} centerSub="devices" slices={[
                 {value:fwStats.ok,color:T.green},
                 {value:fwStats.outdated,color:T.amber},
                 {value:fwStats.offline,color:T.red},
@@ -168,8 +171,8 @@ function Display(){
               ].filter(function(s){return s.value>0;})}/>
             </div>
             <div style={{display:"flex",gap:"3vw",justifyContent:"center",flexWrap:"wrap",marginTop:"2vh"}}>
-              {[{label:"OK",count:fwStats.ok,color:T.green},{label:"Outdated",count:fwStats.outdated,color:T.amber},{label:"Offline",count:fwStats.offline,color:T.red},{label:"No Target",count:fwStats.noTarget,color:T.textDim}].filter(function(s){return s.count>0;}).map(function(s,i){
-                var pct=stats.total>0?Math.round(s.count/stats.total*100):0;
+              {(function(){var fwTotal=fwStats.ok+fwStats.outdated+fwStats.offline+fwStats.noTarget;return [{label:"OK",count:fwStats.ok,color:T.green},{label:"Outdated",count:fwStats.outdated,color:T.amber},{label:"Offline",count:fwStats.offline,color:T.red},{label:"No Target",count:fwStats.noTarget,color:T.textDim}].filter(function(s){return s.count>0;}).map(function(s,i){
+                var pct=fwTotal>0?Math.round(s.count/fwTotal*100):0;
                 return <div key={i} style={{display:"flex",alignItems:"center",gap:"0.8vw"}}>
                   <div style={{width:"1.8vh",height:"1.8vh",borderRadius:"0.4vh",background:s.color,flexShrink:0}}/>
                   <div>
@@ -180,7 +183,7 @@ function Display(){
                     <div style={{fontSize:"1.2vh",color:T.textMuted,textTransform:"uppercase",letterSpacing:2}}>{s.label}</div>
                   </div>
                 </div>;
-              })}
+              });})()}
             </div>
           </div>
 
@@ -209,7 +212,7 @@ function Display(){
         {cur.type==="charts"&&<div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(2,1fr)",gridTemplateRows:"repeat(2,1fr)",gap:"1.2vh",padding:"1.5vh 2vw",overflow:"hidden"}}>
           {cur.types.map(function(type){
             var cfg=DTYPES[type]||DTYPES.unknown;
-            var devsOfType=allDevs.filter(function(d){return d._type===type;});
+            var devsOfType=allDevs.filter(function(d){return d._type===type&&d.firmware!=="N/A";});
             var fwMap={};
             devsOfType.forEach(function(d){var fw=d.firmware||"N/A";fwMap[fw]=(fwMap[fw]||0)+1;});
             var fwList=Object.entries(fwMap).sort(function(a,b){return b[1]-a[1];});

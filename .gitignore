@@ -1,4 +1,4 @@
-cameras.csv
+scripts/secrets/visca_firmware.csv
 scripts/secrets/axis_firmware.csv
 scripts/secrets/biamp_firmware.csv
 scripts/secrets/bravia_firmware.csv
@@ -11,3 +11,4 @@ scripts/secrets/rlink_firmware.csv
 scripts/secrets/shuremxa_firmware.csv
 scripts/secrets/tp_firmware.csv
 scripts/secrets/ups_firmware.csv
+scripts/tmp/
