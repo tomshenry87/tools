@@ -20,26 +20,33 @@ Validated handshake (against an SRG-X400 returning fw 3.00):
 Packet format (8-byte header + VISCA payload):
   [2B payload_type][2B payload_length][4B sequence_number][N bytes payload]
 
-Note: only one process at a time can bind UDP 52381 on this machine, so
-queries are issued sequentially even though a workers argument is exposed
-for compatibility with the standard CLI.
+Note: cameras reply to local UDP 52381, so a run binds that port once and
+shares the socket between all cameras. A receiver thread hands each reply to
+the camera it came from (by source IP), which lets --workers cameras be
+queried in parallel. Only one run at a time can hold the port.
 """
 
+import contextlib
 import csv
+import errno
 import json
+import queue
 import re
 import socket
 import struct
 import sys
 import os
 import shutil
-import argparse
 import threading
 import time
 import urllib.request
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     from tabulate import tabulate
@@ -67,17 +74,15 @@ RESET  = "\033[0m"
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV     = "secrets/visca_firmware.csv"
-OUTPUT_DIR      = "visca_firmware/files"
-DEFAULT_OUTPUT  = os.path.join(
-    OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+DEFAULT_CSV     = "secrets/visca_firmware.csv"      # relative to this script's folder
+OUTPUT_DIR      = "visca_firmware/files"            # results_<YYYYMMDD>_<HHMMSS>.json
 DEFAULT_PORT    = 52381
 DEFAULT_TIMEOUT = 3
-DEFAULT_WORKERS = 1   # only one process can bind UDP 52381 — kept for CLI parity
+DEFAULT_WORKERS = 16  # cameras in flight at once; they share one UDP 52381 socket
 
 LOCAL_VISCA_PORT = 52381
+RECV_POLL        = 0.2   # seconds; how often the receiver thread checks for shutdown
+BIND_WAIT        = 60    # seconds to wait for UDP 52381 when another run holds it
 
 # VISCA-over-IP payload types
 PT_VISCA_INQUIRY   = 0x0110
@@ -199,6 +204,7 @@ MODEL_CODE_TO_PROFILE = {
     0x0617: "srg-x400",
     0x0519: "srg-x400",
     0x0630: "srg-x400",
+    0x0621: "srg-a40",
     0x0710: "srg-a40",
     0x0711: "srg-a40",  # SRG-A12 shares the SRG-A40 firmware family
 }
@@ -406,39 +412,47 @@ def visca_error_meaning(payload: bytes) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Debug logging
+# Debug logging (--debug)
 # ---------------------------------------------------------------------------
-# Module-level debug state. Set by main() based on the --debug flag.
-DEBUG = False
+# Routed through cli.debug, so every line goes to stderr prefixed with the
+# camera's host and a timestamp. All of these are no-ops without --debug.
+def dbg(host: str, msg: str):
+    """One --debug trace line for host."""
+    cli.debug.log(host, msg)
 
 
-def dbg(msg: str, color: str = ""):
-    """Print a debug message to stderr when --debug is enabled."""
-    if not DEBUG:
-        return
-    prefix = f"  {YELLOW}[debug]{RESET} "
-    print(f"{prefix}{color}{msg}{RESET}", file=sys.stderr)
-
-
-def dbg_hex(label: str, data: bytes, max_bytes: int = 64):
-    """Pretty-print a hex dump of bytes for debug output."""
-    if not DEBUG:
+def dbg_hex(host: str, label: str, data: bytes, max_bytes: int = 64):
+    """Compact one-line hex dump of a packet for --debug."""
+    if not cli.debug.enabled:
         return
     if not data:
-        dbg(f"{label}: <empty>")
+        dbg(host, f"{label}: <empty>")
         return
     truncated = data[:max_bytes]
     hex_str   = " ".join(f"{b:02x}" for b in truncated)
     suffix    = f" ... (+{len(data) - max_bytes} more)" if len(data) > max_bytes else ""
-    dbg(f"{label} ({len(data)}b): {hex_str}{suffix}")
+    dbg(host, f"{label} ({len(data)}b): {hex_str}{suffix}")
 
 
-def dbg_parsed_packet(label: str, parsed: dict):
+def packet_name(packet: bytes) -> str:
+    """Short name of an outgoing packet, for --debug / --raw labels."""
+    parsed = parse_packet(packet)
+    pt, payload = parsed.get("payload_type"), parsed.get("payload")
+    if pt == PT_CONTROL_COMMAND and payload == CTRL_RESET_SEQ:
+        return "RESET"
+    if pt == PT_VISCA_INQUIRY and payload == VISCA_INQ_CAM_VERSION:
+        return "CAM_VersionInq"
+    if pt == PT_VISCA_INQUIRY and payload == VISCA_INQ_SOFT_VERSION:
+        return "CAM_SoftVersionInq"
+    return f"packet type 0x{pt:04X}" if pt is not None else "packet"
+
+
+def dbg_parsed_packet(host: str, label: str, parsed: dict):
     """Show parsed Sony envelope fields if applicable."""
-    if not DEBUG:
+    if not cli.debug.enabled:
         return
     if "error" in parsed:
-        dbg(f"{label}: parse error — {parsed['error']}")
+        dbg(host, f"{label}: parse error — {parsed['error']}")
         return
     pt = parsed.get("payload_type")
     pl = parsed.get("payload_length")
@@ -450,64 +464,257 @@ def dbg_parsed_packet(label: str, parsed: dict):
         PT_CONTROL_COMMAND: "CONTROL_CMD",
         PT_CONTROL_REPLY:   "CONTROL_REPLY",
     }.get(pt, f"unknown(0x{pt:04X})")
-    dbg(f"{label}: type={pt_name}  len={pl}  seq={sq}  payload={pp.hex()}")
+    dbg(host, f"{label}: type={pt_name}  len={pl}  seq={sq}  payload={pp.hex()}")
 
 
 # ---------------------------------------------------------------------------
 # UDP Transport
 # ---------------------------------------------------------------------------
-def open_visca_socket(timeout: int):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.settimeout(timeout)
-    try:
-        sock.bind(('', LOCAL_VISCA_PORT))
-        return sock, None
-    except OSError as e:
-        sock.close()
-        return None, f"Cannot bind local UDP port {LOCAL_VISCA_PORT}: {e}"
+# Cameras send their replies to local UDP 52381, so a run binds that port
+# ONCE and every camera shares the socket. A receiver thread reads each
+# datagram and hands it to the exchange waiting on its source IP, so a camera
+# only ever sees its own replies. That is what lets --workers query cameras
+# in parallel, and it stops a late reply from one camera being read as the
+# next camera's answer.
+#
+# The socket is bound WITHOUT SO_REUSEADDR. With it, Linux lets another
+# process bind 52381 as well and then delivers the replies to whichever
+# socket bound last, so a second run started mid-scan would silently take
+# this run's replies for the rest of the scan. Without it, the second run
+# fails fast with "Cannot bind". (UDP has no TIME_WAIT, so the port is free
+# again as soon as a run exits.)
+class ViscaTransport:
+    """The run's one local UDP 52381 socket, with replies routed by camera IP."""
+
+    def __init__(self, sock):
+        self.sock      = sock
+        self._lock     = threading.Lock()
+        self._waiting  = {}      # camera IP -> queue.Queue of (data, addr)
+        self._ip_locks = {}      # camera IP -> Lock: one exchange per IP at a time
+        self._queried  = set()   # every IP an exchange has been opened for
+        self.unrouted  = {}      # source IP that was never queried -> datagram count
+        self._closed   = threading.Event()
+        self._thread   = threading.Thread(target=self._receive_loop,
+                                          name="visca-recv", daemon=True)
+        self._thread.start()
+
+    @classmethod
+    def bind(cls):
+        """Bind local UDP 52381 and start the receiver thread. Raises OSError."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.bind(('', LOCAL_VISCA_PORT))
+        except OSError:
+            sock.close()
+            raise
+        sock.settimeout(RECV_POLL)
+        return cls(sock)
+
+    @classmethod
+    def open(cls):
+        """Like bind(), but returns (transport, None) or (None, error text)."""
+        try:
+            return cls.bind(), None
+        except OSError as e:
+            return None, f"Cannot bind local UDP port {LOCAL_VISCA_PORT}: {e}"
+
+    def close(self):
+        self._closed.set()
+        self._thread.join(RECV_POLL * 5)
+        try:
+            self.sock.close()
+        except OSError as e:
+            dbg(f"udp/{LOCAL_VISCA_PORT}", f"socket close failed: {e}")
+
+    def _receive_loop(self):
+        while not self._closed.is_set():
+            try:
+                data, addr = self.sock.recvfrom(1024)
+            except socket.timeout:
+                continue
+            except OSError as e:
+                if self._closed.is_set():
+                    return
+                dbg(f"udp/{LOCAL_VISCA_PORT}", f"recvfrom failed: {e}")
+                time.sleep(RECV_POLL)
+                continue
+            with self._lock:
+                replies = self._waiting.get(addr[0])
+                if replies is None and addr[0] not in self._queried:
+                    self.unrouted[addr[0]] = self.unrouted.get(addr[0], 0) + 1
+            if replies is not None:
+                replies.put((data, addr))
+            else:
+                dbg(addr[0], f"\u2190 {addr[0]}:{addr[1]}  {len(data)}b ignored: "
+                             f"no query to this address is waiting")
+
+    @contextlib.contextmanager
+    def exchange(self, host, port, timeout):
+        """
+        One camera's packet exchange. Resolves host once, waits until no other
+        exchange is using that IP, then yields a ViscaExchange that receives
+        only datagrams from that IP.
+        """
+        try:
+            ip, resolve_error = socket.getaddrinfo(
+                host, None, socket.AF_INET, socket.SOCK_DGRAM)[0][4][0], None
+        except OSError as e:
+            ip, resolve_error = None, e
+        if resolve_error is not None:
+            # Every send then fails with the same "sendto failed: ..." text
+            # that sendto(hostname) gave when the script resolved per packet.
+            yield ViscaExchange(self, host, port, timeout, resolve_error=resolve_error)
+            return
+        with self._lock:
+            ip_lock = self._ip_locks.setdefault(ip, threading.Lock())
+        with ip_lock:
+            replies = queue.Queue()
+            with self._lock:
+                self._waiting[ip] = replies
+                self._queried.add(ip)
+            try:
+                yield ViscaExchange(self, host, port, timeout, ip=ip, replies=replies)
+            finally:
+                with self._lock:
+                    self._waiting.pop(ip, None)
 
 
-def send_and_receive(sock, packet, dest):
-    dbg(f"\u2192 {dest[0]}:{dest[1]}")
-    dbg_hex("  sent", packet)
-    try:
-        sock.sendto(packet, dest)
-    except OSError as e:
-        dbg(f"  sendto failed: {e}", color=RED)
-        return None, f"sendto failed: {e}"
-    try:
-        data, addr = sock.recvfrom(1024)
-        dbg(f"\u2190 {addr[0]}:{addr[1]}")
-        dbg_hex("  recv", data)
-        return data, None
-    except socket.timeout:
-        dbg("  no reply (timeout)", color=RED)
+class ViscaExchange:
+    """One camera's view of the shared socket: send to it, read only its replies."""
+
+    def __init__(self, transport, host, port, timeout, ip=None, replies=None,
+                 resolve_error=None):
+        self.host          = host
+        self.port          = port
+        self.timeout       = timeout
+        self._transport    = transport
+        self._dest         = (ip, port)
+        self._replies      = replies
+        self._resolve_error = resolve_error
+        self._sent         = []   # (sequence_number, payload_type) per packet sent
+
+    def send(self, packet):
+        """Send one packet to the camera. Returns None, or an error string."""
+        parsed = parse_packet(packet)
+        self._sent.append((parsed.get("sequence_number"), parsed.get("payload_type")))
+        if self._resolve_error is not None:
+            return f"sendto failed: {self._resolve_error}"
+        try:
+            self._transport.sock.sendto(packet, self._dest)
+        except OSError as e:
+            return f"sendto failed: {e}"
+        return None
+
+    def receive(self, seq, on_skip=None):
+        """
+        Wait up to the timeout for this camera's reply to the packet with
+        sequence number seq. Returns (data, addr), or (None, None) on timeout.
+        A reply that provably answers an EARLIER packet of this exchange (see
+        _stale_reason) is skipped, shown to on_skip(label, data), and the
+        wait continues.
+        """
+        deadline = time.monotonic() + self.timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return None, None
+            try:
+                data, addr = self._replies.get(timeout=remaining)
+            except queue.Empty:
+                return None, None
+            stale = self._stale_reason(data, seq)
+            if stale is None:
+                return data, addr
+            dbg(self.host, f"\u2190 {addr[0]}:{addr[1]}  skipped {stale} reply")
+            dbg_hex(self.host, "  skipped", data)
+            if on_skip:
+                on_skip(stale, data)
+
+    def _stale_reason(self, data, seq):
+        """
+        Label for a late or repeated reply to an earlier packet, or None.
+
+        Only replies that can be pinned on an earlier packet are rejected:
+        a RESET acknowledgement carrying the RESET's sequence number, or a
+        VISCA reply carrying an earlier inquiry's sequence number. Cameras
+        that do not echo sequence numbers (they reply with 0, say) are
+        therefore unaffected, and bare VISCA replies have no number to check.
+        """
+        parsed = parse_packet(data)
+        if "error" in parsed or parsed["sequence_number"] == seq:
+            return None
+        rseq, rtype = parsed["sequence_number"], parsed["payload_type"]
+        for sent_seq, sent_type in self._sent[:-1]:
+            if sent_seq != rseq:
+                continue
+            if (sent_type == PT_CONTROL_COMMAND and rtype == PT_CONTROL_REPLY
+                    and parsed["payload"] == CTRL_RESET_SEQ):
+                return "repeated RESET"
+            if sent_type == PT_VISCA_INQUIRY and rtype == PT_VISCA_REPLY:
+                return f"late seq {rseq} inquiry"
+        return None
+
+
+def _raw_skip_hook(on_reply):
+    """Show replies skipped as stale to the --raw hook, labelled as ignored."""
+    if not on_reply:
+        return None
+    return lambda label, data: on_reply(f"ignored: {label}", data, None)
+
+
+def send_and_receive(chan, packet, on_reply=None):
+    """
+    Send one packet to the camera and wait for one reply. Returns (data, error).
+
+    on_reply(name, data, error) is the --raw hook: it sees every reply packet
+    (or the error) exactly as received. It does not change what is sent.
+    """
+    host = chan.host
+    name = packet_name(packet)
+    seq  = parse_packet(packet)["sequence_number"]
+    dbg(host, f"\u2192 {host}:{chan.port}  {name}")
+    dbg_hex(host, "  sent", packet)
+    err = chan.send(packet)
+    if err:
+        dbg(host, f"  {err}")
+        if on_reply:
+            on_reply(name, None, err)
+        return None, err
+    data, addr = chan.receive(seq, on_skip=_raw_skip_hook(on_reply))
+    if data is None:
+        dbg(host, "  no reply (timeout)")
+        if on_reply:
+            on_reply(name, None, "No response (timeout)")
         return None, "No response (timeout)"
-    except OSError as e:
-        dbg(f"  recvfrom failed: {e}", color=RED)
-        return None, f"recvfrom failed: {e}"
+    dbg(host, f"\u2190 {addr[0]}:{addr[1]}")
+    dbg_hex(host, "  recv", data)
+    if on_reply:
+        on_reply(name, data, None)
+    return data, None
 
 
-def visca_reset_sequence(sock, dest):
+def visca_reset_sequence(chan, on_reply=None):
     """Send RESET (0x0200 + 0x01) and wait for the 0x0201 control reply."""
-    dbg("RESET handshake \u2014 syncing sequence number")
+    host = chan.host
+    dbg(host, "RESET handshake \u2014 syncing sequence number")
     packet = build_packet(PT_CONTROL_COMMAND, CTRL_RESET_SEQ, 0)
-    reply, err = send_and_receive(sock, packet, dest)
+    reply, err = send_and_receive(chan, packet, on_reply)
     if reply is None:
-        dbg(f"  RESET failed: {err}", color=RED)
+        dbg(host, f"  RESET failed: {err}")
         return False, err or "RESET handshake failed"
 
     parsed = parse_packet(reply)
-    dbg_parsed_packet("  RESET reply", parsed)
+    dbg_parsed_packet(host, "  RESET reply", parsed)
 
     if "error" in parsed:
+        dbg(host, f"  RESET failed: {parsed['error']}")
         return False, parsed["error"]
 
     if parsed["payload_type"] == PT_CONTROL_REPLY:
-        dbg("  RESET ok", color=GREEN)
+        dbg(host, "  RESET ok")
         return True, None
 
+    dbg(host, f"  RESET failed: unexpected reply type 0x{parsed['payload_type']:04X}")
     return False, f"Unexpected RESET reply type 0x{parsed['payload_type']:04X}"
 
 
@@ -516,69 +723,81 @@ def _is_raw_visca_payload(data: bytes) -> bool:
     return len(data) >= 3 and data[0] == 0x90 and data[-1] == 0xFF
 
 
-def send_visca_inquiry(sock, dest, inquiry, seq):
+def send_visca_inquiry(chan, inquiry, seq, on_reply=None):
     """Send a VISCA inquiry, return (visca_payload, error).
 
     Tolerates both Sony's 8-byte envelope and bare VISCA replies that some
     third-party cameras (PTZOptics, Prisual, Tenveo, etc.) send.
+    on_reply is the --raw hook (see send_and_receive).
     """
-    dbg(f"VISCA inquiry seq={seq}: {inquiry.hex()}")
+    host = chan.host
+    dbg(host, f"VISCA inquiry seq={seq}: {inquiry.hex()}")
     packet = build_packet(PT_VISCA_INQUIRY, inquiry, seq)
-    reply, err = send_and_receive(sock, packet, dest)
+    reply, err = send_and_receive(chan, packet, on_reply)
     if reply is None:
         return None, err or "No response"
 
     # Some cameras skip the 8-byte envelope and just send raw VISCA bytes.
     if _is_raw_visca_payload(reply) and len(reply) < 8:
-        dbg("  reply looks like RAW VISCA (no Sony envelope)")
+        dbg(host, "  reply looks like RAW VISCA (no Sony envelope)")
         rtype = classify_visca_reply(reply)
-        dbg(f"  raw VISCA classified as: {rtype}")
+        dbg(host, f"  raw VISCA classified as: {rtype}")
         if rtype == "completion":
             return reply, None
         if rtype == "error":
+            dbg(host, f"  VISCA error: {visca_error_meaning(reply)}")
             return None, visca_error_meaning(reply)
 
     parsed = parse_packet(reply)
-    dbg_parsed_packet("  parsed envelope", parsed)
+    dbg_parsed_packet(host, "  parsed envelope", parsed)
     if "error" in parsed:
         if _is_raw_visca_payload(reply):
-            dbg("  envelope parse failed but raw VISCA detected \u2014 using raw")
+            dbg(host, "  envelope parse failed but raw VISCA detected \u2014 using raw")
             return reply, None
         return None, parsed["error"]
 
     if (parsed["payload_type"] == PT_CONTROL_REPLY
             and parsed["payload"] == bytes([0x0F, 0x01])):
-        dbg("  camera reports sequence-number error", color=RED)
+        dbg(host, "  camera reports sequence-number error")
         return None, "Sequence number out of sync"
 
     if parsed["payload_type"] != PT_VISCA_REPLY:
         if _is_raw_visca_payload(reply):
-            dbg("  unexpected envelope type but raw VISCA pattern detected")
+            dbg(host, "  unexpected envelope type but raw VISCA pattern detected")
             return reply, None
+        dbg(host, f"  unexpected reply type 0x{parsed['payload_type']:04X}")
         return None, f"Unexpected reply type 0x{parsed['payload_type']:04X}"
 
     visca_payload = parsed["payload"]
     rtype = classify_visca_reply(visca_payload)
-    dbg(f"  VISCA payload classified as: {rtype}")
+    dbg(host, f"  VISCA payload classified as: {rtype}")
 
     if rtype == "completion":
         return visca_payload, None
     if rtype == "error":
+        dbg(host, f"  VISCA error: {visca_error_meaning(visca_payload)}")
         return None, visca_error_meaning(visca_payload)
     if rtype == "ack":
-        dbg("  ACK received, waiting for completion")
-        try:
-            data, _ = sock.recvfrom(1024)
-            dbg_hex("  recv (post-ACK)", data)
-            p2 = parse_packet(data)
-            if p2.get("payload_type") == PT_VISCA_REPLY:
-                return p2["payload"], None
-            if _is_raw_visca_payload(data):
-                return data, None
-            return None, "No completion after ACK"
-        except socket.timeout:
+        dbg(host, "  ACK received, waiting for completion")
+        name = f"{packet_name(packet)} (after ACK)"
+        data, _ = chan.receive(seq, on_skip=_raw_skip_hook(on_reply))
+        if data is None:
+            dbg(host, "  no completion after ACK (timeout)")
+            if on_reply:
+                on_reply(name, None, "No completion after ACK (timeout)")
             return None, "No completion after ACK (timeout)"
+        dbg_hex(host, "  recv (post-ACK)", data)
+        if on_reply:
+            on_reply(name, data, None)
+        p2 = parse_packet(data)
+        if p2.get("payload_type") == PT_VISCA_REPLY:
+            return p2["payload"], None
+        if _is_raw_visca_payload(data):
+            return data, None
+        dbg(host, "  no completion after ACK")
+        return None, "No completion after ACK"
 
+    dbg(host, f"  unrecognized VISCA reply: {visca_payload.hex()}")
     return None, f"Unrecognized VISCA reply: {visca_payload.hex()}"
 
 
@@ -839,7 +1058,7 @@ def http_fingerprint(host: str, timeout: int = 3,
         result["probes_tried"].append(url)
 
         if verbose:
-            dbg(f"HTTP probe \u2192 {url}")
+            dbg(host, f"HTTP probe \u2192 {url}")
 
         probe = {"url": url, "status": None, "server": None,
                  "title": None, "snippet": None, "cgi_fields": None,
@@ -879,7 +1098,7 @@ def http_fingerprint(host: str, timeout: int = 3,
                         result["cgi_summary"] = summary
                         if verbose:
                             for k, v in summary.items():
-                                dbg(f"  CGI summary: {k} = {v!r}", color=GREEN)
+                                dbg(host, f"  CGI summary: {k} = {v!r}")
 
                 # Match against fingerprint patterns — search headers, title,
                 # CGI fields, and visible body
@@ -901,7 +1120,7 @@ def http_fingerprint(host: str, timeout: int = 3,
                         result["title"]       = probe["title"]
                         result["probe_results"].append(probe)
                         if verbose:
-                            dbg(f"  match: {label}  (pattern: {pat})", color=GREEN)
+                            dbg(host, f"  match: {label}  (pattern: {pat})")
                         return result
 
         except urllib.error.HTTPError as e:
@@ -910,8 +1129,8 @@ def http_fingerprint(host: str, timeout: int = 3,
             # 401/403 still expose the Server header, which might fingerprint
             try:
                 probe["server"] = e.headers.get("Server") if e.headers else None
-            except Exception:
-                pass
+            except Exception as hdr_err:
+                dbg(host, f"  {url}: could not read Server header: {hdr_err}")
             if probe["server"]:
                 for pat, label in HTTP_FINGERPRINT_PATTERNS:
                     if re.search(pat, probe["server"], re.I):
@@ -921,7 +1140,7 @@ def http_fingerprint(host: str, timeout: int = 3,
                         result["server"]      = probe["server"]
                         result["probe_results"].append(probe)
                         if verbose:
-                            dbg(f"  match (auth-protected): {label}", color=GREEN)
+                            dbg(host, f"  match (auth-protected): {label}")
                         return result
         except urllib.error.URLError as e:
             probe["error"] = f"URL error: {e.reason}"
@@ -934,9 +1153,9 @@ def http_fingerprint(host: str, timeout: int = 3,
 
         if verbose:
             if probe["error"]:
-                dbg(f"  {probe['error']}")
+                dbg(host, f"  {probe['error']}")
             else:
-                dbg(f"  HTTP {probe['status']}  server={probe['server']!r}  "
+                dbg(host, f"  HTTP {probe['status']}  server={probe['server']!r}  "
                     f"title={probe['title']!r}")
 
     # Last-resort: if no brand string matched anywhere, see if the CGI
@@ -952,7 +1171,7 @@ def http_fingerprint(host: str, timeout: int = 3,
                     result["source_url"] = p["url"]
                     break
             if verbose:
-                dbg(f"  CGI field signature \u2192 {sig_vendor}", color=GREEN)
+                dbg(host, f"  CGI field signature \u2192 {sig_vendor}")
 
     return result
 
@@ -960,12 +1179,16 @@ def http_fingerprint(host: str, timeout: int = 3,
 
 def query_camera(host: str, port: int, camera_name: str, camera_type: str,
                  timeout: int = DEFAULT_TIMEOUT,
-                 fingerprint_stubs: bool = True) -> dict:
+                 fingerprint_stubs: bool = True, on_reply=None,
+                 transport=None) -> dict:
     """Query a single camera. Returns a result dict shaped like the Bravia tool.
 
     If `fingerprint_stubs` is True and the camera returns a stub VISCA reply
     (no model/firmware) the script will probe HTTP to try to identify the
     camera by web UI signatures.
+    on_reply is the --raw hook that sees every reply packet (see send_and_receive).
+    transport is the run's shared ViscaTransport; without one, this call
+    binds UDP 52381 for itself and releases it before returning.
     """
     result = {
         # --- Common fields (spec 2.3) -----------------------------------
@@ -1004,29 +1227,33 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
     profile = resolve_profile(camera_type)
     if not profile:
         result["error"] = f"Unknown camera type: {camera_type}"
-        return result
+        return _finish(result)
 
-    if DEBUG:
-        dbg("=" * 60)
-        dbg(f"Camera: {camera_name or host}  ({host}:{port})")
-        dbg(f"Type hint: {camera_type or '(none)'}  \u2192  profile: {profile['display_name']}")
-        dbg("=" * 60)
+    if cli.debug.enabled:
+        dbg(host, f"Camera: {camera_name or host}  ({host}:{port})")
+        dbg(host, f"Type hint: {camera_type or '(none)'}  \u2192  profile: {profile['display_name']}")
 
     result["manufacturer"] = profile["manufacturer"]
-    dest = (host, port)
 
-    sock, bind_err = open_visca_socket(timeout)
-    if sock is None:
-        result["error"] = bind_err
-        return result
+    dbg(host, f"local UDP {LOCAL_VISCA_PORT}; camera {host}:{port}, "
+              f"timeout {timeout}s per packet")
+    with contextlib.ExitStack() as stack:
+        if transport is None:
+            transport, bind_err = ViscaTransport.open()
+            if transport is None:
+                dbg(host, bind_err)
+                result["error"] = bind_err
+                return _finish(result)
+            stack.callback(transport.close)
+        chan = stack.enter_context(transport.exchange(host, port, timeout))
 
-    try:
         # 1. RESET handshake (Sony's VISCA-over-IP requires this; third-party
         #    cameras may not implement it but often still answer inquiries.)
-        reset_ok, reset_err = visca_reset_sequence(sock, dest)
+        reset_ok, reset_err = visca_reset_sequence(chan, on_reply)
         if not reset_ok:
             # Don't bail out yet — try the inquiry anyway. If that also
             # fails we'll surface the original RESET error.
+            dbg(host, "RESET did not complete; trying CAM_VersionInq anyway")
             result["reset_status"] = "skipped"
             result["reset_error"]  = reset_err
         else:
@@ -1036,7 +1263,7 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
 
         # 2. CAM_VersionInq
         version_payload, err = send_visca_inquiry(
-            sock, dest, VISCA_INQ_CAM_VERSION, seq=1
+            chan, VISCA_INQ_CAM_VERSION, seq=1, on_reply=on_reply
         )
         if version_payload is None:
             # Inquiry failed — surface RESET error first if we had one,
@@ -1045,21 +1272,21 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
                 result["error"] = reset_err or "RESET handshake failed"
             else:
                 result["error"] = err or "CAM_VersionInq: no response"
-            return result
+            return _finish(result)
 
         vi = parse_version_response(version_payload, profile["manufacturer"])
         if "parse_error" in vi:
-            dbg(f"Version parse error: {vi['parse_error']}", color=RED)
-            dbg_hex("  raw payload", version_payload)
+            dbg(host, f"Version parse error: {vi['parse_error']}")
+            dbg_hex(host, "  raw payload", version_payload)
             result["error"] = vi["parse_error"]
-            return result
+            return _finish(result)
 
-        if DEBUG:
-            dbg("Parsed version response:")
+        if cli.debug.enabled:
+            dbg(host, "Parsed version response:")
             for k in ("vendor_id", "vendor_name", "model_code", "model_name",
                      "rom_revision", "firmware_version", "max_sockets", "raw_hex"):
                 if k in vi:
-                    dbg(f"  {k} = {vi[k]}")
+                    dbg(host, f"  {k} = {vi[k]}")
 
         # The protocol parsers are left untouched (spec section 4) and may
         # return the string "N/A" as a sentinel. Normalise it to null here so
@@ -1084,8 +1311,8 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
                 model_code_int = 0
             detected = profile_from_model_code(model_code_int)
             if detected:
-                dbg(f"Auto-detect: model 0x{model_code_int:04X} \u2192 "
-                    f"{detected['display_name']}", color=GREEN)
+                dbg(host, f"Auto-detect: model 0x{model_code_int:04X} \u2192 "
+                          f"{detected['display_name']}")
                 profile = detected
                 result["camera_type"] = profile["display_name"]
 
@@ -1094,21 +1321,17 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
         # 3. CAM_SoftVersionInq (SRG-A40 only)
         if profile["supports_soft_version_inq"]:
             time.sleep(0.05)
-            sw_payload, _ = send_visca_inquiry(
-                sock, dest, VISCA_INQ_SOFT_VERSION, seq=2
+            sw_payload, sw_err = send_visca_inquiry(
+                chan, VISCA_INQ_SOFT_VERSION, seq=2, on_reply=on_reply
             )
+            if sw_payload is None:
+                dbg(host, f"CAM_SoftVersionInq failed (ignored): {sw_err}")
             if sw_payload:
                 sw = parse_software_version_response(sw_payload)
                 if sw.get("software_version_ascii"):
                     result["software_version"] = sw["software_version_ascii"]
                 if sw.get("software_version_hex"):
                     result["software_version_hex"] = sw["software_version_hex"]
-
-    finally:
-        try:
-            sock.close()
-        except Exception:
-            pass
 
     # ----- 4. HTTP fingerprint fallback for stub VISCA cameras -----
     # If the VISCA reply gave us a vendor we can't identify (or no useful
@@ -1125,9 +1348,8 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
         and _unidentified(result["model"])
     )
     if needs_fingerprint:
-        dbg(f"Stub or unknown VISCA reply \u2014 trying HTTP fingerprint",
-            color=YELLOW)
-        fp = http_fingerprint(host, timeout=timeout, verbose=DEBUG)
+        dbg(host, "Stub or unknown VISCA reply \u2014 trying HTTP fingerprint")
+        fp = http_fingerprint(host, timeout=timeout, verbose=cli.debug.enabled)
         result["fingerprint"] = fp
 
         # 4a. Brand match found — use vendor name as manufacturer/model
@@ -1136,8 +1358,8 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
                 result["manufacturer"] = fp["vendor"].split()[0]
             if _unidentified(result["model"]):
                 result["model"] = fp["vendor"]
-            dbg(f"Fingerprint identified: {fp['vendor']}  "
-                f"(via {fp['source_url']})", color=GREEN)
+            dbg(host, f"Fingerprint identified: {fp['vendor']}  "
+                      f"(via {fp['source_url']})")
 
         # 4b. No brand match, but the param.cgi-style endpoint gave us
         #     model + firmware fields — surface those even though we don't
@@ -1152,9 +1374,22 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
                 # Clear the misleading "doesn't report firmware" note now
                 # that we have a real version
                 result.pop("firmware_note", None)
-            dbg(f"CGI fields supplied: model={cgi_summary.get('model_label')!r}  "
-                f"fw={cgi_summary.get('firmware_version')!r}", color=GREEN)
+            dbg(host, f"CGI fields supplied: model={cgi_summary.get('model_label')!r}  "
+                      f"fw={cgi_summary.get('firmware_version')!r}")
 
+    return _finish(result)
+
+
+def _finish(result: dict) -> dict:
+    """--debug: trace a camera's final status, then hand the result back unchanged."""
+    if cli.debug.enabled:
+        line = f"result: {result['status']}"
+        if result.get("error"):
+            line += f" ({result['error']})"
+        if result["status"] == "success":
+            line += (f"  model={result.get('model')!r}  "
+                     f"firmware={result.get('firmware_version')!r}")
+        dbg(result["host"], line)
     return result
 
 
@@ -1162,13 +1397,13 @@ def query_camera(host: str, port: int, camera_name: str, camera_type: str,
 # Output
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
-    os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
+    cli.ensure_parent(filepath)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
     output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()) if not args.host else None,
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "VISCA over IP (UDP) — Sony 8-byte header envelope",
             "mode":            f"local UDP port {LOCAL_VISCA_PORT}, RESET-then-inquire",
@@ -1186,17 +1421,12 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
 
 
 def print_results_table(results: list, output_file: str, elapsed: float,
-                        workers: int, firmware_filter: str = None):
+                        workers: int, firmware_filter: list = None):
 
-    if firmware_filter:
-        # firmware_version is null when the camera does not report one, so
-        # compare against the cleaned display form rather than the raw value.
-        display_results = [
-            r for r in results
-            if clean(r.get("firmware_version")) != firmware_filter
-        ]
-    else:
-        display_results = results
+    # firmware_version is null when the camera does not report one, so
+    # compare against the cleaned display form rather than the raw value.
+    display_results = cli.firmware_mismatches(
+        results, firmware_filter, key=lambda r: clean(r.get("firmware_version")))
 
     table_data = []
     for r in display_results:
@@ -1240,7 +1470,7 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     print()
     if firmware_filter:
         print(
-            f"  {BOLD}Firmware filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
             f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {len(results)} cameras"
         )
     print(
@@ -1279,17 +1509,86 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+def dump_raw(dev: dict, timeout: int, fingerprint_stubs: bool = True, transport=None):
+    """
+    --raw: run the normal query for one camera and print every reply packet
+    exactly as it arrives (RESET, CAM_VersionInq and, for SRG-A40-family
+    cameras, CAM_SoftVersionInq), then a summary of each HTTP fingerprint
+    probe's response when the stub-camera fallback runs.
+    """
+    shown_errors = set()
+
+    def on_reply(name, data, err):
+        if data is not None:
+            cli.raw_item(f"{name} reply", data)
+        else:
+            shown_errors.add(err)
+            cli.raw_error(name, err)
+
+    r = query_camera(
+        host=dev["host"],
+        port=dev["port"],
+        camera_name=dev.get("name", ""),
+        camera_type=dev.get("type", ""),
+        timeout=timeout,
+        fingerprint_stubs=fingerprint_stubs,
+        on_reply=on_reply,
+        transport=transport,
+    )
+
+    fp = r.get("fingerprint")
+    if fp:
+        for p in fp.get("probe_results", []):
+            cli.raw_item(f"HTTP GET {p['url']}",
+                         {k: v for k, v in p.items() if k != "url" and v not in (None, "", {})})
+        cli.raw_item("HTTP fingerprint result", {
+            "vendor":      fp.get("vendor"),
+            "matched_pat": fp.get("matched_pat"),
+            "source_url":  fp.get("source_url"),
+            "cgi_summary": fp.get("cgi_summary") or None,
+        })
+
+    # Errors that never reached the wire (bind failure, unknown --type, a
+    # reply too short to parse) would otherwise be invisible here.
+    if r.get("error") and r["error"] not in shown_errors:
+        cli.raw_error("query", r["error"])
+
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="Query Sony VISCA-over-IP cameras (SRG-X400, SRG-A40) for firmware version.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        host_help=("Query HOST instead of the whole CSV. Repeat for several hosts. "
+                   "If HOST is in the CSV, that row's port, type and name are reused."),
+        port_help=(f"Camera UDP port for --host targets (default: {DEFAULT_PORT}). "
+                   f"Replies always come back to local UDP {LOCAL_VISCA_PORT}."),
+        workers_help=(f"Cameras queried at once (default: {DEFAULT_WORKERS}). They share "
+                      f"one local UDP {LOCAL_VISCA_PORT} socket; each reply is matched "
+                      f"to its camera by source address."),
+        raw_help=("Print each camera's raw reply packets (RESET, CAM_VersionInq, "
+                  "CAM_SoftVersionInq) as hex, plus each HTTP fingerprint probe's "
+                  "response when that fallback runs, then exit without the table "
+                  "or JSON. Works with --host or the whole CSV."),
+        debug_help=("Trace the packet exchange to stderr, prefixed with the host: "
+                    "sent/received bytes, parsed envelope, VISCA error meanings, "
+                    "auto-detect and HTTP fingerprint probes. Turns off the progress "
+                    "bar. The normal table and JSON still run."),
         epilog="""
 Examples:
-  python visca_script.py
-  python visca_script.py -i my_cameras.csv
-  python visca_script.py -i cameras.csv -t 5 -o output.json
-  python visca_script.py --host 10.8.129.79
-  python visca_script.py --host 10.8.129.79 --type srg-x400
-  python visca_script.py --firmware 3.00
+  python3 visca_script.py                                   # whole CSV
+  python3 visca_script.py --host 10.8.129.79                # one camera
+  python3 visca_script.py --host 10.8.129.79 --type srg-x400
+  python3 visca_script.py --host 10.8.129.79 --host 10.8.129.80
+  python3 visca_script.py --host 10.8.129.79 --raw          # reply packets as hex
+  python3 visca_script.py --host 10.8.129.79 --debug        # packet trace on stderr
+  python3 visca_script.py --firmware 3.00 3.19              # who is NOT on 3.00/3.19
+  python3 visca_script.py -i cameras.csv -t 5 -o output.json
+  python3 visca_script.py --fingerprint-only 10.8.129.79    # HTTP probe only
 
 CSV Format:
   host                                   <- 'host' is the only required column
@@ -1317,48 +1616,30 @@ Auto-detection:
 
 Protocol Notes:
   - Uses UDP 52381 with Sony's 8-byte header envelope.
-  - Binds the local socket to UDP 52381 — only one process at a time can do this.
+  - Binds local UDP 52381 once per run. Only one run at a time can hold it:
+    a second run waits up to 60s for the port, then exits with an error
+    and writes no results file, so the previous results stay the newest.
   - Sends a RESET (0x0200 + 0x01) before every camera to sync sequence numbers.
-  - Cameras are queried sequentially because of the local-port constraint;
-    --workers is accepted for CLI parity but always behaves as 1.
+  - Replies are matched to cameras by source IP, so --workers cameras are
+    queried in parallel over the one socket. Replies from an address no
+    camera was queried at are ignored, and a note on stderr lists them.
+  - --timeout applies to each UDP packet and to each HTTP fingerprint probe,
+    so one camera can take several timeouts.
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-
-    parser.add_argument("-i", "--input",   default=DEFAULT_CSV,
-        help=f"CSV file with 'host' column (type/port/name optional) "
-             f"(default: {DEFAULT_CSV})")
-    parser.add_argument("--host",          default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("--type",          default=None,
-        help="Optional camera type hint (e.g. srg-x400, srg-a40). "
-             "If omitted, the model is auto-detected from the VISCA reply.")
-    parser.add_argument("-o", "--output",  default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
-        help=f"UDP timeout per packet in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",    type=int, default=DEFAULT_PORT,
-        help=f"Port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
-        help=f"Workers (default: {DEFAULT_WORKERS}; always sequential due to UDP 52381 bind)")
-    parser.add_argument("--firmware",      default=None, metavar="VERSION",
-        help="Only show cameras whose firmware does NOT match VERSION in the terminal table "
-             "(e.g. --firmware 3.00). JSON output always contains all results.")
-    parser.add_argument("--debug",         action="store_true", default=False,
-        help="Print raw packet exchange (sent/received bytes, parsed envelope, "
-             "and protocol decisions) to stderr. Useful for unfamiliar cameras.")
-    parser.add_argument("--no-fingerprint", action="store_true", default=False,
+    g = parser.add_argument_group("VISCA options")
+    g.add_argument("--type",          default=None,
+        help="Camera type hint for --host targets (e.g. srg-x400, srg-a40); "
+             "overrides the CSV row's type. If omitted, the model is "
+             "auto-detected from the VISCA reply.")
+    g.add_argument("--no-fingerprint", action="store_true", default=False,
         help="Disable the HTTP fingerprint fallback that runs on stub/unknown "
              "VISCA replies. Faster, but unidentified cameras stay 'Unknown'.")
-    parser.add_argument("--fingerprint-only", default=None, metavar="HOST",
+    g.add_argument("--fingerprint-only", default=None, metavar="HOST",
         help="Only run the HTTP fingerprint probe against HOST and exit. "
              "Useful to investigate a single camera's identity without VISCA.")
 
-    args = parser.parse_args()
-
-    # Activate debug logging based on the flag
-    global DEBUG
-    DEBUG = args.debug
+    args = cli.parse_args(parser)
 
     term_width = get_terminal_width()
     start_time = time.monotonic()
@@ -1375,7 +1656,7 @@ Protocol Notes:
         print(f"{RESET}")
 
         # Force debug on for this mode so the user sees probe details
-        DEBUG = True
+        cli.debug.enable()
         fp = http_fingerprint(host, timeout=args.timeout, verbose=True)
 
         print(f"\n{WHITE}")
@@ -1426,42 +1707,98 @@ Protocol Notes:
     # -----------------------------------------------------------------------
     # Header block
     # -----------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
     print(f"  {BOLD}Sony VISCA-over-IP Firmware Query Tool{RESET}{WHITE}")
     print(f"  Queries VISCA-over-IP cameras for firmware and model information")
-    print(f"  Input:   {input_display}")
-    print(f"  Output:  {args.output}")
-    print(f"  Workers: {args.workers} (sequential — UDP {LOCAL_VISCA_PORT} bind)")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
+    print(f"  Workers: {args.workers} (one shared UDP {LOCAL_VISCA_PORT} socket)")
     print(f"  Timeout: {args.timeout}s")
     print(f"  Mode:    Bind UDP {LOCAL_VISCA_PORT} \u2192 RESET \u2192 inquire")
     if args.firmware:
-        print(f"  Filter:  Showing cameras not on firmware {args.firmware}")
+        print(f"  Filter:  Showing cameras not on firmware {cli.firmware_label(args.firmware)}")
     if args.no_fingerprint:
         print(f"  HTTP fp: {RED}OFF{RESET}{WHITE} (skipping HTTP probe on unknown cameras)")
     else:
         print(f"  HTTP fp: ON \u2014 unknown VISCA replies trigger an HTTP probe")
     if args.debug:
-        print(f"  {YELLOW}{BOLD}Debug:   ON{RESET}{WHITE} \u2014 raw packet trace on stderr")
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
-    # Build camera list
+    # Build camera list (--host or CSV)
     # -----------------------------------------------------------------------
-    if args.host:
-        cameras = [{
-            "host": args.host,
-            "port": args.port,
-            "type": args.type or "auto",
-            "name": "",
-        }]
-    else:
-        cameras = load_csv(args.input)
+    cameras = cli.select_devices(args, load_csv, lambda host: {
+        "host": host, "port": DEFAULT_PORT, "type": args.type or "auto", "name": "",
+    })
+    if args.host and args.type:
+        for cam in cameras:          # --type beats the CSV row's type
+            cam["type"] = args.type
 
-    # -----------------------------------------------------------------------
-    # Progress bar + sequential query loop
-    # (UDP 52381 can only be bound by one process — no concurrency)
-    # -----------------------------------------------------------------------
+    # One UDP 52381 socket for the whole run (exits here if it stays busy)
+    transport = open_run_transport(BIND_WAIT)
+    try:
+        # -------------------------------------------------------------------
+        # --raw: print each camera's reply packets, no table / JSON
+        # -------------------------------------------------------------------
+        if args.raw:
+            cli.run_raw(cameras, lambda c: dump_raw(c, args.timeout,
+                                                    fingerprint_stubs=not args.no_fingerprint,
+                                                    transport=transport))
+            return
+
+        results, elapsed = scan_cameras(cameras, args, transport, term_width, start_time)
+    finally:
+        transport.close()
+
+    # Preserve CSV order
+    host_order = {c["host"]: i for i, c in enumerate(cameras)}
+    results.sort(key=lambda r: host_order.get(r["host"], 0))
+
+    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
+    save_results_json(results, args.output, args, elapsed)
+
+    if transport.unrouted:
+        sources = ", ".join(f"{ip} ({n})" for ip, n in sorted(transport.unrouted.items()))
+        print(f"  {YELLOW}Note:{RESET} ignored UDP {LOCAL_VISCA_PORT} replies from "
+              f"addresses no camera was queried at: {sources}", file=sys.stderr)
+
+
+def open_run_transport(max_wait):
+    """
+    Bind UDP 52381 for the run. If another process holds it, wait up to
+    max_wait seconds for it to free up. If it is still busy, exit 1 WITHOUT
+    writing results: the dashboard shows the newest results file, so a file
+    where every camera failed to bind would replace the last good scan.
+    """
+    deadline = time.monotonic() + max_wait
+    announced = False
+    while True:
+        try:
+            transport = ViscaTransport.bind()
+            if announced:
+                print(f"  UDP {LOCAL_VISCA_PORT} is free now; starting.")
+            return transport
+        except OSError as e:
+            err = e
+            if e.errno != errno.EADDRINUSE or time.monotonic() >= deadline:
+                break
+        if not announced:
+            print(f"  {YELLOW}UDP {LOCAL_VISCA_PORT} is in use by another process "
+                  f"(another VISCA run?). Waiting up to {max_wait}s for it...{RESET}{WHITE}")
+            announced = True
+        time.sleep(1)
+    print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} Cannot bind local UDP port "
+          f"{LOCAL_VISCA_PORT}: {err}")
+    print(f"  No results written; the previous results file is left as the newest.{RESET}")
+    sys.exit(1)
+
+
+def scan_cameras(cameras, args, transport, term_width, start_time):
+    """
+    Query every camera, args.workers at a time, behind the progress bar.
+    Returns (results in CSV order, elapsed seconds).
+    """
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
         f"{CYAN}{{bar}}{RESET}"
@@ -1470,46 +1807,44 @@ Protocol Notes:
         f"  {WHITE}{{postfix}}{RESET}"
     )
 
-    results     = []
-    active_lock = threading.Lock()
-    latest_host = {"value": ""}
+    def query(cam):
+        return query_camera(
+            host=cam["host"],
+            port=cam["port"],
+            camera_name=cam.get("name", ""),
+            camera_type=cam.get("type", ""),
+            timeout=args.timeout,
+            fingerprint_stubs=not args.no_fingerprint,
+            transport=transport,
+        )
+
+    workers = max(1, args.workers)
+    results = [None] * len(cameras)
 
     # Disable the tqdm progress bar in debug mode — its constant redraw
     # interleaves messily with the [debug] trace lines on stderr.
     with tqdm(total=len(cameras), bar_format=bar_fmt, ncols=term_width,
               dynamic_ncols=True, file=sys.stderr, leave=True,
               disable=args.debug) as pbar:
-        for cam in cameras:
-            with active_lock:
-                latest_host["value"] = cam["host"]
-            pbar.set_postfix_str(latest_host["value"], refresh=False)
-
-            r = query_camera(
-                host=cam["host"],
-                port=cam["port"],
-                camera_name=cam.get("name", ""),
-                camera_type=cam.get("type", ""),
-                timeout=args.timeout,
-                fingerprint_stubs=not args.no_fingerprint,
-            )
-            results.append(r)
-            pbar.update(1)
-
-            # Brief pause to let the local UDP port fully release
-            time.sleep(0.2)
+        pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="visca")
+        try:
+            pending = {pool.submit(query, cam): i for i, cam in enumerate(cameras)}
+            for fut in as_completed(pending):
+                r = fut.result()
+                results[pending[fut]] = r
+                pbar.set_postfix_str(r["host"], refresh=False)
+                pbar.update(1)
+        finally:
+            # On Ctrl-C, drop the cameras not started yet instead of
+            # querying them all before exiting.
+            pool.shutdown(wait=True, cancel_futures=True)
 
         elapsed = time.monotonic() - start_time
         pbar.set_postfix_str(
             f"{GREEN}Complete{RESET}{WHITE} in {elapsed:.1f}s",
             refresh=True,
         )
-
-    # Preserve CSV order
-    host_order = {c["host"]: i for i, c in enumerate(cameras)}
-    results.sort(key=lambda r: host_order.get(r["host"], 0))
-
-    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
-    save_results_json(results, args.output, args, elapsed)
+    return results, elapsed
 
 
 if __name__ == "__main__":

@@ -7,8 +7,15 @@ queries identity + per-channel mic status, and emits a styled terminal
 report plus a JSON file for downstream tooling.
 
 Usage:
-    python3 mxw_query.py <hosts.csv> [--output mxw_results.json]
-                                     [--workers 5] [--timeout 3]
+    python3 mxw_script.py                         # reads secrets/mxw_firmware.csv
+    python3 mxw_script.py -i other_hosts.csv [-o out.json] [-w 5] [-t 3]
+    python3 mxw_script.py --host 10.1.2.3 [--raw | --debug]
+    (python3 mxw_script.py other_hosts.csv still works: legacy positional CSV)
+
+Defaults:
+    Input:  secrets/mxw_firmware.csv
+    Output: mxw_firmware/files/results_<YYYYMMDD>_<HHMMSS>.json
+            Envelope: {"query_info": {...}, "transceivers": [...]}
 
 CSV columns:
     host           required - IP or hostname of the MXW APT
@@ -18,6 +25,7 @@ CSV columns:
 import argparse
 import csv
 import json
+import os
 import re
 import shutil
 import socket
@@ -27,6 +35,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 from tabulate import tabulate
 from tqdm import tqdm
@@ -50,6 +61,9 @@ DEFAULT_TIMEOUT = 3
 DEFAULT_WORKERS = 5
 PROTOCOL_NAME   = "Shure MXW Command Strings v1"
 
+DEFAULT_CSV     = "secrets/mxw_firmware.csv"        # relative to this script's folder
+OUTPUT_DIR      = "mxw_firmware/files"              # results_<YYYYMMDD>_<HHMMSS>.json
+
 # MXW magic battery values
 BATT_ON_CHARGER = 65533
 BATT_CALCULATING = 65534
@@ -58,6 +72,13 @@ BATT_MIC_OFF     = 255
 
 # Regex to parse "< REP [n] PARAM value... >" responses
 REP_RE = re.compile(r"<\s*REP(?:\s+(\d+))?\s+(\S+)\s+(.*?)\s*>")
+
+# Per-channel sweep after GET DEVICE_ID (channel 0 = all channels)
+CHANNEL_COMMANDS = ("GET 0 TX_AVAILABLE",
+                    "GET 0 TX_TYPE",
+                    "GET 0 TX_STATUS",
+                    "GET 0 BATT_CHARGE",
+                    "GET 0 BATT_HEALTH")
 
 
 # ---------------------------------------------------------------------------
@@ -131,8 +152,12 @@ def summary_state(statuses):
 # ---------------------------------------------------------------------------
 # Network query
 # ---------------------------------------------------------------------------
-def _send(sock, command, drain_wait=0.3):
-    """Send one MXW command, drain reply until socket goes quiet."""
+def _send(sock, command, drain_wait=0.3, host="?"):
+    """Send one MXW command, drain reply until socket goes quiet.
+
+    host is only used to label the --debug trace.
+    """
+    cli.debug.sent(host, f"< {command} >")
     sock.sendall(f"< {command} >".encode("ascii"))
     sock.settimeout(drain_wait)
     chunks = []
@@ -140,10 +165,12 @@ def _send(sock, command, drain_wait=0.3):
         while True:
             data = sock.recv(4096)
             if not data:
+                cli.debug.log(host, "connection closed by device")
                 break
             chunks.append(data)
     except socket.timeout:
-        pass
+        cli.debug.log(host, f"quiet for {drain_wait}s: end of reply")
+    cli.debug.received(host, b"".join(chunks))
     return b"".join(chunks).decode("ascii", errors="replace")
 
 
@@ -187,11 +214,13 @@ def query_apt(host, port, timeout):
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            cli.debug.log(host, f"connecting to {host}:{port} (timeout {timeout}s)")
             s.settimeout(timeout)
             s.connect((host, port))
+            cli.debug.log(host, "connected")
 
             # 1) Device identity
-            reps = _parse_reps(_send(s, "GET DEVICE_ID"))
+            reps = _parse_reps(_send(s, "GET DEVICE_ID", host=host))
             device_id = reps.get("DEVICE_ID")
             if not device_id:
                 raise RuntimeError("No REP received for DEVICE_ID")
@@ -208,12 +237,8 @@ def query_apt(host, port, timeout):
 
             # 2) Per-channel sweep (channel 0 = all)
             combined = ""
-            for cmd in ("GET 0 TX_AVAILABLE",
-                        "GET 0 TX_TYPE",
-                        "GET 0 TX_STATUS",
-                        "GET 0 BATT_CHARGE",
-                        "GET 0 BATT_HEALTH"):
-                combined += _send(s, cmd)
+            for cmd in CHANNEL_COMMANDS:
+                combined += _send(s, cmd, host=host)
             ch_reps = _parse_reps(combined)
 
             channels = []
@@ -240,7 +265,7 @@ def query_apt(host, port, timeout):
                         charge_val = raw
                         charges.append(raw)
                 except (TypeError, ValueError):
-                    pass
+                    cli.debug.log(host, f"ch {ch}: BATT_CHARGE {charge!r} is not a number")
 
                 # Battery health interpretation
                 health_val = None
@@ -250,7 +275,7 @@ def query_apt(host, port, timeout):
                         health_val = raw
                         healths.append(raw)
                 except (TypeError, ValueError):
-                    pass
+                    cli.debug.log(host, f"ch {ch}: BATT_HEALTH {health!r} is not a number")
 
                 if tx_stat:
                     statuses.append(tx_stat)
@@ -280,7 +305,22 @@ def query_apt(host, port, timeout):
     except Exception as e:
         result["error"] = str(e)
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
+
+
+def dump_raw(dev, timeout):
+    """--raw: print the raw reply to GET DEVICE_ID and each per-channel GET."""
+    host, port = dev["host"], dev["port"]
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        cli.debug.log(host, f"connecting to {host}:{port} (timeout {timeout}s)")
+        s.settimeout(timeout)
+        s.connect((host, port))   # failure -> run_raw prints a connection error
+        for cmd in ("GET DEVICE_ID",) + CHANNEL_COMMANDS:
+            try:
+                cli.raw_item(cmd, _send(s, cmd, host=host) or "(no reply)")
+            except Exception as e:
+                cli.raw_error(cmd, e)
 
 
 # ---------------------------------------------------------------------------
@@ -318,7 +358,7 @@ def load_csv(csv_path: str) -> list:
                     try:
                         port = int(pv)
                     except ValueError:
-                        pass
+                        cli.debug.log(host, f"bad port {pv!r} in CSV; using {DEFAULT_PORT}")
             devices.append({"host": host, "port": port})
     return devices
 
@@ -327,17 +367,46 @@ def load_csv(csv_path: str) -> list:
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    ap = argparse.ArgumentParser(description="Query Shure MXW APTs over TCP/2202.")
-    ap.add_argument("csv_file", help="CSV with 'host' column (optional 'port').")
-    ap.add_argument("--output", "-o", default="mxw_results.json",
-                    help="Output JSON path (default: mxw_results.json)")
-    ap.add_argument("--workers", "-w", type=int, default=DEFAULT_WORKERS,
-                    help=f"Concurrent workers (default: {DEFAULT_WORKERS})")
-    ap.add_argument("--timeout", "-t", type=float, default=DEFAULT_TIMEOUT,
-                    help=f"Socket timeout seconds (default: {DEFAULT_TIMEOUT})")
-    args = ap.parse_args()
+    ap = cli.build_parser(
+        script_file=__file__,
+        description="Query Shure MXW APTs over TCP/2202.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        timeout_type=float,
+        firmware_help=("Show only devices NOT on any of these firmware versions in the "
+                       "table. MXW command strings expose no firmware version, so every "
+                       "APT counts as a mismatch and the table lists them all. "
+                       "The JSON always has every device."),
+        epilog="""
+Examples:
+  python3 mxw_script.py                          # whole CSV
+  python3 mxw_script.py --host 10.1.2.3          # one APT
+  python3 mxw_script.py --host 10.1.2.3 --raw
+  python3 mxw_script.py --host 10.1.2.3 --debug
+  python3 mxw_script.py -i hosts.csv -t 5 -w 10 -o out.json
 
-    devices = load_csv(args.csv_file)
+Protocol:
+  Shure MXW command strings over TCP port 2202. No authentication.
+  Commands: GET DEVICE_ID, then GET 0 TX_AVAILABLE / TX_TYPE / TX_STATUS /
+  BATT_CHARGE / BATT_HEALTH (channel 0 = all channels).
+  No firmware version is exposed, so the Firmware column is always N/A.
+
+CSV columns:
+  host   required - IP or hostname of the MXW APT
+  port   optional - TCP port (default 2202)
+        """,
+    )
+    # Legacy: the CSV used to be a positional argument. Still accepted, hidden.
+    ap.add_argument("csv_file", nargs="?", default=None, help=argparse.SUPPRESS)
+    args = cli.parse_args(ap)
+    if args.csv_file:
+        args.input = args.csv_file
+
+    devices = cli.select_devices(
+        args, load_csv, lambda host: {"host": host, "port": DEFAULT_PORT})
     total = len(devices)
     if total == 0:
         print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No devices in CSV.{RESET}")
@@ -347,12 +416,21 @@ def main():
     print(f"{WHITE}")
     print(f"  {BOLD}Shure MXW Inventory Query{RESET}{WHITE}")
     print(f"  Queries MXW APTs for identity, channel status, and battery telemetry")
-    print(f"  Input:    {args.csv_file}")
-    print(f"  Output:   {args.output}")
+    print(f"  Input:    {cli.input_label(args)}")
+    print(f"  Output:   {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers:  {args.workers}")
     print(f"  Timeout:  {args.timeout}s")
     print(f"  Protocol: {PROTOCOL_NAME}")
+    if args.firmware:
+        print(f"  Filter:   Showing devices not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:    on (trace on stderr)")
     print(f"{RESET}")
+
+    # ---------- --raw: dump what each APT sends back, no table / JSON ----------
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, args.timeout))
+        return
 
     # ---------- Progress bar setup ----------
     active_lock = threading.Lock()
@@ -407,12 +485,15 @@ def main():
     err  = sum(1 for r in results if r["status"] == "error")
 
     # ---------- Build table ----------
+    # --firmware: only devices NOT on one of the versions. MXW reports no
+    # firmware, so with a filter every APT is listed. JSON keeps every device.
+    display_results = cli.firmware_mismatches(results, args.firmware, key="firmware")
     headers = [
         "Status", "Host", "Manufacturer", "Model", "Firmware",
         "Channels", "Min Batt %", "Min Health %", "State", "Error",
     ]
     rows = []
-    for r in results:
+    for r in display_results:
         ch_count  = r.get("channel_count")
         ch_linked = r.get("channels_linked")
         ch_cell   = f"{ch_linked}/{ch_count}" if (ch_count and ch_linked is not None) else "N/A"
@@ -450,6 +531,11 @@ def main():
 
     # ---------- Summary footer ----------
     print()
+    if args.firmware:
+        print(
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(args.firmware)}  |  "
+            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {total} devices"
+        )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
@@ -481,7 +567,7 @@ def main():
     # ---------- JSON output ----------
     out = {
         "query_info": {
-            "csv_file": str(Path(args.csv_file).resolve()),
+            "csv_file": cli.input_label(args),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "protocol": PROTOCOL_NAME,
             "mode": "tcp-command-strings",
@@ -493,6 +579,7 @@ def main():
         },
         "transceivers": results,
     }
+    cli.ensure_parent(args.output)
     Path(args.output).write_text(json.dumps(out, indent=2))
 
     # ---------- Closing footer ----------

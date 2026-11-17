@@ -22,11 +22,13 @@ import sys
 import os
 import shutil
 import time
-import argparse
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     import requests
@@ -65,9 +67,8 @@ RESET  = "\033[0m"    # Always close every colour block
 # ---------------------------------------------------------------------------
 # Paths & defaults
 # ---------------------------------------------------------------------------
-SCRIPT_DIR       = Path(__file__).resolve().parent
-DEFAULT_CSV      = str(SCRIPT_DIR / "secrets" / "bravia_firmware.csv")
-OUTPUT_DIR       = SCRIPT_DIR / "bravia_firmware" / "files"
+DEFAULT_CSV      = "secrets/bravia_firmware.csv"    # relative to this script's folder
+OUTPUT_DIR       = "bravia_firmware/files"          # results_<YYYYMMDD>_<HHMMSS>.json
 
 DEFAULT_PSK      = None
 FALLBACK_PSK     = "1234"
@@ -87,10 +88,15 @@ POWER_SAVING_LABELS = {
 }
 
 
-def default_output_path() -> str:
-    """scripts/bravia_firmware/files/results_<YYYYMMDD>_<HHMMSS>.json"""
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    return str(OUTPUT_DIR / f"results_{stamp}.json")
+# Every JSON-RPC request the query makes, in order: (method, params, version, id).
+# --raw sends each of these and prints the reply.
+RAW_REQUESTS = (
+    [("getSystemInformation", [], v, 1) for v in SYSTEM_INFO_VERSIONS] + [
+        ("getInterfaceInformation", [],             "1.0", 2),
+        ("getNetworkSettings",      [{"netif": ""}], "1.0", 3),
+        ("getPowerSavingMode",      [],             "1.0", 4),
+    ]
+)
 
 
 # ---------------------------------------------------------------------------
@@ -237,8 +243,19 @@ def call_sony_api(host: str, port: int, method: str, params: list,
     scheme = "https" if port == 443 else "http"
     url = f"{scheme}://{host}:{port}{API_ENDPOINT}"
     payload = {"method": method, "id": request_id, "params": params, "version": version}
-    response = requests.post(url, json=payload, headers=build_headers(psk),
-                             timeout=timeout, verify=False)
+    headers = build_headers(psk)
+    # Trace only: headers go through cli.redact so the X-Auth-PSK value is never shown.
+    cli.debug.log(host, f"POST {url} (timeout {timeout}s) headers: {cli.redact(headers)}")
+    cli.debug.sent(host, json.dumps(payload))
+    try:
+        response = requests.post(url, json=payload, headers=headers,
+                                 timeout=timeout, verify=False)
+    except Exception as e:
+        cli.debug.log(host, f"{method} v{version}: request failed: {type(e).__name__}: {e}")
+        raise
+    cli.debug.log(host, f"{method} v{version}: HTTP {response.status_code}")
+    if cli.debug.enabled:   # .text may run charset detection; only touch it when tracing
+        cli.debug.received(host, response.text)
     response.raise_for_status()
     return response.json()
 
@@ -257,6 +274,7 @@ def get_system_information(host: str, port: int, psk: str = None,
                 msg  = result["error"][1] if isinstance(result["error"], list) and len(result["error"]) > 1 else "Unknown"
                 if isinstance(code, int) and code in [12, 15]:
                     last_error = f"v{api_version} not supported (error {code})"
+                    cli.debug.log(host, f"getSystemInformation {last_error}; trying next version")
                     continue
                 raise Exception(f"API Error {code}: {msg}")
             return result.get("result", [{}])[0], api_version
@@ -269,6 +287,7 @@ def get_system_information(host: str, port: int, psk: str = None,
         except Exception as e:
             if "API Error" in str(e):
                 last_error = str(e)
+                cli.debug.log(host, f"getSystemInformation v{api_version}: {e}; trying next version")
                 continue
             raise
     raise Exception(f"All API versions failed. Last: {last_error}")
@@ -279,6 +298,7 @@ def get_interface_information(host: str, port: int, psk: str = None,
     result = call_sony_api(host=host, port=port, method="getInterfaceInformation",
                            params=[], version="1.0", request_id=2, psk=psk, timeout=timeout)
     if "error" in result:
+        cli.debug.log(host, f"getInterfaceInformation error {result['error']}; ignored")
         return {}
     return result.get("result", [{}])[0]
 
@@ -290,9 +310,11 @@ def get_network_settings(host: str, port: int, psk: str = None,
                                params=[{"netif": ""}], version="1.0", request_id=3,
                                psk=psk, timeout=timeout)
         if "error" in result:
+            cli.debug.log(host, f"getNetworkSettings error {result['error']}; ignored")
             return []
         return result.get("result", [[]])[0]
-    except Exception:
+    except Exception as e:
+        cli.debug.log(host, f"getNetworkSettings failed: {e}")
         return []
 
 
@@ -307,10 +329,12 @@ def get_power_saving_mode(host: str, port: int, psk: str = None,
                                params=[], version="1.0", request_id=4,
                                psk=psk, timeout=timeout)
         if "error" in result:
+            cli.debug.log(host, f"getPowerSavingMode error {result['error']}; ignored")
             return "N/A"
         data = result.get("result", [{}])[0]
         return data.get("mode", "N/A") or "N/A"
-    except Exception:
+    except Exception as e:
+        cli.debug.log(host, f"getPowerSavingMode failed: {e}")
         return "N/A"
 
 
@@ -327,7 +351,8 @@ def set_auth_none(host: str, port: int, psk: str,
             return False, f"API error {code}: {msg}"
         return True, "Authentication set to None"
     except requests.exceptions.HTTPError as e:
-        code = e.response.status_code if e.response else "?"
+        # A Response for a 4xx/5xx is falsy, so test it against None.
+        code = e.response.status_code if e.response is not None else "?"
         if code == 403:
             return False, "HTTP 403 — PSK incorrect or auth already None"
         return False, f"HTTP {code}"
@@ -352,8 +377,8 @@ def parse_fw_version(raw: str) -> str:
         parts = stripped.split(".")
         if len(parts) >= 5:
             return ".".join(parts[1:5])
-    except Exception:
-        pass
+    except Exception as e:
+        cli.debug.log("parse_fw_version", f"could not parse {raw!r}: {e}; using it as-is")
     return raw
 
 
@@ -394,6 +419,7 @@ def query_display(host: str, port: int, psk: str = None,
             sys_info, api_version = get_system_information(host, port, effective_psk, timeout)
         except requests.exceptions.HTTPError as e:
             if e.response is not None and e.response.status_code == 403 and not psk:
+                cli.debug.log(host, "HTTP 403 with no PSK; retrying with the fallback PSK")
                 sys_info, api_version = get_system_information(host, port, FALLBACK_PSK, timeout)
                 effective_psk = FALLBACK_PSK
                 result["auth_note"] = f"fallback PSK '{FALLBACK_PSK}' used"
@@ -424,18 +450,19 @@ def query_display(host: str, port: int, psk: str = None,
                 result["interface_version"] = iface.get("interfaceVersion", "N/A")
                 if result["product"] == "N/A":
                     result["product"] = iface.get("productName", "N/A")
-        except Exception:
-            pass
+        except Exception as e:
+            cli.debug.log(host, f"getInterfaceInformation failed: {e}")
 
         if not result["mac"] or result["mac"] == "N/A":
+            cli.debug.log(host, "no macAddr in getSystemInformation; asking getNetworkSettings")
             try:
                 for iface in get_network_settings(host, port, effective_psk, timeout):
                     hw = iface.get("hwAddr", "")
                     if hw:
                         result["mac"] = hw
                         break
-            except Exception:
-                pass
+            except Exception as e:
+                cli.debug.log(host, f"getNetworkSettings parse failed: {e}")
 
         result["power_saving_mode"] = get_power_saving_mode(host, port, effective_psk, timeout)
 
@@ -444,7 +471,9 @@ def query_display(host: str, port: int, psk: str = None,
     except RequestsConnectionError:
         result["error"] = f"Cannot connect to {host}:{port}"
     except requests.exceptions.HTTPError as e:
-        sc = e.response.status_code if e.response else "Unknown"
+        # A Response for a 4xx/5xx is falsy, so test it against None. A 403 here
+        # is final: the given PSK, or the fallback PSK after a 403 with none.
+        sc = e.response.status_code if e.response is not None else "Unknown"
         if sc == 403:
             result["status"] = "auth_error"
             result["error"]  = "HTTP 403 — check PSK or set auth to None"
@@ -455,6 +484,9 @@ def query_display(host: str, port: int, psk: str = None,
     except Exception as e:
         result["error"] = str(e)
 
+    cli.debug.log(host, f"result: {result['status']}"
+                        + (f" ({result['error']})" if result["error"] else "")
+                        + (" [fallback PSK used]" if result["auth_note"] else ""))
     return result
 
 
@@ -467,14 +499,14 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
     err  = sum(1 for r in results if r["status"] == "error")
 
     out = Path(filepath)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    cli.ensure_parent(out)
 
     output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()),
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        f"Sony BRAVIA REST API (JSON-RPC, versions {', '.join(SYSTEM_INFO_VERSIONS)})",
-            "mode":            "PSK" if args.psk else f"None (fallback: {FALLBACK_PSK})",
+            "mode":            "PSK" if args.password else f"None (fallback: {FALLBACK_PSK})",
             "workers":         args.workers,
             "total":           len(results),
             "success":         ok,
@@ -492,13 +524,10 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
 # Terminal output (spec 3.4, 3.8)
 # ---------------------------------------------------------------------------
 def print_results_table(results: list, output_file: str, elapsed: float,
-                        workers: int, firmware_filter: str = None):
+                        workers: int, firmware_filter: list = None):
     """Render the results table. JSON always retains the full result set."""
 
-    if firmware_filter:
-        shown = [r for r in results if r.get("firmware_version", "N/A") != firmware_filter]
-    else:
-        shown = results
+    shown = cli.firmware_mismatches(results, firmware_filter)
 
     table_data = []
     for r in shown:
@@ -547,7 +576,7 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     print()
     if firmware_filter:
         print(
-            f"  {BOLD}Firmware filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
             f"{BOLD}Showing:{RESET}{WHITE} {len(shown)} of {len(results)} displays"
         )
     print(
@@ -581,21 +610,70 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+def dump_raw(dev: dict, psk: str, timeout: int):
+    """
+    --raw: send every JSON-RPC request the query makes and print each reply.
+    Like the normal query, an HTTP 403 with no PSK is retried with the
+    fallback PSK, and that PSK is used for the remaining requests.
+    """
+    host, port = dev["host"], dev["port"]
+    for method, params, version, request_id in RAW_REQUESTS:
+        label = f"{method} v{version}"
+        try:
+            try:
+                reply = call_sony_api(host, port, method, params, version,
+                                      request_id=request_id, psk=psk, timeout=timeout)
+            except requests.exceptions.HTTPError as e:
+                if e.response is None or e.response.status_code != 403 or psk:
+                    raise
+                cli.raw_error(label, f"{e} (no PSK); retrying with the fallback PSK")
+                psk = FALLBACK_PSK
+                label += " (fallback PSK)"
+                reply = call_sony_api(host, port, method, params, version,
+                                      request_id=request_id, psk=psk, timeout=timeout)
+            cli.raw_item(label, reply)
+        except (Timeout, RequestsConnectionError) as e:
+            # Same as the normal query: an unreachable display stops here
+            # instead of waiting out every remaining request.
+            cli.raw_error(label, e)
+            cli.raw_error("remaining requests", "skipped (display not reachable)")
+            return
+        except Exception as e:
+            cli.raw_error(label, e)
+
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="Query Sony Bravia BZ40H/BZ40L displays for firmware version via the Sony REST API.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        auth=cli.AUTH_PASSWORD,
+        port_help=f"Port for --host targets (default: {DEFAULT_PORT}; 443 uses HTTPS)",
+        raw_help=("Print every JSON-RPC reply the query asks for (getSystemInformation "
+                  f"v{', v'.join(SYSTEM_INFO_VERSIONS)}, getInterfaceInformation, "
+                  "getNetworkSettings, getPowerSavingMode) for each display, then exit "
+                  "without the table or JSON. Works with --host or the whole CSV."),
         epilog="""
 Examples:
-  python3 bravia_firmware.py
-  python3 bravia_firmware.py -k 0000
-  python3 bravia_firmware.py -i /path/to/other.csv -t 15 -w 8
-  python3 bravia_firmware.py --firmware 6.0.81.60
-  python3 bravia_firmware.py --host 192.168.1.100 --raw
-  python3 bravia_firmware.py --set-auth-none -k 0000
+  python3 bravia_script.py                                  # whole CSV
+  python3 bravia_script.py --host 192.168.1.100             # one display
+  python3 bravia_script.py --host 192.168.1.100 --password 0000
+  python3 bravia_script.py --host 192.168.1.100 --raw
+  python3 bravia_script.py --host 192.168.1.100 --debug
+  python3 bravia_script.py --firmware 6.0.81.60 6.0.82.10   # who is NOT on these
+  python3 bravia_script.py -i other.csv -t 15 -w 8 -o out.json
+  python3 bravia_script.py --set-auth-none --password 0000
 
 Authentication:
-  By default no PSK is sent. On HTTP 403 the script retries once with the
-  fallback PSK "1234"; auth_error is only reported after every attempt fails.
+  The display's password is its IP control Pre-Shared Key (PSK), sent in the
+  X-Auth-PSK header. The CSV may give one per display ("psk" column);
+  --password (or the old -k/--psk) is used for every display queried.
+  With no PSK, an HTTP 403 is retried once with the fallback PSK "1234";
+  auth_error is only reported after every attempt fails.
 
 Firmware Version:
   v1.7 devices: fwVersion parsed to short form (e.g. 6.0.81.60).
@@ -604,57 +682,47 @@ Firmware Version:
 Power Saving Mode:
   getPowerSavingMode (v1.0) — values: off | low | high | pictureOff
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        # The display's "password" is its PSK: say so in --help.
+        password_help=("Pre-Shared Key (PSK) sent as X-Auth-PSK. Used for every display "
+                       "queried (CSV or --host), overriding the CSV's psk column. "
+                       "Same as the old -k/--psk."),
     )
+    cli.add_alias(parser, "-k", "--psk", dest="password")
 
-    parser.add_argument("-i", "--input",   default=DEFAULT_CSV,
-        help="CSV file with 'host'/'port' columns (default: secrets/bravia_firmware.csv)")
-    parser.add_argument("--host",          default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("-o", "--output",  default=None,
-        help="Output JSON file (default: bravia_firmware/files/results_<YYYYMMDD>_<HHMMSS>.json)")
-    parser.add_argument("-k", "--psk",     default=DEFAULT_PSK,
-        help="Pre-Shared Key (default: no authentication)")
-    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
-        help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",    type=int, default=DEFAULT_PORT,
-        help=f"Port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
-        help=f"Number of concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--firmware",      default=None, metavar="VERSION",
-        help="Only show displays whose firmware does NOT match VERSION in the table")
-    parser.add_argument("--set-auth-none", action="store_true", default=False,
-        help="Use the PSK (-k) to set each display's IP control auth to None")
-    parser.add_argument("--raw",           action="store_true", default=False,
-        help="With --host: dump raw getSystemInformation responses for all API versions")
+    group = parser.add_argument_group("Bravia options")
+    group.add_argument("--set-auth-none", action="store_true", default=False,
+        help="Use the PSK (--password or -k) to set each display's IP control auth "
+             "to None. Prints a terminal table only; no JSON.")
 
-    args = parser.parse_args()
+    args = cli.parse_args(parser)
 
-    if args.output is None:
-        args.output = default_output_path()
-
-    if args.set_auth_none and not args.psk:
-        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} --set-auth-none requires -k <psk>{RESET}")
+    if args.set_auth_none and not args.password:
+        print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} --set-auth-none requires --password <psk> (or -k <psk>){RESET}")
         sys.exit(1)
 
     term_width = shutil.get_terminal_size((120, 24)).columns
     start_time = time.monotonic()
 
+    # A --host target that is not in the CSV: same shape as a load_csv() row.
+    def make_device(host):
+        return {"host": host, "port": DEFAULT_PORT, "psk": DEFAULT_PSK}
+
     # -----------------------------------------------------------------------
     # --set-auth-none mode
     # -----------------------------------------------------------------------
     if args.set_auth_none:
-        devices = ([{"host": args.host, "port": args.port, "psk": None}]
-                   if args.host else load_csv(args.input))
+        devices = cli.select_devices(args, load_csv, make_device, password_key="psk")
 
         print(f"{WHITE}")
         print(f"  {BOLD}Sony Bravia BZ40H/BZ40L Firmware Version Query Tool{RESET}{WHITE}")
         print(f"  Sets IP Control authentication to None via the Sony REST API")
-        print(f"  Input:   {args.host if args.host else args.input}")
+        print(f"  Input:   {cli.input_label(args)}")
         print(f"  Output:  (terminal only)")
         print(f"  Workers: {args.workers}")
         print(f"  Timeout: {args.timeout}s")
-        print(f"  PSK:     {args.psk}")
+        print(f"  PSK:     set (hidden)")
+        if args.debug:
+            print(f"  Debug:   on (trace on stderr)")
         print(f"{RESET}")
 
         bar_fmt = (
@@ -674,7 +742,8 @@ Power Saving Mode:
             with active_lock:
                 latest_host["value"] = d["host"]
             success, message = set_auth_none(d["host"], d["port"],
-                                             psk=args.psk, timeout=args.timeout)
+                                             psk=args.password, timeout=args.timeout)
+            cli.debug.log(d["host"], f"set-auth-none: {'ok' if success else 'failed'}: {message}")
             return {"host": d["host"], "success": success, "message": message}
 
         with tqdm(total=len(devices), bar_format=bar_fmt, ncols=term_width,
@@ -735,44 +804,26 @@ Power Saving Mode:
     print(f"{WHITE}")
     print(f"  {BOLD}Sony Bravia BZ40H/BZ40L Firmware Version Query Tool{RESET}{WHITE}")
     print(f"  Queries Bravia professional displays via the Sony REST API")
-    print(f"  Input:   {args.host if args.host else args.input}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
-    print(f"  Auth:    {'PSK' if args.psk else f'None (fallback: {FALLBACK_PSK})'}")
+    print(f"  Auth:    {'PSK' if args.password else f'None (fallback: {FALLBACK_PSK})'}")
     print(f"  API:     {' -> '.join(SYSTEM_INFO_VERSIONS)} (automatic fallback)")
     if args.firmware:
-        print(f"  Filter:  Showing displays not on firmware {args.firmware}")
+        print(f"  Filter:  Showing displays not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
-    # -----------------------------------------------------------------------
-    # Single-host --raw dump
-    # -----------------------------------------------------------------------
-    if args.host and args.raw:
-        print(f"{WHITE}  Raw getSystemInformation responses:{RESET}\n")
-        for v in SYSTEM_INFO_VERSIONS:
-            try:
-                r = call_sony_api(args.host, args.port, "getSystemInformation", [], v,
-                                  psk=args.psk, timeout=args.timeout)
-                print(f"{WHITE}  --- v{v} ---{RESET}")
-                print(json.dumps(r, indent=2))
-            except Exception as e:
-                print(f"{WHITE}  --- v{v} --- {RED}ERROR:{RESET}{WHITE} {e}{RESET}")
-            print()
-        try:
-            r = call_sony_api(args.host, args.port, "getInterfaceInformation", [], "1.0",
-                              request_id=2, psk=args.psk, timeout=args.timeout)
-            print(f"{WHITE}  --- getInterfaceInformation v1.0 ---{RESET}")
-            print(json.dumps(r, indent=2))
-        except Exception as e:
-            print(f"{WHITE}  --- getInterfaceInformation v1.0 --- {RED}ERROR:{RESET}{WHITE} {e}{RESET}")
-        return
+    devices = cli.select_devices(args, load_csv, make_device, password_key="psk")
 
     # -----------------------------------------------------------------------
-    # Build device list
+    # --raw: print every JSON-RPC reply, no table / JSON
     # -----------------------------------------------------------------------
-    devices = ([{"host": args.host, "port": args.port, "psk": None}]
-               if args.host else load_csv(args.input))
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, args.password or d.get("psk"), args.timeout))
+        return
 
     # -----------------------------------------------------------------------
     # Progress bar + concurrent query loop (spec 3.3)
@@ -794,7 +845,7 @@ Power Saving Mode:
         with active_lock:
             latest_host["value"] = d["host"]
         return query_display(d["host"], d["port"],
-                             psk=(args.psk or d.get("psk")), timeout=args.timeout)
+                             psk=(args.password or d.get("psk")), timeout=args.timeout)
 
     with tqdm(total=len(devices), bar_format=bar_fmt, ncols=term_width,
               dynamic_ncols=True, file=sys.stderr, leave=True) as pbar:

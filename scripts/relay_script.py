@@ -30,6 +30,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
+
 try:
     from tabulate import tabulate
 except ImportError:
@@ -56,14 +59,8 @@ RESET  = "\033[0m"    # Always close every colour block
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-SCRIPT_DIR      = Path(__file__).resolve().parent
-
-DEFAULT_CSV     = str(SCRIPT_DIR / "secrets" / "relay_firmware.csv")
-OUTPUT_DIR      = str(SCRIPT_DIR / "relay_firmware" / "files")
-DEFAULT_OUTPUT  = os.path.join(
-    OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+DEFAULT_CSV     = "secrets/relay_firmware.csv"      # relative to this script's folder
+OUTPUT_DIR      = "relay_firmware/files"            # results_<YYYYMMDD>_<HHMMSS>.json
 DEFAULT_TIMEOUT = 10
 DEFAULT_PORT    = 4998
 DEFAULT_WORKERS = 5
@@ -196,7 +193,8 @@ def load_csv(csv_path: str) -> list:
                 continue
             try:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
+                cli.debug.log(host, f"bad port in CSV ({e}); using {DEFAULT_PORT}")
                 port = DEFAULT_PORT
             # Parse this script's additional columns here — port.
             devices.append({"host": host, "port": port})
@@ -219,7 +217,9 @@ def tcp_command(host: str, port: int, command: str,
     For multi-line responses (e.g. getdevices) set multi_line=True and
     provide end_marker (e.g. 'endlistdevices').
     """
+    cli.debug.log(host, f"connecting to {host}:{port} (timeout {timeout}s)")
     with socket.create_connection((host, port), timeout=timeout) as sock:
+        cli.debug.sent(host, command + "\r")
         sock.sendall((command + "\r").encode("ascii"))
         data = b""
         sock.settimeout(timeout)
@@ -227,6 +227,7 @@ def tcp_command(host: str, port: int, command: str,
             try:
                 chunk = sock.recv(4096)
                 if not chunk:
+                    cli.debug.log(host, "connection closed by device")
                     break
                 data += chunk
                 decoded = data.decode("ascii", errors="replace")
@@ -235,7 +236,9 @@ def tcp_command(host: str, port: int, command: str,
                 if not multi_line and "\r" in decoded:
                     break
             except socket.timeout:
+                cli.debug.log(host, f"recv timed out after {timeout}s ({len(data)} bytes so far)")
                 break
+        cli.debug.received(host, data)
     return data.decode("ascii", errors="replace").strip()
 
 
@@ -264,6 +267,11 @@ def get_devices(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> list:
         host, port, "getdevices", timeout=timeout,
         multi_line=True, end_marker="endlistdevices"
     )
+    return parse_devices(response)
+
+
+def parse_devices(response: str) -> list:
+    """Parse a getdevices reply (also used by --raw on the text it printed)."""
     if not response:
         return []
     modules = []
@@ -346,6 +354,7 @@ def query_relay_states(host: str, port: int, relay_modules: list,
                         "error":   response,
                     })
             except Exception as e:
+                cli.debug.log(host, f"getstate,{addr} failed: {e}")
                 states.append({
                     "module":  module_addr,
                     "port":    str(p),
@@ -435,6 +444,7 @@ def query_device(host: str, port: int,
             result["error"]  = "No relay ports found"
 
     except OSError as e:
+        cli.debug.log(host, f"{type(e).__name__}: {e}")
         err_str = str(e)
         if "timed out" in err_str.lower() or "timeout" in err_str.lower():
             result["error"] = "Connection timed out"
@@ -451,20 +461,66 @@ def query_device(host: str, port: int,
     except Exception as e:
         result["error"] = str(e)
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
+
+
+# Relay addresses probed by --raw when getdevices reports no relay ports
+RAW_PROBE_ADDRESSES = ["1:1", "1:2", "1:3", "3:1", "3:2", "3:3"]
+
+
+def _visible_eol(text: str) -> str:
+    """--raw: show CR/LF as \\r / \\n and break the line there, so a
+    CR-separated reply (getdevices) doesn't overwrite itself on the terminal."""
+    if not text:
+        return "(no reply)"
+    return re.sub(r"\r\n|\r|\n",
+                  lambda m: m.group(0).replace("\r", "\\r").replace("\n", "\\n") + "\n", text)
+
+
+def dump_raw(dev: dict, timeout: int = DEFAULT_TIMEOUT):
+    """
+    --raw: print the raw reply to getversion, getdevices and getstate for
+    every relay port getdevices reports (or a few common addresses if none).
+    Each command is its own TCP connection, as in a normal run.
+    """
+    host, port = dev["host"], dev["port"]
+    # getversion failing means the device is unreachable -> run_raw reports it
+    cli.raw_item("getversion", _visible_eol(tcp_command(host, port, "getversion", timeout=timeout)))
+
+    addresses = list(RAW_PROBE_ADDRESSES)
+    try:
+        devs = tcp_command(host, port, "getdevices", timeout=timeout,
+                           multi_line=True, end_marker="endlistdevices")
+        cli.raw_item("getdevices", _visible_eol(devs))
+        found = [f"{m}:{p}" for m, n in get_relay_ports(parse_devices(devs))
+                 for p in range(1, n + 1)]
+        if found:
+            addresses = found
+        else:
+            cli.raw_item("note", "no relay ports in getdevices; probing common addresses")
+    except Exception as e:
+        cli.raw_error("getdevices", e)
+
+    for addr in addresses:
+        label = f"getstate,{addr}"
+        try:
+            cli.raw_item(label, _visible_eol(tcp_command(host, port, label, timeout=timeout)))
+        except Exception as e:
+            cli.raw_error(label, e)
 
 
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
-    os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
+    cli.ensure_parent(filepath)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
     output = {
         "query_info": {
-            "csv_file":        None if args.host else str(Path(args.input).resolve()),
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "Global Caché Unified TCP API v1.1 (raw TCP port 4998)",
             "mode":            "single-host" if args.host else "csv-batch",
@@ -482,11 +538,15 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
 
 
 def print_results_table(results: list, output_file: str, elapsed: float,
-                        workers: int):
+                        workers: int, firmware_filter: list = None):
     """Render the results table following the project visual style guide."""
 
+    # --firmware: show only devices NOT on one of the versions (errors included).
+    # The full results list is always saved to JSON regardless.
+    display_results = cli.firmware_mismatches(results, firmware_filter)
+
     table_data = []
-    for r in results:
+    for r in display_results:
         relay_summary = format_relay_states(r.get("relay_states", []))
         row = [
             status_icon(r),
@@ -527,6 +587,11 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     err   = sum(1 for r in results if r["status"] == "error")
 
     print()
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
+            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {total} devices"
+        )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
@@ -574,15 +639,25 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # Entry point
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="Query Global Caché devices for firmware version and relay states via Unified TCP API.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        firmware_help=("Show only devices NOT on any of these firmware versions in the "
+                       "table (the getversion string, e.g. 710-1005-05). "
+                       "The JSON always has every device."),
         epilog="""
 Examples:
-  python relay_script.py
-  python relay_script.py -i my_devices.csv
-  python relay_script.py --host 192.168.1.50
-  python relay_script.py -i devices.csv -t 15 -o output.json -w 10
-  python relay_script.py --host 192.168.1.50 --raw
+  python3 relay_script.py                               # whole CSV
+  python3 relay_script.py --host 192.168.1.50           # one device
+  python3 relay_script.py --host 192.168.1.50 --raw
+  python3 relay_script.py --host 192.168.1.50 --debug
+  python3 relay_script.py --firmware 710-1005-05 3.2-12 # who is NOT on these
+  python3 relay_script.py -i devices.csv -t 15 -w 10 -o out.json
 
 Authentication:
   The Global Caché TCP API (port 4998) requires no authentication.
@@ -598,25 +673,8 @@ Relay States:
   1 = Closed / SPDT on1
   2 = SPDT/DPDT on2
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-
-    parser.add_argument("-i", "--input",   default=DEFAULT_CSV,
-        help=f"CSV file with 'host'/'port' columns (default: {DEFAULT_CSV})")
-    parser.add_argument("--host",          default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("-o", "--output",  default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: timestamped file in {OUTPUT_DIR})")
-    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
-        help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",    type=int, default=DEFAULT_PORT,
-        help=f"TCP port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
-        help=f"Number of concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--raw",           action="store_true", default=False,
-        help="With --host: dump raw getversion and getdevices responses.")
-
-    args = parser.parse_args()
+    args = cli.parse_args(parser)
 
     term_width = get_terminal_width()
 
@@ -626,54 +684,32 @@ Relay States:
     # -----------------------------------------------------------------------
     # Header block
     # -----------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
     print(f"  {BOLD}Global Caché Relay Query Tool{RESET}{WHITE}")
     print(f"  Queries Global Caché modules for firmware and relay port states")
-    print(f"  Input:   {input_display}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
-    print(f"  API:     TCP port {args.port if args.host else DEFAULT_PORT} (no authentication)")
+    print(f"  API:     TCP port {args.port if (args.host and args.port) else DEFAULT_PORT} (no authentication)")
+    if args.firmware:
+        print(f"  Filter:  Showing devices not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
-    # --raw dump mode (single host)
+    # Build device list (--host or CSV)
     # -----------------------------------------------------------------------
-    if args.host and args.raw:
-        print(f"{WHITE}Raw API responses for {args.host}:{args.port}{RESET}\n")
-        try:
-            ver = tcp_command(args.host, args.port, "getversion", timeout=args.timeout)
-            print(f"{WHITE}--- getversion ---{RESET}")
-            print(ver)
-        except Exception as e:
-            print(f"{WHITE}--- getversion --- {RED}ERROR:{RESET} {e}")
-        print()
-        try:
-            devs = tcp_command(
-                args.host, args.port, "getdevices", timeout=args.timeout,
-                multi_line=True, end_marker="endlistdevices"
-            )
-            print(f"{WHITE}--- getdevices ---{RESET}")
-            print(devs)
-        except Exception as e:
-            print(f"{WHITE}--- getdevices --- {RED}ERROR:{RESET} {e}")
-        print()
-        # Attempt getstate for a few common relay addresses
-        for addr in ["1:1", "1:2", "1:3", "3:1", "3:2", "3:3"]:
-            try:
-                resp = tcp_command(args.host, args.port, f"getstate,{addr}",
-                                   timeout=args.timeout)
-                print(f"{WHITE}--- getstate,{addr} ---{RESET}")
-                print(resp)
-            except Exception as e:
-                print(f"{WHITE}--- getstate,{addr} --- {RED}ERROR:{RESET} {e}")
-        return
+    devices = cli.select_devices(
+        args, load_csv, lambda host: {"host": host, "port": DEFAULT_PORT})
 
     # -----------------------------------------------------------------------
-    # Build device list
+    # --raw: dump what each device sends back, no table / JSON
     # -----------------------------------------------------------------------
-    devices = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, timeout=args.timeout))
+        return
 
     # -----------------------------------------------------------------------
     # Progress bar + concurrent query loop
@@ -714,7 +750,7 @@ Relay States:
     host_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
-    print_results_table(results, args.output, elapsed, args.workers)
+    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
     save_results_json(results, args.output, args, elapsed)
 
 

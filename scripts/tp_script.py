@@ -32,9 +32,13 @@ import re
 import sys
 import os
 import shutil
-import argparse
+import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     import requests
@@ -65,16 +69,13 @@ RESET  = "\033[0m"
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-OUTPUT_DIR       = "tp_firmware/files"
-DEFAULT_OUTPUT   = os.path.join(
-    OUTPUT_DIR,
-    f"kbremote_results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+OUTPUT_DIR       = "tp_firmware/files"          # results_<YYYYMMDD>_<HHMMSS>.json
 DEFAULT_TIMEOUT  = 30
 DEFAULT_KEYFILE  = os.path.expanduser("~/.kbremote_api_key")
-DEFAULT_CSV      = "secrets/tp_firmware.csv"
+DEFAULT_CSV      = "secrets/tp_firmware.csv"    # relative to this script's folder
 API_BASE         = "https://kioskapi.azure-api.net/klr/api"
 DEVICE_ENDPOINT  = f"{API_BASE}/device"
+API_HOST         = urlparse(API_BASE).hostname  # --debug prefix for the API call itself
 
 # How many seconds since lastSeen before a device is considered "stale"
 STALE_AFTER_SECS = 86400  # 24 hours
@@ -141,7 +142,8 @@ def parse_last_seen(s: str):
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt
-    except Exception:
+    except Exception as e:
+        cli.debug.log(API_HOST, f"cannot parse lastSeen {s!r} ({e}); age shown as N/A")
         return None
 
 
@@ -218,14 +220,24 @@ def filter_devices_by_hosts(devices: list, csv_hosts: list) -> tuple:
         nm = (d.get("name") or "").strip()
         if nm and nm.lower() not in api_index:
             api_index[nm.lower()] = d
+        elif nm:
+            cli.debug.log(nm, f"duplicate KBRemote name: identifier {d.get('identifier')} ignored, "
+                              f"keeping {api_index[nm.lower()].get('identifier')}")
+    unnamed = sum(1 for d in devices if not (d.get("name") or "").strip())
+    if unnamed:
+        cli.debug.log(API_HOST, f"{unnamed} API device(s) have no name and can never match")
 
     matched   = []
     unmatched = []
     for h in csv_hosts:
         d = api_index.get(h.lower())
         if d:
+            cli.debug.log(h, f"matched KBRemote device {d.get('name')!r} (identifier "
+                             f"{d.get('identifier')}, online={d.get('online')}, "
+                             f"androidVersion={d.get('androidVersion')}, kioskVersion={d.get('kioskVersion')})")
             matched.append(d)
         else:
+            cli.debug.log(h, "no KBRemote device with this name (case-insensitive exact match)")
             unmatched.append(h)
     return matched, unmatched
 
@@ -266,17 +278,21 @@ def resolve_api_key(cli_value: str, keyfile_path: str) -> str:
     Errors out cleanly if none of the three is available.
     """
     if cli_value:
+        cli.debug.log(API_HOST, "api key from --api-key")
         return cli_value.strip()
 
     env = os.environ.get("KBREMOTE_API_KEY", "").strip()
     if env:
+        cli.debug.log(API_HOST, "api key from $KBREMOTE_API_KEY")
         return env
 
     p = Path(keyfile_path)
     if p.exists():
         content = p.read_text().strip()
         if content:
+            cli.debug.log(API_HOST, f"api key from keyfile {p}")
             return content
+        cli.debug.log(API_HOST, f"keyfile {p} is empty")
 
     print(f"\n  {WHITE}{BOLD}Error:{RESET}{WHITE} No KBRemote API key found.")
     print(f"  Provide one of:")
@@ -303,7 +319,18 @@ def fetch_devices(api_key: str, timeout: int = DEFAULT_TIMEOUT,
         params["identifier"] = identifier
 
     headers = {"api-key": api_key, "Accept": "application/json"}
-    resp = requests.get(url, headers=headers, params=params, timeout=timeout, verify=True)
+    cli.debug.log(API_HOST, f"GET {url} params={params} timeout={timeout}s "
+                            f"headers={cli.redact(headers)}")
+    t0 = time.monotonic()
+    try:
+        resp = requests.get(url, headers=headers, params=params, timeout=timeout, verify=True)
+    except Exception as e:
+        cli.debug.log(API_HOST, f"request failed after {time.monotonic() - t0:.2f}s: "
+                                f"{type(e).__name__}: {e}")
+        raise
+    cli.debug.log(API_HOST, f"HTTP {resp.status_code} in {time.monotonic() - t0:.2f}s, "
+                            f"{len(resp.content)} bytes, "
+                            f"Content-Type {resp.headers.get('Content-Type')}")
 
     if resp.status_code == 401:
         raise Exception("HTTP 401 — API key rejected (check key is correct and active)")
@@ -320,12 +347,16 @@ def fetch_devices(api_key: str, timeout: int = DEFAULT_TIMEOUT,
     data = resp.json()
     # Single-identifier responses may come back as an object instead of a list
     if isinstance(data, dict) and "identifier" in data:
+        cli.debug.log(API_HOST, f"response: one device object ({data.get('name')!r})")
         return [data]
     if isinstance(data, list):
+        cli.debug.log(API_HOST, f"response: list of {len(data)} devices")
         return data
     # Some endpoints wrap in {success, message, devices: [...]} — handle both shapes
     if isinstance(data, dict) and "devices" in data:
+        cli.debug.log(API_HOST, f"response: wrapped object, {len(data['devices'])} devices")
         return data["devices"]
+    cli.debug.log(API_HOST, f"response: unexpected shape, treated as no devices: {cli.show(data, 500)}")
     return []
 
 
@@ -351,12 +382,48 @@ def enrich_devices(devices: list) -> list:
     return devices
 
 
+def panel_record(d: dict, query_ts: str) -> dict:
+    """
+    Build the JSON record for one panel: the standard fields every script in
+    this project emits (host / status / error / manufacturer / model / ...),
+    followed by the raw KBRemote API fields.
+
+    The fleet dashboard keys on `host` (building/room parsing) and `status`
+    (success vs offline), so the API's `name` and `online` are mapped onto them.
+    """
+    if d.get("online"):
+        status, error = "success", None
+    elif d.get("_age_human") not in (None, "N/A"):
+        status, error = "error", f"Offline — last seen {d['_age_human']} ago"
+    else:
+        status, error = "error", "Offline — never seen"
+
+    android = d.get("androidVersion")
+    record = {
+        "host":            (d.get("name") or "").strip(),
+        "status":          status,
+        "error":           error,
+        "manufacturer":    d.get("brand") or None,
+        "model":           d.get("model") or None,
+        "serial":          d.get("serial") or None,
+        "mac":             d.get("macAddress") or None,
+        "android_version": str(android) if android not in (None, "") else None,
+        "kiosk_version":   d.get("kioskVersion") or None,
+        "query_timestamp": query_ts,
+    }
+    # Raw API fields follow; screenshot payloads are dropped to keep the JSON small
+    for k, v in d.items():
+        if k != "applicationScreenshot" and k not in record:
+            record[k] = v
+    return record
+
+
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
 def save_results_json(devices: list, filepath: str, args, elapsed: float,
                       unmatched_csv_hosts: list = None):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    cli.ensure_parent(filepath)
     online = sum(1 for d in devices if d.get("online"))
     offline_recent = sum(
         1 for d in devices
@@ -366,19 +433,19 @@ def save_results_json(devices: list, filepath: str, args, elapsed: float,
     )
     stale = len(devices) - online - offline_recent
 
-    # Don't bloat the JSON with screenshot payloads
-    cleaned = []
-    for d in devices:
-        c = {k: v for k, v in d.items() if k != "applicationScreenshot"}
-        cleaned.append(c)
+    query_ts = datetime.now(timezone.utc).isoformat()
+    cleaned = [panel_record(d, query_ts) for d in devices]
 
     output = {
         "query_info": {
             "source":            "KBRemote UKR API",
             "endpoint":          DEVICE_ENDPOINT,
-            "timestamp":         datetime.now(timezone.utc).isoformat(),
-            "csv_filter":        args.csv if (getattr(args, "csv", None) and not getattr(args, "all", False) and not getattr(args, "identifier", None)) else None,
+            "timestamp":         query_ts,
+            "protocol":          "KBRemote UKR REST API",
+            "csv_filter":        cli.input_label(args) if not (args.all or args.identifier) else None,
             "total":             len(devices),
+            "success":           online,
+            "errors":            len(devices) - online,
             "online":            online,
             "offline_recent":    offline_recent,
             "stale":             stale,
@@ -393,7 +460,7 @@ def save_results_json(devices: list, filepath: str, args, elapsed: float,
 
 
 def print_results_table(devices: list, output_file: str, elapsed: float,
-                        kiosk_filter: str = None, android_filter: str = None,
+                        kiosk_filter: str = None, android_filter: list = None,
                         sort_by: str = "name"):
     """Render the results table following the project visual style guide."""
 
@@ -403,9 +470,9 @@ def print_results_table(devices: list, output_file: str, elapsed: float,
     if kiosk_filter:
         display = [d for d in display if d.get("kioskVersion") != kiosk_filter]
         filter_descriptions.append(f"Kiosk \u2260 {kiosk_filter}")
-    if android_filter:
-        display = [d for d in display if str(d.get("androidVersion")) != android_filter]
-        filter_descriptions.append(f"Android \u2260 {android_filter}")
+    if android_filter:   # --firmware: androidVersion is a touch panel's firmware
+        display = cli.firmware_mismatches(display, android_filter, key="androidVersion")
+        filter_descriptions.append(f"Android \u2260 {cli.firmware_label(android_filter)}")
 
     # Sort for predictable output
     if sort_by == "name":
@@ -529,20 +596,52 @@ def print_results_table(devices: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+# Fields --raw leaves out: screenshot blobs (huge) and the ages enrich_devices() adds
+RAW_SKIP_KEYS = {"applicationScreenshot", "_age_seconds", "_age_human"}
+
+NOT_USED = "Not used: one cloud API call returns every panel"
+
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="Query the ELO touch panel fleet via the KBRemote UKR REST API.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_timeout=DEFAULT_TIMEOUT,
+        port_help=NOT_USED,
+        workers_help=NOT_USED,
+        timeout_help=f"HTTP request timeout in seconds (default: {DEFAULT_TIMEOUT})",
+        host_help=("Show only the panel whose KBRemote device name is HOST, instead of "
+                   "the CSV's panels (case-insensitive exact match, same as the CSV). "
+                   "Repeat for several panels."),
+        firmware_help=("Show only panels whose Android version (androidVersion, which the "
+                       "dashboard treats as a panel's firmware) is NOT one of these, e.g. "
+                       "--firmware 10 12. The JSON always has every panel. Old name: --android."),
+        raw_help=("Print the API's JSON for the selected panels (screenshot blobs "
+                  "stripped), then exit without the table or JSON file."),
+        debug_help=("Trace the API request (method, URL, params, status, time, size, "
+                    "device count) and each host-name match to stderr. The api-key is "
+                    "never shown. The normal table and JSON still run."),
         epilog="""
 Examples:
-  python tp_kbremote_query.py                              # default: filter to hosts in secrets/tp_firmware.csv
-  python tp_kbremote_query.py --csv my_panels.csv          # use a different CSV
-  python tp_kbremote_query.py --all                        # show every device in the account
-  python tp_kbremote_query.py --identifier b60e7c95-d160-439d-8dc6-4c7e1648bd1a
-  python tp_kbremote_query.py --kiosk 1.4.6                # show CSV panels NOT on this Kiosk version
-  python tp_kbremote_query.py --android 14                 # show CSV panels NOT on Android 14
-  python tp_kbremote_query.py --sort lastseen              # most recently seen first
-  python tp_kbremote_query.py --all --kiosk "1.4.6 (Build 131)"  # whole fleet, mismatched only
-  python tp_kbremote_query.py --raw                        # print full JSON
+  python3 tp_script.py                              # panels in secrets/tp_firmware.csv
+  python3 tp_script.py -i my_panels.csv             # use a different CSV
+  python3 tp_script.py --host baker-213-room-schedule-display.openav.dartmouth.edu
+  python3 tp_script.py --all                        # every device in the account
+  python3 tp_script.py --identifier b60e7c95-d160-439d-8dc6-4c7e1648bd1a
+  python3 tp_script.py --kiosk 1.4.6                # CSV panels NOT on this Kiosk version
+  python3 tp_script.py --firmware 10 12             # CSV panels NOT on Android 10 or 12
+  python3 tp_script.py --sort lastseen              # most recently seen first
+  python3 tp_script.py --all --kiosk "1.4.6 (Build 131)"  # whole fleet, mismatched only
+  python3 tp_script.py --raw                        # print the API JSON, no table/file
+  python3 tp_script.py --debug                      # trace the API call + matching
+
+Scope:
+  One HTTPS GET returns every panel in the account; the results are then cut
+  down to the panels named in the CSV (default) or by --host. --all keeps
+  every panel; --identifier asks the API for a single device.
+  -p/--port and -w/--workers are accepted for uniformity but not used.
 
 Credentials:
   The API key is read from (in order):
@@ -552,35 +651,30 @@ Credentials:
 
   Get a key at: https://klr.android-kiosk.com/ApiKey
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        # -i/--input here is a list of panel names that scopes the results
+        input_help=(f"CSV of panel host names to show (default: {DEFAULT_CSV}). "
+                    "Matching is exact, case-insensitive, against the device's "
+                    "KBRemote name. Unmatched hosts are reported as a warning. "
+                    "Ignored with --all, --host or --identifier."),
     )
+    cli.add_alias(parser, "--android", dest="firmware", nargs="+", metavar="VERSION")
 
-    parser.add_argument("--api-key",    default=None,
+    group = parser.add_argument_group("KBRemote options")
+    group.add_argument("--api-key",    default=None,
         help="KBRemote API key (overrides env var and keyfile)")
-    parser.add_argument("--keyfile",    default=DEFAULT_KEYFILE,
+    group.add_argument("--keyfile",    default=DEFAULT_KEYFILE,
         help=f"Path to file containing the API key (default: {DEFAULT_KEYFILE})")
-    parser.add_argument("-o", "--output", default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
-        help=f"HTTP request timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("--identifier", default=None,
+    group.add_argument("--identifier", default=None,
         help="Query a single device by its KBRemote identifier (UUID) instead of the full fleet")
-    parser.add_argument("--csv",        default=DEFAULT_CSV, metavar="PATH",
-        help=f"CSV file of hosts to filter results to (default: {DEFAULT_CSV}). Matching is exact, case-insensitive, against the device's KBRemote name. Unmatched CSV hosts are reported as a warning. Use --all to disable filtering.")
-    parser.add_argument("--all",        action="store_true", default=False,
-        help="Show every device in the KBRemote account (disables the CSV filter).")
-    parser.add_argument("--kiosk",      default=None, metavar="VERSION",
+    group.add_argument("--all",        action="store_true", default=False,
+        help="Show every device in the KBRemote account (no CSV / --host scoping).")
+    group.add_argument("--kiosk",      default=None, metavar="VERSION",
         help="Only show panels whose kioskVersion does NOT match VERSION. JSON output always contains all results.")
-    parser.add_argument("--android",    default=None, metavar="VERSION",
-        help="Only show panels whose androidVersion does NOT match VERSION. JSON output always contains all results.")
-    parser.add_argument("--sort",       default="name", choices=["name", "lastseen", "kiosk"],
+    group.add_argument("--sort",       default="name", choices=["name", "lastseen", "kiosk"],
         help="Sort order for the table (default: name)")
-    parser.add_argument("--raw",        action="store_true", default=False,
-        help="Print the raw JSON response (with --identifier prints one device, without prints all)")
 
-    args = parser.parse_args()
+    args = cli.parse_args(parser)
 
-    import time
     start_time = time.monotonic()
 
     api_key = resolve_api_key(args.api_key, args.keyfile)
@@ -592,27 +686,46 @@ Credentials:
     print(f"  {BOLD}KBRemote (UKR) \u2014 Fleet Query Tool{RESET}{WHITE}")
     print(f"  Queries every panel in your KBRemote account in one API call.")
     print(f"  Endpoint: {DEVICE_ENDPOINT}")
-    print(f"  Output:   {args.output}")
+    print(f"  Output:   {'(none: --raw)' if args.raw else args.output}")
     print(f"  Timeout:  {args.timeout}s")
     print(f"  Auth:     api-key header (key length {len(api_key)} chars)")
     if args.identifier:
         print(f"  Scope:    single device {args.identifier}")
     elif args.all:
         print(f"  Scope:    full fleet (--all)")
+    elif args.host:
+        print(f"  Scope:    hosts {cli.input_label(args)} (--host)")
     else:
-        print(f"  Scope:    hosts in {args.csv}")
+        print(f"  Scope:    hosts in {cli.input_label(args)}")
     if args.kiosk:
         print(f"  Filter:   Kiosk version \u2260 {args.kiosk}")
-    if args.android:
-        print(f"  Filter:   Android version \u2260 {args.android}")
+    if args.firmware:
+        print(f"  Filter:   Android version \u2260 {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:    on (trace on stderr)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
-    # Load CSV host list (default behavior — unless --all or --identifier)
+    # Host list that scopes the results: --host names, else the CSV
+    # (default behavior — unless --all or --identifier)
     # -----------------------------------------------------------------------
     csv_hosts = None
+    scope_src = "--host" if args.host else "CSV"
     if not args.all and not args.identifier:
-        csv_hosts = load_csv_hosts(args.csv)
+        rows = cli.select_devices(
+            args,
+            lambda path: [{"host": h} for h in load_csv_hosts(path)],
+            lambda host: {"host": host},
+        )
+        csv_hosts, seen = [], set()
+        for row in rows:                       # dedupe repeated --host names
+            if row["host"].lower() not in seen:
+                seen.add(row["host"].lower())
+                csv_hosts.append(row["host"])
+        cli.debug.log(API_HOST, f"scope: {len(csv_hosts)} host(s) from {scope_src}")
+    else:
+        cli.debug.log(API_HOST, "scope: " + (f"--identifier {args.identifier}" if args.identifier
+                                             else "--all (no host filter)"))
 
     # -----------------------------------------------------------------------
     # Fetch
@@ -638,7 +751,7 @@ Credentials:
     devices = enrich_devices(devices)
 
     # -----------------------------------------------------------------------
-    # Apply CSV host filter (after enrich so age fields are still computed)
+    # Apply the CSV / --host filter (after enrich so age fields are still computed)
     # -----------------------------------------------------------------------
     unmatched_csv_hosts = []
     if csv_hosts is not None:
@@ -646,27 +759,26 @@ Credentials:
         devices, unmatched_csv_hosts = filter_devices_by_hosts(devices, csv_hosts)
         print(f"{WHITE}")
         print(
-            f"  {BOLD}CSV scope:{RESET}{WHITE} {len(csv_hosts)} hosts in CSV  |  "
+            f"  {BOLD}{scope_src} scope:{RESET}{WHITE} {len(csv_hosts)} hosts in {scope_src}  |  "
             f"{BOLD}Matched:{RESET}{WHITE} {len(devices)}  |  "
             f"{BOLD}Unmatched:{RESET}{WHITE} {len(unmatched_csv_hosts)}  |  "
             f"{BOLD}API total:{RESET}{WHITE} {api_total}"
         )
         if unmatched_csv_hosts:
-            print(f"  {YELLOW}{BOLD}Hosts in CSV with no matching KBRemote device:{RESET}{WHITE}")
+            print(f"  {YELLOW}{BOLD}Hosts in {scope_src} with no matching KBRemote device:{RESET}{WHITE}")
             for h in unmatched_csv_hosts:
                 print(f"    \u2022 {h}")
         print(f"{RESET}")
 
     if not devices:
-        print(f"\n  {WHITE}{BOLD}Warning:{RESET}{WHITE} No devices left after CSV filter.{RESET}")
+        print(f"\n  {WHITE}{BOLD}Warning:{RESET}{WHITE} No devices left after {scope_src} filter.{RESET}")
         sys.exit(0)
 
     # -----------------------------------------------------------------------
-    # --raw mode
+    # --raw mode: the API's JSON for the selected panels, no table / file
     # -----------------------------------------------------------------------
     if args.raw:
-        # Strip screenshot blobs which are huge and unreadable
-        cleaned = [{k: v for k, v in d.items() if k != "applicationScreenshot"} for d in devices]
+        cleaned = [{k: v for k, v in d.items() if k not in RAW_SKIP_KEYS} for d in devices]
         print(json.dumps(cleaned, indent=2, ensure_ascii=False))
         return
 
@@ -678,7 +790,7 @@ Credentials:
         args.output,
         elapsed,
         kiosk_filter=args.kiosk,
-        android_filter=args.android,
+        android_filter=args.firmware,
         sort_by=args.sort,
     )
     save_results_json(devices, args.output, args, elapsed, unmatched_csv_hosts=unmatched_csv_hosts)

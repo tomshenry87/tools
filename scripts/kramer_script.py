@@ -12,19 +12,20 @@ Protocol 3000 reference (VP-440H2 User Manual):
   Response syntax: ~nn@<COMMAND> <value>\r\n
   Default TCP port: 5000
 
-Usage:
-  Normal run   : python3 kramer_firmware.py
-  Version audit: python3 kramer_firmware.py --firmware 1.02.0008
-  Full debug   : python3 kramer_firmware.py --debug
-  Single host  : python3 kramer_firmware.py --debug --host 192.168.1.100
-  Single cmd   : python3 kramer_firmware.py --debug --host 192.168.1.100 --cmd firmware_version
+Usage (standard flags: see --help):
+  Normal run   : python3 kramer_script.py
+  Version audit: python3 kramer_script.py --firmware 1.02.0008 1.02.0010
+  Single host  : python3 kramer_script.py --host 192.168.1.100
+  Trace        : python3 kramer_script.py --host 192.168.1.100 --debug
+  Raw replies  : python3 kramer_script.py --host 192.168.1.100 --raw
+  Single cmd   : python3 kramer_script.py --host 192.168.1.100 --cmd firmware_version
 
 Dependencies: pip install tabulate tqdm python-dateutil
 """
 
-import argparse
 import csv
 import json
+import os
 import re
 import shutil
 import socket
@@ -35,6 +36,9 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     from tabulate import tabulate
@@ -65,32 +69,21 @@ WHITE  = "\033[97m"   # All body text, table content, labels
 BOLD   = "\033[1m"    # Section headers, label emphasis
 RESET  = "\033[0m"    # Always close every colour block
 
-# Debug-mode colours. Retained under spec section 4, which protects
-# debug_print() from modification. Not used in normal output.
-_DBG_YLW = "\033[33m"
-_DBG_GRN = "\033[32m"
-_DBG_DIM = "\033[2m"
-_DBG_RED = "\033[31m"
-_DBG_MGT = "\033[35m"
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-SCRIPT_DIR       = Path(__file__).parent
 DEFAULT_PORT     = 5000
-CONNECT_TIMEOUT  = 8.0
+CONNECT_TIMEOUT  = 8.0        # -t/--timeout sets this and RECV_TIMEOUT
 RECV_TIMEOUT     = 8.0
 BUFFER_SIZE      = 4096
-WORKERS          = 5
+WORKERS          = 5          # default for -w/--workers
 SEND_PAUSE       = 0.02       # 20 ms post-send pause
 DRAIN_WINDOW     = 0.05       # 50 ms non-blocking drain window
 
 MANUFACTURER     = "Kramer"
 
-CSV_FILE         = SCRIPT_DIR / "secrets" / "kramer_firmware.csv"
-OUTPUT_DIR       = SCRIPT_DIR / "kramer_version_check" / "files"
-_RUN_STAMP       = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-JSON_FILE        = OUTPUT_DIR / f"results_{_RUN_STAMP}.json"
+CSV_FILE         = "secrets/kramer_firmware.csv"     # relative to this script's folder
+OUTPUT_DIR       = "kramer_version_check/files"      # results_<YYYYMMDD>_<HHMMSS>.json
 
 # ---------------------------------------------------------------------------
 # Protocol queries  (spec section 4 — command framing unchanged)
@@ -106,36 +99,13 @@ SCALAR_QUERIES = {
 
 ALL_CMD_KEYS = list(SCALAR_QUERIES.keys())
 
-DEBUG = False
-
 
 # ---------------------------------------------------------------------------
-# Debug helpers  (spec section 4 — do not change)
+# Debug helpers
 # ---------------------------------------------------------------------------
 def debug_print(host, label, data):
-    if not DEBUG:
-        return
-    dir_col   = _DBG_MGT if "SEND" in label.upper() else _DBG_GRN
-    hex_width = 16
-    header    = f"DEBUG [{host}] {label} ({len(data)} bytes)"
-    box_w     = max(len(header) + 4, 62)
-    print(f"\n{_DBG_YLW}  +-- {dir_col}{header}{_DBG_YLW} {'-' * max(0, box_w - len(header) - 4)}+{RESET}")
-    if not data:
-        print(f"{_DBG_YLW}  |{RESET}  (empty)")
-    else:
-        for offset in range(0, len(data), hex_width):
-            chunk     = data[offset: offset + hex_width]
-            hex_cols  = " ".join(f"{b:02X}" for b in chunk)
-            hex_cols += "   " * (hex_width - len(chunk))
-            ascii_col = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
-            print(f"{_DBG_YLW}  |{RESET} {_DBG_DIM}{offset:04X}{RESET}  {CYAN}{hex_cols}{RESET}  {_DBG_GRN}|{ascii_col.ljust(hex_width)}|{RESET}")
-        decoded = data.decode("ascii", errors="replace")
-        visible = (decoded
-                   .replace("\r", f"{_DBG_RED}{{CR}}{RESET}")
-                   .replace("\n", f"{_DBG_RED}{{LF}}{RESET}")
-                   .replace("\x00", f"{_DBG_RED}{{NUL}}{RESET}"))
-        print(f"{_DBG_YLW}  |{RESET}  decoded : {visible}")
-    print(f"{_DBG_YLW}  +{'-' * box_w}+{RESET}\n")
+    """--debug: hex + ASCII dump of one socket exchange (stderr, host-prefixed)."""
+    cli.debug.hexdump(host, label, data)
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +134,8 @@ def send_query(sock, command, host=""):
                 if b"\n" in response:
                     break
         except socket.timeout:
+            cli.debug.log(host, f"no complete reply to {command.strip()!r} within "
+                                f"{RECV_TIMEOUT:g}s; using what arrived")
             break
 
     sock.setblocking(False)
@@ -173,7 +145,9 @@ def send_query(sock, command, host=""):
             chunk = sock.recv(BUFFER_SIZE)
             if chunk:
                 response += chunk
-        except (BlockingIOError, socket.error):
+        except (BlockingIOError, socket.error) as exc:
+            if not isinstance(exc, BlockingIOError):   # BlockingIOError = drained, normal
+                cli.debug.log(host, f"drain after {command.strip()!r} stopped: {exc}")
             break
     sock.setblocking(True)
     sock.settimeout(RECV_TIMEOUT)
@@ -299,6 +273,37 @@ def truncate_error(err, max_len: int = 30) -> str:
 # ---------------------------------------------------------------------------
 # Device querying
 # ---------------------------------------------------------------------------
+def connect(host, port):
+    cli.debug.log(host, f"connecting to {host}:{port} (timeout {CONNECT_TIMEOUT:g}s)")
+    sock = socket.create_connection((host, port), timeout=CONNECT_TIMEOUT)
+    cli.debug.log(host, "connected")
+    return sock
+
+
+def handshake(sock, host):
+    """Send the bare '#' handshake. Return the reply bytes, or None if none came."""
+    hs = b"#\r"
+    debug_print(host, "SEND  handshake", hs)
+    sock.sendall(hs)
+    time.sleep(SEND_PAUSE)
+    try:
+        hs_resp = sock.recv(BUFFER_SIZE)
+        debug_print(host, "RECV  handshake", hs_resp)
+        return hs_resp
+    except socket.timeout:
+        cli.debug.log(host, f"RECV  handshake: no reply within {RECV_TIMEOUT:g}s (no banner); continuing")
+        return None
+
+
+def parse_reply(raw, pattern):
+    """Value captured by pattern from the first matching reply line, else None."""
+    for line in raw.splitlines():
+        m = pattern.search(line)
+        if m:
+            return m.group(1).strip()
+    return None
+
+
 def query_device(host, port):
     result = {
         "host":             host,
@@ -315,77 +320,61 @@ def query_device(host, port):
         "prot_ver":         None,
     }
     try:
-        with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
+        with connect(host, port) as sock:
             sock.settimeout(RECV_TIMEOUT)
-
-            hs = b"#\r"
-            debug_print(host, "SEND  handshake", hs)
-            sock.sendall(hs)
-            time.sleep(SEND_PAUSE)
-            try:
-                hs_resp = sock.recv(BUFFER_SIZE)
-                debug_print(host, "RECV  handshake", hs_resp)
-            except socket.timeout:
-                debug_print(host, "RECV  handshake", b"(timeout - no banner)")
+            handshake(sock, host)
 
             for key, (command, pattern) in SCALAR_QUERIES.items():
                 raw = send_query(sock, command, host=host)
-                for line in raw.splitlines():
-                    m = pattern.search(line)
-                    if m:
-                        result[key] = m.group(1).strip()
-                        break
+                value = parse_reply(raw, pattern)
+                if value is not None:
+                    result[key] = value
+                    cli.debug.log(host, f"{key} = {value!r}")
+                else:
+                    cli.debug.log(host, f"{key}: no '{command.strip()}' answer in reply {raw!r}; left empty")
 
             if result["build_date"]:
-                result["build_date"] = normalise_date(result["build_date"])
+                normalised = normalise_date(result["build_date"])
+                cli.debug.log(host, f"build_date {result['build_date']!r} -> {normalised!r}")
+                result["build_date"] = normalised
             result["status"] = "success"
 
     except (ConnectionRefusedError, socket.timeout, OSError) as exc:
+        cli.debug.log(host, f"connection failed: {type(exc).__name__}: {exc}")
         result["error"] = str(exc)
 
+    cli.debug.log(host, f"result: {result['status']}"
+                        + (f" ({result['error']})" if result["error"] else ""))
     return result
 
 
 # ---------------------------------------------------------------------------
-# Debug probe  (spec section 4 — do not change)
+# --raw / --cmd probe
 # ---------------------------------------------------------------------------
-class DebugProbeError(Exception):
-    """Raised when debug_probe encounters a fatal connection problem."""
+def dump_raw(dev, cmd_key=None):
+    """
+    --raw: connect, send the handshake and every query (only cmd_key's with
+    --cmd), and print each raw reply plus the value parsed from it.
+    """
+    host, port = dev["host"], dev["port"]
+    with connect(host, port) as sock:
+        sock.settimeout(RECV_TIMEOUT)
+        hs_resp = handshake(sock, host)
+        if hs_resp is None:
+            cli.raw_error("handshake #", f"no reply within {RECV_TIMEOUT:g}s")
+        else:
+            cli.raw_item("handshake #", hs_resp.decode("ascii", errors="replace").strip())
 
-
-def debug_probe(host, port, cmd_key):
-    print(f"\n  == Debug probe: {host}:{port} ==\n")
-    try:
-        with socket.create_connection((host, port), timeout=CONNECT_TIMEOUT) as sock:
-            sock.settimeout(RECV_TIMEOUT)
-
-            hs = b"#\r"
-            debug_print(host, "SEND  handshake", hs)
-            sock.sendall(hs)
-            time.sleep(SEND_PAUSE)
-            try:
-                hs_resp = sock.recv(BUFFER_SIZE)
-                debug_print(host, "RECV  handshake", hs_resp)
-            except socket.timeout:
-                debug_print(host, "RECV  handshake", b"(timeout)")
-
-            targets = (
-                {cmd_key: SCALAR_QUERIES[cmd_key]}
-                if cmd_key
-                else SCALAR_QUERIES
-            )
-            for key, (command, pattern) in targets.items():
-                raw    = send_query(sock, command, host=host)
-                parsed = "N/A"
-                for line in raw.splitlines():
-                    m = pattern.search(line)
-                    if m:
-                        parsed = m.group(1).strip()
-                        break
-                print(f"  parsed [{key}] => {parsed!r}\n")
-
-    except (ConnectionRefusedError, socket.timeout, OSError) as exc:
-        raise DebugProbeError(f"Connection failed: {exc}") from exc
+        targets = {cmd_key: SCALAR_QUERIES[cmd_key]} if cmd_key else SCALAR_QUERIES
+        for key, (command, pattern) in targets.items():
+            label = f"{command.strip()}  [{key}]"
+            raw = send_query(sock, command, host=host)
+            if not raw:
+                cli.raw_error(label, f"no reply within {RECV_TIMEOUT:g}s")
+                continue
+            parsed = parse_reply(raw, pattern)
+            cli.raw_item(label, raw)
+            print(f"parsed {key} => {'N/A' if parsed is None else repr(parsed)}")
 
 
 # ---------------------------------------------------------------------------
@@ -432,52 +421,80 @@ def load_csv(csv_path: str) -> list:
 # Entry point
 # ---------------------------------------------------------------------------
 def main():
-    global DEBUG
+    global CONNECT_TIMEOUT, RECV_TIMEOUT
 
-    parser = argparse.ArgumentParser(
-        description="Query Kramer VP-440H2 devices via Protocol 3000 TCP."
+    parser = cli.build_parser(
+        script_file=__file__,
+        description="Query Kramer VP-440H2 devices via Protocol 3000 TCP.",
+        default_csv=CSV_FILE,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=CONNECT_TIMEOUT,
+        default_workers=WORKERS,
+        timeout_type=float,
+        timeout_help=(f"Connect timeout, and the wait for each reply, in seconds "
+                      f"(default: {CONNECT_TIMEOUT:g})"),
+        host_help=("Query HOST instead of the whole CSV. Repeat for several hosts. "
+                   "If HOST is in the CSV, that row's port is reused."),
+        raw_help=("Print each device's raw reply to the handshake and every query "
+                  f"({', '.join(q[0].strip() for q in SCALAR_QUERIES.values())}) and "
+                  "the value parsed from it, then exit without the table or JSON. "
+                  "Works with --host or the whole CSV."),
+        debug_help=("Trace every connection and a hex + ASCII dump of every command and "
+                    "reply to stderr, prefixed with the host. The normal table and JSON "
+                    "still run."),
+        epilog=f"""
+Examples:
+  python3 kramer_script.py                                   # whole CSV
+  python3 kramer_script.py --host 192.168.1.100              # one switcher
+  python3 kramer_script.py --host 192.168.1.100 --debug      # + hex trace
+  python3 kramer_script.py --host 192.168.1.100 --raw        # raw replies only
+  python3 kramer_script.py --host 192.168.1.100 --cmd firmware_version
+  python3 kramer_script.py --firmware 1.02.0008 1.02.0010    # who is NOT on these
+  python3 kramer_script.py -i devices.csv -t 4 -w 10 -o out.json
+
+Protocol:
+  Protocol 3000 over TCP (default port {DEFAULT_PORT}), no authentication.
+  "#CMD?\\r" -> "~nn@CMD value\\r\\n". A bare "#\\r" handshake is sent first.
+  -t sets both the connect timeout and the wait for each reply.
+        """,
     )
-    parser.add_argument("--debug", action="store_true",
-                        help="Print hex+ASCII dump of every socket exchange.")
-    parser.add_argument("--host", metavar="IP",
-                        help="(Debug) Target a single host instead of the CSV.")
-    parser.add_argument("--port", metavar="PORT", type=int, default=DEFAULT_PORT,
-                        help=f"TCP port (default: {DEFAULT_PORT}).")
-    parser.add_argument("--cmd", metavar="CMD", choices=ALL_CMD_KEYS,
-                        help="(Debug) Probe only one command. Choices: " + ", ".join(ALL_CMD_KEYS))
-    parser.add_argument("--firmware", metavar="VERSION",
-                        help="Hide devices already on this firmware version from the "
-                             "terminal table. JSON output is unaffected.")
-    args = parser.parse_args()
+    group = parser.add_argument_group("Kramer options")
+    group.add_argument("--cmd", metavar="CMD", choices=ALL_CMD_KEYS,
+        help="Probe only this one query: print its raw reply and parsed value "
+             "(implies --raw: no table/JSON). Works with --host or the whole CSV; "
+             "add --debug for the hex trace. Choices: " + ", ".join(ALL_CMD_KEYS))
+    args = cli.parse_args(parser)
 
-    DEBUG = args.debug
-
-    if args.debug and args.host:
-        try:
-            debug_probe(args.host, args.port, args.cmd)
-        except DebugProbeError as exc:
-            print(f"\n  {exc}\n")
-            sys.exit(1)
-        sys.exit(0)
-
+    CONNECT_TIMEOUT = RECV_TIMEOUT = args.timeout
     if args.cmd:
-        parser.error("--cmd requires --debug and --host")
+        args.raw = True     # --cmd is a one-query raw probe
 
-    devices    = load_csv(CSV_FILE)
+    devices    = cli.select_devices(args, load_csv,
+                                    lambda host: {"host": host, "port": DEFAULT_PORT})
     total      = len(devices)
     start_time = time.time()
-
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # -- Header block (spec 3.2) -------------------------------------------
     print(f"{WHITE}")
     print(f"  {BOLD}Kramer VP-440H2 - Protocol 3000 Device Query Tool{RESET}{WHITE}")
     print(f"  Queries Kramer matrix switchers for firmware and build date")
-    print(f"  Input:   {CSV_FILE}")
-    print(f"  Output:  {JSON_FILE}")
-    print(f"  Workers: {WORKERS}")
-    print(f"  Timeout: {CONNECT_TIMEOUT:.0f}s")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
+    print(f"  Workers: {args.workers}")
+    print(f"  Timeout: {args.timeout:g}s")
+    if args.cmd:
+        print(f"  Command: {args.cmd} only ({SCALAR_QUERIES[args.cmd][0].strip()})")
+    if args.firmware:
+        print(f"  Filter:  Showing devices not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
+
+    # -- --raw / --cmd: raw replies only, no table / JSON ------------------
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, args.cmd))
+        return
 
     # -- Progress bar (spec 3.3) -------------------------------------------
     term_width = get_terminal_width()
@@ -506,7 +523,7 @@ def main():
         file=sys.stderr,
         leave=True,
     ) as pbar:
-        with ThreadPoolExecutor(max_workers=WORKERS) as executor:
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
             futures = {executor.submit(worker_task, d): d for d in devices}
             for future in as_completed(futures):
                 results.append(future.result())
@@ -529,10 +546,7 @@ def main():
     # -- Table (spec 3.4) --------------------------------------------------
     # --firmware filters the table view only; JSON always receives all results.
     firmware_filter = args.firmware
-    display_results = (
-        [r for r in results if r.get("firmware_version") != firmware_filter]
-        if firmware_filter else results
-    )
+    display_results = cli.firmware_mismatches(results, firmware_filter)
     filtered_count = len(results) - len(display_results)
 
     # Status | Host | Manufacturer | Model | Firmware | Build Date | Protocol Ver | Serial | MAC | Error
@@ -569,7 +583,7 @@ def main():
     bw         = max(raw_width, 60)
     title      = "Kramer VP-440H2 Query Results — Protocol 3000"
     if firmware_filter:
-        title += f" — Excluding {firmware_filter}"
+        title += f" — Excluding {cli.firmware_label(firmware_filter)}"
     pad        = max(0, (bw - len(title)) // 2)
 
     print(f"{WHITE}")
@@ -604,18 +618,18 @@ def main():
     if firmware_filter:
         print(
             f"  {BOLD}Firmware Filter:{RESET}{WHITE} hiding {filtered_count} device(s) "
-            f"on {firmware_filter} — {len(display_results)} device(s) shown"
+            f"on {cli.firmware_label(firmware_filter)} — {len(display_results)} device(s) shown"
         )
     print(f"{RESET}")
 
     # -- JSON output (spec 2.1 / 2.7) --------------------------------------
     output = {
         "query_info": {
-            "csv_file":        str(Path(CSV_FILE).resolve()),
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "Kramer Protocol 3000",
             "mode":            "threaded",
-            "workers":         WORKERS,
+            "workers":         args.workers,
             "total":           total,
             "success":         ok,
             "errors":          err,
@@ -624,12 +638,13 @@ def main():
         "switches": results,
     }
 
-    with open(JSON_FILE, "w", encoding="utf-8") as fh:
+    cli.ensure_parent(args.output)
+    with open(args.output, "w", encoding="utf-8") as fh:
         json.dump(output, fh, indent=2)
 
     # -- Closing lines (spec 3.8) ------------------------------------------
-    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {JSON_FILE}{RESET}")
-    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({WORKERS} workers){RESET}")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {args.output}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({args.workers} workers){RESET}")
     print()
 
 

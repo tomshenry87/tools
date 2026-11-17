@@ -33,6 +33,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
+
 try:
     from tabulate import tabulate
 except ImportError:
@@ -59,12 +62,8 @@ RESET  = "\033[0m"    # Always close every colour block
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV     = "secrets/biamp_firmware.csv"
-OUTPUT_DIR      = "biamp_firmware/files"
-DEFAULT_OUTPUT  = os.path.join(
-    OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+DEFAULT_CSV     = "secrets/biamp_firmware.csv"      # relative to this script's folder
+OUTPUT_DIR      = "biamp_firmware/files"            # results_<YYYYMMDD>_<HHMMSS>.json
 DEFAULT_TIMEOUT = 10
 DEFAULT_PORT    = 23
 DEFAULT_WORKERS = 5
@@ -258,9 +257,12 @@ class TesiraConnection:
         self._buf    = b""
 
     def connect(self):
+        cli.debug.log(self.host, f"connecting to {self.host}:{self.port} (timeout {self.timeout}s)")
         self._sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
         self._sock.settimeout(self.timeout)
+        cli.debug.log(self.host, "connected; waiting for IAC negotiation + banner")
         self._negotiate_and_drain_banner()
+        cli.debug.log(self.host, f"banner: {cli.show(self._buf)}")
 
     def _negotiate_and_drain_banner(self):
         """
@@ -276,13 +278,14 @@ class TesiraConnection:
                 chunk = self._sock.recv(RECV_BUFSIZE)
                 if not chunk:
                     break
+                cli.debug.hexdump(self.host, "recv (negotiation/banner)", chunk)
                 # Process IAC sequences out of the chunk before buffering
                 clean, chunk = self._process_iac(chunk)
                 self._buf += clean
                 if b"Welcome to the Tesira Text Protocol Server" in self._buf:
                     break
         except socket.timeout:
-            pass
+            cli.debug.log(self.host, f"no more banner data after {BANNER_TIMEOUT}s")
         finally:
             self._sock.settimeout(self.timeout)
 
@@ -302,10 +305,12 @@ class TesiraConnection:
                 if cmd == self.DO:
                     # Device asks us to DO something — we decline: IAC WONT option
                     self._sock.sendall(bytes([self.IAC, self.WONT, option]))
+                    cli.debug.log(self.host, f"IAC DO {option} -> sent WONT {option}")
                     i += 3
                 elif cmd == self.WILL:
                     # Device says it WILL do something — we say DONT: IAC DONT option
                     self._sock.sendall(bytes([self.IAC, self.DONT, option]))
+                    cli.debug.log(self.host, f"IAC WILL {option} -> sent DONT {option}")
                     i += 3
                 else:
                     # Unknown IAC sequence — skip the 3 bytes
@@ -333,12 +338,15 @@ class TesiraConnection:
 
     def send_command(self, cmd: str) -> str:
         """Send a TTP command and return the first +OK / -ERR response line."""
+        cli.debug.sent(self.host, cmd)
         self._sock.sendall(cmd.encode("utf-8"))
         # Read lines until we hit a response line starting with + or -
         for _ in range(20):
             line = self._readline()
             if line.startswith("+") or line.startswith("-"):
+                cli.debug.received(self.host, line)
                 return line
+            cli.debug.log(self.host, f"skip (echo/other): {cli.show(line)}")
         raise Exception("No +OK/-ERR response received")
 
     def close(self):
@@ -465,6 +473,7 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
             resp = conn.send_command(CMD_VERSION)
             result["firmware_version"] = parse_ok_value(resp)
         except Exception as e:
+            cli.debug.log(host, f"version failed: {e}")
             if is_auth_failure(e):
                 result["status"] = "auth_error"
                 result["error"]  = str(e)
@@ -477,15 +486,15 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
             net  = parse_network_status(raw)
             result["device_name"] = net.get("hostname", "N/A")
             result["mac"]         = net.get("mac_address", "N/A")
-        except Exception:
-            pass
+        except Exception as e:
+            cli.debug.log(host, f"networkStatus failed: {e}")
 
         # --- Serial number ---
         try:
             resp = conn.send_command(CMD_SERIAL)
             result["serial"] = parse_ok_value(resp)
-        except Exception:
-            pass
+        except Exception as e:
+            cli.debug.log(host, f"serialNumber failed: {e}")
 
         # --- Active fault list ---
         try:
@@ -494,8 +503,8 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
             fault_status, fault_details = parse_fault_list(raw)
             result["fault_status"]  = fault_status
             result["fault_details"] = fault_details
-        except Exception:
-            pass
+        except Exception as e:
+            cli.debug.log(host, f"activeFaultList failed: {e}")
 
         result["status"] = "success"
 
@@ -520,6 +529,7 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
     finally:
         conn.close()
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
 
 
@@ -527,14 +537,14 @@ def query_device(host: str, port: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
 # Output
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    cli.ensure_parent(filepath)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
 
     output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()) if not args.host else args.host,
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "Biamp Tesira Text Protocol (TTP) over TCP",
             "mode":            "None (no authentication)",
@@ -552,18 +562,12 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
 
 
 def print_results_table(results: list, output_file: str, elapsed: float,
-                        workers: int, firmware_filter: str = None):
+                        workers: int, firmware_filter: list = None):
     """Render the results table following the project visual style guide."""
 
     # Apply firmware filter — mismatched or errored rows only.
     # The full results list is always saved to JSON regardless.
-    if firmware_filter:
-        display_results = [
-            r for r in results
-            if r.get("firmware_version", "N/A") != firmware_filter
-        ]
-    else:
-        display_results = results
+    display_results = cli.firmware_mismatches(results, firmware_filter)
 
     table_data = []
     for r in display_results:
@@ -611,7 +615,7 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     print()
     if firmware_filter:
         print(
-            f"  {BOLD}Firmware filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
             f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {len(results)} devices"
         )
     print(
@@ -648,49 +652,52 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+def dump_raw(dev: dict, timeout: int):
+    """--raw: print the banner and the raw TTP reply line for every command."""
+    conn = TesiraConnection(dev["host"], dev["port"], timeout)
+    try:
+        conn.connect()
+        cli.raw_item("welcome banner", conn._buf.decode("utf-8", errors="replace").strip())
+        for label, cmd in [
+            ("DEVICE get version",         CMD_VERSION),
+            ("DEVICE get networkStatus",   CMD_NETSTATUS),
+            ("DEVICE get serialNumber",    CMD_SERIAL),
+            ("DEVICE get activeFaultList", CMD_FAULTS),
+        ]:
+            try:
+                cli.raw_item(label, conn.send_command(cmd))
+            except Exception as e:
+                cli.raw_error(label, e)
+    finally:
+        conn.close()
+
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="Query Biamp Tesira DSPs for firmware version and fault status via TTP.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
         epilog="""
 Examples:
-  python biamp_script.py
-  python biamp_script.py -i my_devices.csv
-  python biamp_script.py --host baker-102-dsp.example.edu
-  python biamp_script.py -i devices.csv -t 15 -o output.json -w 10
-  python biamp_script.py --host baker-102-dsp.example.edu --raw
-  python biamp_script.py --firmware 5.5.0.2
+  python3 biamp_script.py                                   # whole CSV
+  python3 biamp_script.py --host baker-102-dsp.example.edu  # one device
+  python3 biamp_script.py --host baker-102-dsp.example.edu --raw
+  python3 biamp_script.py --host baker-102-dsp.example.edu --debug
+  python3 biamp_script.py --firmware 5.5.0.2                # who is NOT on 5.5.0.2
+  python3 biamp_script.py -i devices.csv -t 15 -w 10 -o out.json
 
 Protocol:
   Telnet (TTP) on port 23. IAC negotiation is answered automatically.
   No authentication — devices must have IP control auth level set to None.
   Commands issued: DEVICE get version, networkStatus, serialNumber,
   activeFaultList.
-
-Firmware filter:
-  --firmware VERSION shows only devices NOT on that version in the terminal.
-  The JSON output always contains all results.
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-
-    parser.add_argument("-i", "--input",    default=DEFAULT_CSV,
-        help=f"CSV file with 'host'/'port' columns (default: {DEFAULT_CSV})")
-    parser.add_argument("--host",           default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("-o", "--output",   default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: timestamped in {OUTPUT_DIR})")
-    parser.add_argument("-t", "--timeout",  type=int, default=DEFAULT_TIMEOUT,
-        help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",     type=int, default=DEFAULT_PORT,
-        help=f"TCP port (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers",  type=int, default=DEFAULT_WORKERS,
-        help=f"Number of concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--raw",            action="store_true", default=False,
-        help="With --host: dump raw TTP responses for all commands.")
-    parser.add_argument("--firmware",       default=None, metavar="VERSION",
-        help="Only show devices whose firmware does NOT match VERSION (e.g. --firmware 5.5.0.2). JSON always contains all results.")
-
-    args = parser.parse_args()
+    args = cli.parse_args(parser)
 
     term_width = get_terminal_width()
     start_time = time.monotonic()
@@ -698,52 +705,33 @@ Firmware filter:
     # -----------------------------------------------------------------------
     # Header block (spec 3.2)
     # -----------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
     print(f"  {BOLD}Biamp Tesira Firmware / Device Info Query Tool{RESET}{WHITE}")
     print(f"  Queries Tesira DSPs for firmware version and fault status")
-    print(f"  Input:   {input_display}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
-    print(f"  Port:    {args.port}")
+    print(f"  Port:    {args.port or DEFAULT_PORT}")
     print(f"  Auth:    None")
     if args.firmware:
-        print(f"  Filter:  Showing devices not on firmware {args.firmware}")
+        print(f"  Filter:  Showing devices not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
-    # Single-host --raw dump
+    # Build device list (--host or CSV)
     # -----------------------------------------------------------------------
-    if args.host and args.raw:
-        print(f"{WHITE}Raw TTP responses for {args.host}:{args.port}{RESET}\n")
-        commands = [
-            ("DEVICE get version",        CMD_VERSION),
-            ("DEVICE get networkStatus",  CMD_NETSTATUS),
-            ("DEVICE get serialNumber",   CMD_SERIAL),
-            ("DEVICE get activeFaultList", CMD_FAULTS),
-        ]
-        conn = TesiraConnection(args.host, args.port, args.timeout)
-        try:
-            conn.connect()
-            for label, cmd in commands:
-                try:
-                    resp = conn.send_command(cmd)
-                    print(f"{WHITE}--- {label} ---{RESET}")
-                    print(resp)
-                except Exception as e:
-                    print(f"{WHITE}--- {label} --- {RED}ERROR:{RESET} {e}")
-                print()
-        except Exception as e:
-            print(f"{RED}Connection failed:{RESET} {e}")
-        finally:
-            conn.close()
-        return
+    devices = cli.select_devices(
+        args, load_csv, lambda host: {"host": host, "port": DEFAULT_PORT})
 
     # -----------------------------------------------------------------------
-    # Build device list
+    # --raw: dump what each device sends back, no table / JSON
     # -----------------------------------------------------------------------
-    devices = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, args.timeout))
+        return
 
     # -----------------------------------------------------------------------
     # Progress bar + concurrent query loop (spec 3.3)

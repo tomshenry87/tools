@@ -57,12 +57,14 @@ import re
 import sys
 import os
 import shutil
-import argparse
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     from easysnmp import Session, EasySNMPTimeoutError, EasySNMPError
@@ -98,12 +100,8 @@ RESET  = "\033[0m"    # Always close every colour block
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV       = "secrets/ups_firmware.csv"
-OUTPUT_DIR        = "ups_firmware/files"
-DEFAULT_OUTPUT    = os.path.join(
-    OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+DEFAULT_CSV       = "secrets/ups_firmware.csv"     # relative to this script's folder
+OUTPUT_DIR        = "ups_firmware/files"           # results_<YYYYMMDD>_<HHMMSS>.json
 DEFAULT_COMMUNITY = "public"
 DEFAULT_TIMEOUT   = 10
 DEFAULT_PORT      = 161
@@ -303,6 +301,8 @@ def calibration_needed(result_code: int, date_str: str) -> bool:
 # ---------------------------------------------------------------------------
 def make_session(host: str, port: int, community: str,
                  timeout: int) -> Session:
+    # The community string is a secret: never traced.
+    cli.debug.log(host, f"SNMPv2c session to {host}:{port} (timeout {timeout}s, retries 1)")
     return Session(
         hostname=host,
         remote_port=port,
@@ -319,18 +319,29 @@ def snmp_get_value(session: Session, oid: str) -> tuple:
     Returns (value_string, error_string).
     value_string is None on failure.
     """
+    host = _trace_host(session)
+    cli.debug.sent(host, f"GET {oid}")
     try:
         result = session.get(oid)
         val = result.value
+        cli.debug.received(host, f"{oid} = {getattr(result, 'snmp_type', '?')} {val!r}")
         if val in (None, "NOSUCHOBJECT", "NOSUCHINSTANCE", "ENDOFMIBVIEW"):
             return None, f"No such object: {oid}"
         return str(val).strip(), None
     except EasySNMPTimeoutError:
+        cli.debug.log(host, f"GET {oid}: timed out")
         return None, "Timed out"
     except EasySNMPError as e:
+        cli.debug.log(host, f"GET {oid}: {type(e).__name__}: {e}")
         return None, str(e)
     except Exception as e:
+        cli.debug.log(host, f"GET {oid}: {type(e).__name__}: {e}")
         return None, str(e)
+
+
+def _trace_host(session) -> str:
+    """Host name for --debug lines (easysnmp keeps it on the session)."""
+    return str(getattr(session, "hostname", "snmp"))
 
 
 def snmp_get_int(session: Session, oid: str) -> int:
@@ -340,6 +351,7 @@ def snmp_get_int(session: Session, oid: str) -> int:
     try:
         return int(val)
     except ValueError:
+        cli.debug.log(_trace_host(session), f"{oid}: not an integer: {val!r}")
         return -1
 
 
@@ -428,6 +440,7 @@ def query_ups(host: str, port: int, community: str,
         if model_err:
             result["error"]  = model_err
             result["status"] = classify_status(model_err)
+            cli.debug.log(host, f"result: {result['status']} (model probe failed: {model_err})")
             return result
         result["model"] = model_val or "N/A"
 
@@ -476,9 +489,11 @@ def query_ups(host: str, port: int, community: str,
         result["status"] = "success"
 
     except Exception as e:
+        cli.debug.log(host, f"query failed: {type(e).__name__}: {e}")
         result["error"]  = str(e)
         result["status"] = classify_status(str(e))
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
 
 
@@ -486,13 +501,13 @@ def query_ups(host: str, port: int, community: str,
 # Output
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    cli.ensure_parent(filepath)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
     output = {
         "query_info": {
-            "csv_file":        str(Path(args.input).resolve()),
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        PROTOCOL_LABEL,
             "mode":            "SNMPv2c read (community)",
@@ -510,10 +525,15 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
 
 
 def print_results_table(results: list, output_file: str,
-                        elapsed: float, workers: int):
+                        elapsed: float, workers: int, firmware_filter: list = None):
+
+    # --firmware: show only units whose RMCARD (agent) firmware is not one of
+    # the given versions -- the same field the dashboard uses for UPS firmware.
+    # The full results list is always saved to JSON regardless.
+    display_results = cli.firmware_mismatches(results, firmware_filter, key="agent_firmware")
 
     table_data = []
-    for r in results:
+    for r in display_results:
         cap = r.get("battery_capacity_pct")
         cap_str = f"{cap}%" if cap is not None else "N/A"
 
@@ -582,6 +602,11 @@ def print_results_table(results: list, output_file: str,
     err   = sum(1 for r in results if r["status"] == "error")
 
     print()
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)} (Card FW)  |  "
+            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {total} devices"
+        )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
@@ -626,20 +651,59 @@ def print_results_table(results: list, output_file: str,
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+def dump_raw(dev: dict, timeout: int):
+    """--raw: GET every OID in the map and print the agent's raw reply (type + value)."""
+    session = make_session(dev["host"], dev["port"], dev["community"], timeout)
+    for name, oid in OID.items():
+        label = f"{name}  {oid}"
+        try:
+            var = session.get(oid)
+        except Exception as e:
+            cli.raw_error(label, f"{type(e).__name__}: {e}")
+            if name == "model" and isinstance(e, EasySNMPTimeoutError):
+                # Same as the query: no reply to the first GET means nothing else will answer
+                cli.raw_error("remaining OIDs", "skipped (no reply to the first GET)")
+                return
+            continue
+        text = f"{getattr(var, 'snmp_type', '?')} {var.value!r}"
+        if isinstance(var.value, str) and not var.value.isprintable():
+            try:    # binary OCTET STRING (e.g. the MAC): show the bytes too
+                text += f"  (hex: {var.value.encode('latin-1').hex(' ')})"
+            except UnicodeEncodeError:
+                pass
+        cli.raw_item(label, text)
+
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description=(
             "Query CyberPower OR700LCDRM1U UPS units via SNMP (RMCARD205).\n"
             "Reports model, serial, MAC, firmware, battery %, runtime,\n"
             "and whether annual runtime calibration is due."
         ),
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        timeout_type=int,     # easysnmp wants a whole number of seconds
+        port_help=f"UDP port for --host targets (default: the CSV row's, else {DEFAULT_PORT})",
+        firmware_help=("Show only units whose RMCARD card firmware (agent_firmware, the "
+                       "'Card FW' column -- the field the dashboard reports as UPS "
+                       "firmware) is NOT one of these versions. The JSON always has every unit."),
+        raw_help=("Print each unit's raw SNMP reply (type and value) for every OID "
+                  "queried, then exit without the table or JSON. Works with --host or "
+                  "the whole CSV."),
         epilog="""
 Examples:
-  python3 ups_script.py
+  python3 ups_script.py                                  # whole CSV
   python3 ups_script.py -i secrets/ups_firmware.csv
   python3 ups_script.py -i ups_firmware.csv -c mySecret -w 10
-  python3 ups_script.py --host 192.168.1.50
+  python3 ups_script.py --host 192.168.1.50              # one unit
   python3 ups_script.py --host 192.168.1.50 --raw
+  python3 ups_script.py --host 192.168.1.50 --debug
+  python3 ups_script.py --firmware 1.4.1 1.4.2           # units NOT on card FW 1.4.1/1.4.2
 
 CSV format (secrets/ups_firmware.csv):
   host,community,port
@@ -655,68 +719,49 @@ Calibration:
   To trigger from the RMCARD205 web UI:
     UPS -> Diagnostics -> Runtime Calibration -> Start
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-
-    parser.add_argument("-i", "--input",     default=DEFAULT_CSV,
-        help=f"CSV file with host/community/port columns (default: {DEFAULT_CSV})")
-    parser.add_argument("--host",            default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("-o", "--output",    default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: timestamped in {OUTPUT_DIR})")
-    parser.add_argument("-c", "--community", default=DEFAULT_COMMUNITY,
-        help=f"SNMP community string override (default: {DEFAULT_COMMUNITY})")
-    parser.add_argument("-t", "--timeout",   type=int, default=DEFAULT_TIMEOUT,
-        help=f"SNMP timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",      type=int, default=DEFAULT_PORT,
-        help=f"UDP port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers",   type=int, default=DEFAULT_WORKERS,
-        help=f"Concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--raw",             action="store_true", default=False,
-        help="With --host: dump all raw SNMP OID values and exit")
-
-    args = parser.parse_args()
+    g_ups = parser.add_argument_group("UPS options")
+    g_ups.add_argument("-c", "--community", default=None, metavar="COMMUNITY",
+        help=("SNMP v2c community string for every unit queried (CSV rows and --host "
+              "targets). Default: each CSV row's community, else "
+              f"'{DEFAULT_COMMUNITY}'."))
+    args = cli.parse_args(parser)
 
     term_width = get_terminal_width()
 
     # -----------------------------------------------------------------------
     # Header block
     # -----------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
     print(f"  {BOLD}CyberPower OR700LCDRM1U UPS SNMP Query Tool{RESET}{WHITE}")
     print(f"  Queries CyberPower UPS units with RMCARD205 cards over SNMP")
-    print(f"  Input:   {input_display}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
     print(f"  Mode:    SNMPv2c read (community)")
+    if args.firmware:
+        print(f"  Filter:  Showing units not on card firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
     # -----------------------------------------------------------------------
-    # --host --raw dump
+    # Build device list (--host or CSV)
     # -----------------------------------------------------------------------
-    if args.host and args.raw:
-        print(f"{WHITE}Raw SNMP OID dump for {args.host}:{args.port}{RESET}\n")
-        session = make_session(args.host, args.port, args.community, args.timeout)
-        for name, oid in OID.items():
-            val, err = snmp_get_value(session, oid)
-            if err:
-                print(f"  {RED}{name:<25}{RESET}{WHITE} {oid}  =>  ERROR: {err}{RESET}")
-            else:
-                print(f"  {GREEN}{name:<25}{RESET}{WHITE} {oid}  =>  {val!r}{RESET}")
-        return
+    devices = cli.select_devices(
+        args, load_csv,
+        lambda host: {"host": host, "port": DEFAULT_PORT, "community": DEFAULT_COMMUNITY})
+    if args.community is not None:
+        for d in devices:
+            d["community"] = args.community
 
     # -----------------------------------------------------------------------
-    # Build device list
+    # --raw: dump what each unit sends back, no table / JSON
     # -----------------------------------------------------------------------
-    if args.host:
-        devices = [{"host": args.host, "port": args.port, "community": args.community}]
-    else:
-        devices = load_csv(args.input)
-        if args.community != DEFAULT_COMMUNITY:
-            for d in devices:
-                d["community"] = args.community
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, args.timeout))
+        return
 
     # -----------------------------------------------------------------------
     # Progress bar + concurrent query loop
@@ -761,7 +806,7 @@ Calibration:
     host_order = {d["host"]: i for i, d in enumerate(devices)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
-    print_results_table(results, args.output, elapsed, args.workers)
+    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
     save_results_json(results, args.output, args, elapsed)
 
 

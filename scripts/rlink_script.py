@@ -7,11 +7,13 @@ states from RLNK-915R, RLNK-415R, and RLNK-215 PDUs via their JSON
 settings endpoint at /assets/js/json/settings.json.
 
 Usage:
-    python rlink_firmware.py                                  # reads secrets/rlink_firmware.csv
-    python rlink_firmware.py --host 192.168.1.200             # single device
-    python rlink_firmware.py --host 192.168.1.200 --port 80 -u admin -p s3cret
-    python rlink_firmware.py -i secrets/rlink_firmware.csv -w 10
-    python rlink_firmware.py --firmware 1.14.02               # hide up-to-date devices
+    python3 rlink_script.py                                   # reads secrets/rlink_firmware.csv
+    python3 rlink_script.py --host 192.168.1.200              # single device
+    python3 rlink_script.py --host 192.168.1.200 -p 80 -u admin --password s3cret
+    python3 rlink_script.py -i secrets/rlink_firmware.csv -w 10
+    python3 rlink_script.py --firmware 1.14.02                # hide up-to-date devices
+    python3 rlink_script.py --host 192.168.1.200 --raw        # print the settings JSON
+    (run with --help for every flag; -p is the port, the password flag is --password)
 
 Input CSV (default: secrets/rlink_firmware.csv):
     host,port,user_name,pw
@@ -24,10 +26,10 @@ Requirements:
     pip install tabulate tqdm
 """
 
-import argparse
 import base64
 import csv
 import json
+import os
 import re
 import shutil
 import ssl
@@ -41,6 +43,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
+
 from tabulate import tabulate
 from tqdm import tqdm
 
@@ -53,7 +58,13 @@ WHITE  = "\033[97m"   # All body text, table content, labels
 BOLD   = "\033[1m"    # Section headers, label emphasis
 RESET  = "\033[0m"    # Always close every colour block
 
-DEFAULT_PORT = 80
+DEFAULT_CSV      = "secrets/rlink_firmware.csv"   # relative to this script's folder
+OUTPUT_DIR       = "rlink_firmware/files"         # results_<YYYYMMDD>_<HHMMSS>.json
+DEFAULT_PORT     = 80
+DEFAULT_TIMEOUT  = 10
+DEFAULT_WORKERS  = 5
+DEFAULT_USERNAME = "admin"     # used when the CSV has no user_name / for --host not in the CSV
+DEFAULT_PASSWORD = "admin"
 
 
 # ── Shared Helpers ───────────────────────────────────────────────────
@@ -161,8 +172,8 @@ def load_csv(csv_path: str) -> list:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
             except (ValueError, TypeError):
                 port = DEFAULT_PORT
-            username = (row.get(col_map.get("user_name", ""), "") or "").strip() or "admin"
-            password = (row.get(col_map.get("pw", ""), "") or "").strip() or "admin"
+            username = (row.get(col_map.get("user_name", ""), "") or "").strip() or DEFAULT_USERNAME
+            password = (row.get(col_map.get("pw", ""), "") or "").strip() or DEFAULT_PASSWORD
             devices.append({
                 "host": host,
                 "port": port,
@@ -193,14 +204,45 @@ def http_get(url: str, username: str, password: str,
         "Accept-Encoding": "identity",
         "User-Agent": "RackLinkQuery/1.0",
     })
+    host = urllib.parse.urlsplit(url).hostname or url
+    # The Authorization header is never traced.
+    cli.debug.log(host, f"GET {url} (Basic auth as {username!r}, timeout {timeout}s)")
     resp = urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx)
     body = resp.read().decode("utf-8", errors="replace")
+    if cli.debug.enabled:
+        cli.debug.log(host, f"HTTP {resp.status} {getattr(resp, 'reason', '')}, {len(body)} chars")
+        cli.debug.received(host, _redacted_body(body))
     return resp.status, body
+
+
+def _redacted_body(body: str):
+    """settings.json for --debug with any secret-looking keys masked (see cli.redact)."""
+    try:
+        data = json.loads(body)
+    except (ValueError, TypeError):
+        return body
+
+    def walk(o):
+        if isinstance(o, dict):
+            return {k: walk(v) for k, v in cli.redact(o).items()}
+        if isinstance(o, list):
+            return [walk(v) for v in o]
+        return o
+    return walk(data)
 
 
 # ── RackLink Query Logic (protocol — do not change) ──────────────────
 
 SETTINGS_PATH = "/assets/js/json/settings.json"
+
+
+def base_urls(host: str, port: int) -> list:
+    """URL bases to try, in order: the scheme the port implies first, then the other."""
+    if port == 80:
+        return [f"http://{host}", f"https://{host}"]
+    if port == 443:
+        return [f"https://{host}", f"http://{host}"]
+    return [f"https://{host}:{port}", f"http://{host}:{port}"]
 
 
 def query_racklink(host: str, port: int = DEFAULT_PORT, username: str = "admin",
@@ -225,16 +267,7 @@ def query_racklink(host: str, port: int = DEFAULT_PORT, username: str = "admin",
     }
 
     # Build URL candidates based on port
-    candidates = []
-    if port == 80:
-        candidates.append(f"http://{host}")
-        candidates.append(f"https://{host}")
-    elif port == 443:
-        candidates.append(f"https://{host}")
-        candidates.append(f"http://{host}")
-    else:
-        candidates.append(f"https://{host}:{port}")
-        candidates.append(f"http://{host}:{port}")
+    candidates = base_urls(host, port)
 
     body = None
     for base_url in candidates:
@@ -244,19 +277,24 @@ def query_racklink(host: str, port: int = DEFAULT_PORT, username: str = "admin",
             )
             if status == 200 and body:
                 break
+            cli.debug.log(host, f"{base_url}: HTTP {status}, {len(body or '')} chars -- trying next")
         except urllib.error.HTTPError as e:
+            cli.debug.log(host, f"{base_url}: HTTP {e.code} {e.reason}")
             if e.code in (401, 403):
                 result["status"] = "auth_error"
                 result["error"] = f"Authentication failed (HTTP {e.code})"
+                cli.debug.log(host, f"result: auth_error ({result['error']})")
                 return result
             body = None
             continue
-        except Exception:
+        except Exception as e:
+            cli.debug.log(host, f"{base_url}: {type(e).__name__}: {e}")
             body = None
             continue
 
     if not body:
         result["error"] = f"Could not connect to {host} via HTTPS or HTTP"
+        cli.debug.log(host, f"result: error ({result['error']})")
         return result
 
     # Parse JSON
@@ -264,6 +302,7 @@ def query_racklink(host: str, port: int = DEFAULT_PORT, username: str = "admin",
         data = json.loads(body)
     except json.JSONDecodeError as e:
         result["error"] = f"Invalid JSON from settings endpoint: {e}"
+        cli.debug.log(host, f"result: error ({result['error']})")
         return result
 
     # Extract fields from the JSON structure
@@ -298,60 +337,82 @@ def query_racklink(host: str, port: int = DEFAULT_PORT, username: str = "admin",
     else:
         result["error"] = "Connected but settings JSON contained no device info"
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
 
 
 # ── Main ─────────────────────────────────────────────────────────────
 
+def dump_raw(dev: dict, timeout: int):
+    """--raw: GET settings.json the same way the query does and print each reply."""
+    for base_url in base_urls(dev["host"], dev.get("port", DEFAULT_PORT)):
+        url = f"{base_url}{SETTINGS_PATH}"
+        try:
+            status, body = http_get(url, dev["username"], dev["password"], timeout)
+        except urllib.error.HTTPError as e:
+            cli.raw_error(f"GET {url}", f"HTTP {e.code} {e.reason}")
+            if e.code in (401, 403):
+                return          # the query stops here too (auth_error)
+            continue
+        except Exception as e:
+            cli.raw_error(f"GET {url}", f"{type(e).__name__}: {e}")
+            continue
+        try:
+            shown = json.loads(body)        # pretty-printed when it parses
+        except ValueError:
+            shown = body
+        cli.raw_item(f"GET {url}  (HTTP {status}, {len(body)} chars)", shown)
+        if status == 200 and body:
+            return              # the query uses the first URL that answers
+
+
 def main():
-    script_dir = Path(__file__).resolve().parent
+    parser = cli.build_parser(
+        script_file=__file__,
+        description="Query Middle Atlantic RackLink Select Series PDUs",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        auth=cli.AUTH_USER_PASSWORD,
+        port_help=(f"Port for --host targets (default: the CSV row's, else {DEFAULT_PORT}). "
+                   "80 tries http:// then https://, 443 https:// then http://, "
+                   "any other port https://HOST:PORT then http://HOST:PORT."),
+        raw_help=("Print the settings.json each PDU sends back (and the error for each "
+                  "URL that fails), then exit without the table or JSON. Works with "
+                  "--host or the whole CSV."),
+        epilog=f"""
+Examples:
+  python3 rlink_script.py                                  # whole CSV
+  python3 rlink_script.py --host 192.168.1.200             # one PDU
+  python3 rlink_script.py --host 192.168.1.200 -p 443 -u admin --password s3cret
+  python3 rlink_script.py --host 192.168.1.200 --raw
+  python3 rlink_script.py --host 192.168.1.200 --debug
+  python3 rlink_script.py --firmware 1.14.02 1.14.03       # PDUs NOT on either version
+  python3 rlink_script.py -i devices.csv -t 15 -w 10 -o out.json
 
-    parser = argparse.ArgumentParser(
-        description="Query Middle Atlantic RackLink Select Series PDUs"
+Note: -p is now the PORT (the standard flag). The password flag is --password
+  (it used to be -p/--password).
+
+CSV columns: host,port,user_name,pw  (port, user_name and pw optional;
+  defaults {DEFAULT_PORT}, {DEFAULT_USERNAME}/{DEFAULT_PASSWORD}). A --host that is not in the CSV
+  uses the same defaults unless -p / -u / --password are given.
+        """,
     )
-    parser.add_argument("--host", help="Single device IP or hostname")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT,
-                        help=f"Port for single host (default: {DEFAULT_PORT})")
-    parser.add_argument("-u", "--username", default="admin",
-                        help="Username for single host (default: admin)")
-    parser.add_argument("-p", "--password", default="admin",
-                        help="Password for single host (default: admin)")
-    parser.add_argument("--firmware", metavar="VERSION",
-                        help="Current firmware version — hides matching devices from table")
-    parser.add_argument("-i", "--input",
-                        default=str(script_dir / "secrets" / "rlink_firmware.csv"),
-                        help="Input CSV file (default: secrets/rlink_firmware.csv)")
-    parser.add_argument("-o", "--output", default=None,
-                        help="Output JSON file (default: rlink_firmware/files/results_YYYYMMDD_HHMMSS.json)")
-    parser.add_argument("-w", "--workers", type=int, default=5)
-    parser.add_argument("-t", "--timeout", type=int, default=10)
-    args = parser.parse_args()
+    args = cli.parse_args(parser)
 
-    # ── Build output path with timestamp ─────────────────────────────
-    if args.output:
-        out_path = Path(args.output).resolve()
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        output_file = str(out_path)
-    else:
-        out_dir = script_dir / "rlink_firmware" / "files"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = str((out_dir / f"results_{stamp}.json").resolve())
+    # ── Output path ──────────────────────────────────────────────────
+    output_file = str(Path(args.output).resolve())
 
-    csv_file = str(Path(args.input).resolve())
+    csv_file = cli.input_label(args)
 
-    # ── Build device list ────────────────────────────────────────────
-    if args.host:
-        devices = [{
-            "host": args.host,
-            "port": args.port,
-            "username": args.username,
-            "password": args.password,
-        }]
-        mode = "json_api_single_host"
-    else:
-        devices = load_csv(args.input)
-        mode = "json_api"
+    # ── Build device list (--host or CSV) ────────────────────────────
+    devices = cli.select_devices(
+        args, load_csv,
+        lambda host: {"host": host, "port": DEFAULT_PORT,
+                      "username": DEFAULT_USERNAME, "password": DEFAULT_PASSWORD})
+    mode = "json_api_single_host" if args.host else "json_api"
 
     total = len(devices)
 
@@ -360,10 +421,17 @@ def main():
     print(f"  {BOLD}Middle Atlantic RackLink Select Series — Device Info Query{RESET}{WHITE}")
     print(f"  Queries RackLink PDUs for firmware, serial, and outlet states")
     print(f"  Input:   {csv_file}")
-    print(f"  Output:  {output_file}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else output_file}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
+
+    # ── --raw: dump what each PDU sends back, no table / JSON ────────
+    if args.raw:
+        cli.run_raw(devices, lambda d: dump_raw(d, args.timeout))
+        return
 
     # ── Progress Bar + Threaded Scan ─────────────────────────────────
     active_lock = threading.Lock()
@@ -437,10 +505,7 @@ def main():
 
     # ── Filter displayed rows when --firmware is set ─────────────────
     if args.firmware:
-        display_results = [
-            r for r in results
-            if r.get("firmware_version") != args.firmware
-        ]
+        display_results = cli.firmware_mismatches(results, args.firmware)
         hidden = total - len(display_results)
     else:
         display_results = results
@@ -492,7 +557,7 @@ def main():
             print(f"  {line}")
     else:
         print()
-        print(f"  All {total} devices matched firmware {args.firmware} — none to display.")
+        print(f"  All {total} devices matched firmware {cli.firmware_label(args.firmware)} — none to display.")
         print()
 
     if hidden > 0:
@@ -500,7 +565,7 @@ def main():
         print(
             f"  {BOLD}Filter:{RESET}{WHITE} "
             f"Hiding {hidden} device{'s' if hidden != 1 else ''} "
-            f"on firmware {args.firmware}"
+            f"on firmware {cli.firmware_label(args.firmware)}"
         )
 
     # ── Summary Footer ───────────────────────────────────────────────
@@ -539,6 +604,7 @@ def main():
     print()
 
     # ── JSON Output ──────────────────────────────────────────────────
+    cli.ensure_parent(output_file)
     output = {
         "query_info": {
             "csv_file": csv_file,

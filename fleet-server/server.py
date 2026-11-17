@@ -60,6 +60,7 @@ ARRAY_KEY_TO_TYPE = {
     "relays": "relay",
     "dsp": "dsp",
     "panels": "touch_panel",
+    "transceivers": "wireless_mic",
 }
 
 

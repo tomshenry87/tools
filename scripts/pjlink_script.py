@@ -19,16 +19,18 @@ import socket
 import hashlib
 import json
 import csv
-import argparse
+import os
 import sys
 import re
-import logging
 import time
 import shutil
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 from tabulate import tabulate
 from tqdm import tqdm
@@ -45,10 +47,22 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 DEFAULT_PORT = 4352
-DEFAULT_CSV = "secrets/pjlink_firmware.csv"
-DEFAULT_OUTPUT_DIR = "projector_version_check/files"
+DEFAULT_CSV = "secrets/pjlink_firmware.csv"              # relative to this script's folder
+DEFAULT_OUTPUT_DIR = "projector_version_check/files"     # results_<YYYYMMDD>_<HHMMSS>.json
+DEFAULT_TIMEOUT = 10
 DEFAULT_WORKERS = 5
 ARRAY_KEY = "projectors"
+
+# --raw: every command the old --diagnostic sent, plus the extra --all queries
+RAW_COMMANDS = [
+    ("%1", "CLSS"), ("%1", "POWR"), ("%1", "INF1"), ("%1", "INF2"),
+    ("%1", "INFO"), ("%1", "NAME"), ("%1", "LAMP"), ("%1", "ERST"),
+    ("%2", "SVER"), ("%2", "SNUM"),
+]
+RAW_COMMANDS_ALL = [
+    ("%1", "INPT"), ("%1", "INST"), ("%1", "AVMT"),
+    ("%2", "FILT"), ("%2", "IRES"), ("%2", "RRES"),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -65,25 +79,17 @@ RESET = "\033[0m"    # Always close every colour block
 
 
 # ---------------------------------------------------------------------------
-# Logging  —  PROTECTED (spec 4)
+# Debug trace (--debug)
+# The old pjlink logger is gone: --debug now goes through cli.debug, which
+# prefixes every line with the host and writes to stderr.
 # ---------------------------------------------------------------------------
 
-log = logging.getLogger("pjlink")
-log.addHandler(logging.NullHandler())
+_DIGEST_RE = re.compile(rb"^[0-9a-f]{32}(?=%)")
 
 
-def setup_logging(debug: bool):
-    log.handlers.clear()
-    if debug:
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
-        ))
-        log.addHandler(handler)
-        log.setLevel(logging.DEBUG)
-    else:
-        log.addHandler(logging.NullHandler())
-        log.setLevel(logging.WARNING)
+def _mask_digest(data: bytes) -> bytes:
+    """Packet as it may be traced: the MD5 auth digest prefix is replaced, never logged."""
+    return _DIGEST_RE.sub(b"<md5 digest>", bytes(data))
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +171,8 @@ def truncate_error(err, max_len: int = 30) -> str:
 # PJLink Client  —  PROTECTED IN FULL (spec 4). DO NOT MODIFY.
 # Class 1 / Class 2 negotiation, auth challenge/response, command framing.
 # Field naming for the JSON contract is handled downstream in query_projector().
+# The only additions are --debug trace calls (cli.debug.*), which change nothing
+# when --debug is off; the auth digest and password are never traced.
 # ---------------------------------------------------------------------------
 
 class PJLinkError(Exception):
@@ -215,13 +223,16 @@ class PJLinkClient:
 
     def connect(self):
         try:
+            cli.debug.log(self.host, f"connecting to {self.host}:{self.port} (timeout {self.timeout}s)")
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(self.timeout)
             self.socket.connect((self.host, self.port))
+            cli.debug.log(self.host, "connected; waiting for PJLINK greeting")
             raw = self._receive_raw_line()
             greeting = raw.decode("utf-8", errors="replace")
-            log.debug(f"[{self.host}] Greeting: {repr(greeting)}")
             self._parse_greeting(greeting)
+            cli.debug.log(self.host, "greeting ok: authentication "
+                          + ("ON (MD5 digest will be sent)" if self.security_enabled else "off"))
         except socket.timeout:
             raise PJLinkError(f"Connection timed out: {self.host}:{self.port}")
         except ConnectionRefusedError:
@@ -254,8 +265,8 @@ class PJLinkClient:
         if self.socket:
             try:
                 self.socket.close()
-            except OSError:
-                pass
+            except OSError as e:
+                cli.debug.log(self.host, f"close failed (ignored): {e}")
             finally:
                 self.socket = None
 
@@ -277,8 +288,13 @@ class PJLinkClient:
                     break
         except socket.timeout:
             if not data:
+                cli.debug.log(self.host, f"recv: nothing within {self.timeout}s")
                 raise PJLinkError(f"No response from {self.host} (timeout)")
-        log.debug(f"[{self.host}] RX: {repr(data)}")
+            cli.debug.log(self.host, f"recv: timed out after {len(data)} bytes; using the partial line")
+        if data:
+            cli.debug.received(self.host, data)
+        else:
+            cli.debug.log(self.host, "recv: nothing (connection closed by the device)")
         return data
 
     def _drain_socket(self):
@@ -291,27 +307,26 @@ class PJLinkClient:
                 chunk = self.socket.recv(self.BUFFER_SIZE)
                 if not chunk:
                     break
-        except (socket.timeout, OSError):
-            pass
+                cli.debug.log(self.host, f"drained stale data: {cli.show(chunk)}")
+        except (socket.timeout, OSError) as e:
+            if not isinstance(e, socket.timeout):  # a timeout just means nothing left to drain
+                cli.debug.log(self.host, f"drain failed (ignored): {e}")
         finally:
             self.socket.settimeout(orig)
 
     def _compute_digest(self) -> str:
+        # Never trace the nonce + password input or the digest itself (see _mask_digest).
         if not self.security_enabled or not self.random_number:
             return ""
         digest = hashlib.md5(
             f"{self.random_number}{self.password}".encode("utf-8")
         ).hexdigest()
-        log.debug(
-            f"[{self.host}] Auth digest — nonce: {self.random_number!r} "
-            f"+ password → MD5: {digest}"
-        )
         return digest
 
     def _send_raw(self, data: bytes):
         if not self.socket:
             raise PJLinkError("Not connected.")
-        log.debug(f"[{self.host}] TX: {repr(data)}")
+        cli.debug.sent(self.host, _mask_digest(data))
         self.socket.sendall(data)
 
     def _should_prepend_digest(self) -> bool:
@@ -358,13 +373,14 @@ class PJLinkClient:
                 if "PJLINK" in resp.upper() and "ERRA" in resp.upper():
                     raise PJLinkAuthError("PJLINK ERRA")
                 return self._parse_response(resp, cmd)
-        except (socket.timeout, OSError):
-            pass
+            cli.debug.log(self.host, f"{header}{cmd}: empty reply; trying retry variants")
+        except (socket.timeout, OSError) as e:
+            cli.debug.log(self.host, f"{header}{cmd}: {e}; trying retry variants")
         return self._retry_command(cmd, param, header)
 
     def _retry_command(self, cmd, param, orig_hdr) -> str:
         alt = "%2" if orig_hdr == "%1" else "%1"
-        for _, hdr, dig in [
+        for name, hdr, dig in [
             ("drain", orig_hdr, None), ("force", orig_hdr, True),
             ("nodig", orig_hdr, False), ("alt", alt, None),
             ("alt+dig", alt, True), ("alt-dig", alt, False),
@@ -375,7 +391,10 @@ class PJLinkClient:
                 resp = self._send_and_receive(hdr, cmd, param, dig)
                 if resp and not ("PJLINK" in resp.upper() and "ERRA" in resp.upper()):
                     return self._parse_response(resp, cmd)
-            except (PJLinkError, socket.timeout, OSError):
+                cli.debug.log(self.host, f"retry '{name}' {hdr}{cmd}: "
+                              + ("PJLINK ERRA" if resp else "empty reply"))
+            except (PJLinkError, socket.timeout, OSError) as e:
+                cli.debug.log(self.host, f"retry '{name}' {hdr}{cmd} failed: {e}")
                 continue
         raise PJLinkError(f"No response for {cmd} after retries.")
 
@@ -414,6 +433,7 @@ class PJLinkClient:
         try:
             return func(), None
         except PJLinkError as e:
+            cli.debug.log(self.host, f"{label} failed: {e}")
             return None, str(e)
 
     def detect_class(self) -> str:
@@ -423,10 +443,12 @@ class PJLinkClient:
             v = self._send_command("CLSS", "?", "%1")
             if v and not v.startswith("ERROR"):
                 self.detected_class = v.strip()
-        except PJLinkError:
+        except PJLinkError as e:
+            cli.debug.log(self.host, f"CLSS failed ({e}); assuming Class 1")
             self.detected_class = "1"
         if self.detected_class == "1":
             self.auth_sent = False
+        cli.debug.log(self.host, f"PJLink class: {self.detected_class}")
         return self.detected_class
 
     # -- Class 1 --
@@ -582,18 +604,21 @@ class PJLinkClient:
         info["lamp_info_raw"] = v if v is not None else f"ERROR: {e}"
         try:
             info["lamp_info"] = self.get_lamp_info_parsed()
-        except PJLinkError:
+        except PJLinkError as e:
+            cli.debug.log(self.host, f"lamp_info failed: {e}")
             info["lamp_info"] = []
         try:
             ti, ts = self.get_lamp_hours_total()
             info["lamp_hours_total"] = ti
             info["lamp_hours_total_display"] = ts
-        except PJLinkError:
+        except PJLinkError as e:
+            cli.debug.log(self.host, f"lamp_hours_total failed: {e}")
             info["lamp_hours_total"] = -1
             info["lamp_hours_total_display"] = "N/A"
         try:
             info["lamp_hours_summary"] = self.get_lamp_hours_summary()
-        except PJLinkError:
+        except PJLinkError as e:
+            cli.debug.log(self.host, f"lamp_hours_summary failed: {e}")
             info["lamp_hours_summary"] = "N/A"
 
     def _derive_fw(self, info) -> str:
@@ -714,7 +739,48 @@ def _map_to_contract(info: dict) -> dict:
     return out
 
 
-def query_projector(host, port, password, timeout, query_all, diagnostic):
+def make_device(host: str) -> dict:
+    """--host target that is not in the CSV: same shape as a load_csv() row."""
+    return {"host": host, "port": DEFAULT_PORT, "password": None}
+
+
+class _QueryClient(PJLinkClient):
+    """PJLinkClient for query_projector(): a rejected password ends the query.
+
+    The protected client swallows PJLINK ERRA in detect_class() (it assumes
+    Class 1) and in _safe_query() (the field becomes "ERROR: PJLINK ERRA"), so
+    a wrong password used to come out as status "success" with N/A fields.
+    This subclass notes the ERRA and raises it at the first of those points, so
+    query_projector() reports auth_error. PJLinkClient itself, --info and
+    --send are unchanged.
+    """
+
+    auth_rejected = False
+
+    def _send_command(self, cmd, param="?", class_prefix=None):
+        try:
+            return super()._send_command(cmd, param, class_prefix)
+        except PJLinkAuthError:
+            self.auth_rejected = True
+            raise
+
+    def _stop_if_rejected(self):
+        if self.auth_rejected:
+            cli.debug.log(self.host, "password rejected (PJLINK ERRA); stopping")
+            raise PJLinkAuthError("PJLINK ERRA — password rejected")
+
+    def detect_class(self) -> str:
+        detected = super().detect_class()
+        self._stop_if_rejected()
+        return detected
+
+    def _safe_query(self, label, func):
+        found = super()._safe_query(label, func)
+        self._stop_if_rejected()
+        return found
+
+
+def query_projector(host, port, password, timeout, query_all):
     result = {
         "host": host,
         "port": port,
@@ -729,14 +795,10 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
         "lamp_hours_total": None,
         "power_status": None,
     }
-    client = PJLinkClient(host=host, port=port, password=password, timeout=timeout)
+    client = _QueryClient(host=host, port=port, password=password, timeout=timeout)
     try:
         client.connect()
-        if diagnostic:
-            result["diagnostic"] = client.run_diagnostic()
-            result["lamp_hours_total_display"] = "See diagnostic"
-            result["lamp_hours_summary"] = "See diagnostic"
-        elif query_all:
+        if query_all:
             result.update(_map_to_contract(client.get_all_info()))
         else:
             result.update(_map_to_contract(client.get_firmware_info()))
@@ -751,7 +813,51 @@ def query_projector(host, port, password, timeout, query_all, diagnostic):
                       lamp_hours_total_display="N/A", lamp_hours_summary="N/A")
     finally:
         client.disconnect()
+    cli.debug.log(host, f"result: {result['status']}"
+                        + (f" ({result['error']})" if result["error"] else
+                           f" (firmware {result.get('firmware_version')})"))
     return result
+
+
+def dump_raw(dev: dict, timeout: int, query_all: bool = False):
+    """
+    --raw (was --diagnostic): print the greeting, then the raw reply to every
+    diagnostic query. With authentication on, each command is tried with the
+    MD5 digest first and again without it if that gets no reply. The digest
+    itself is never printed.
+    """
+    host, port = dev["host"], dev["port"]
+    client = PJLinkClient(host=host, port=port, password=dev.get("password"), timeout=timeout)
+    try:
+        # PJLinkClient.connect() parses the greeting without keeping it, so the
+        # same steps are done here to show it before it is parsed.
+        cli.debug.log(host, f"connecting to {host}:{port} (timeout {timeout}s)")
+        client.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.socket.settimeout(timeout)
+        client.socket.connect((host, port))
+        greeting = client._receive_raw_line()
+        cli.raw_item("greeting", greeting.rstrip(b"\r\n"))
+        client._parse_greeting(greeting.decode("utf-8", errors="replace"))
+
+        for hdr, cmd in RAW_COMMANDS + (RAW_COMMANDS_ALL if query_all else []):
+            for dig in ([True, False] if client.security_enabled else [False]):
+                label = f"{hdr}{cmd} ?"
+                if client.security_enabled:
+                    label += " (with digest)" if dig else " (without digest)"
+                try:
+                    client._drain_socket()
+                    client._send_raw(client._build_packet(hdr, cmd, "?", force_digest=dig))
+                    time.sleep(0.2)
+                    raw = client._receive_raw_line()
+                except Exception as e:
+                    cli.raw_error(label, e)
+                    continue
+                if raw.strip():
+                    cli.raw_item(label, raw.rstrip(b"\r\n"))
+                    break
+                cli.raw_error(label, "empty reply")
+    finally:
+        client.disconnect()
 
 
 # ---------------------------------------------------------------------------
@@ -978,103 +1084,119 @@ def run_info_mode(projectors, timeout):
 # Main
 # ---------------------------------------------------------------------------
 
-def default_output_path() -> str:
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return str(Path(DEFAULT_OUTPUT_DIR) / f"results_{ts}.json")
-
-
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="PJLink projector firmware & lamp hours query (Class 1 + 2)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        default_csv=DEFAULT_CSV,
+        output_dir=DEFAULT_OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        auth=cli.AUTH_PASSWORD,
+        host_help=("Query HOST instead of the whole CSV (also the target of --send). "
+                   "Repeat for several hosts. If HOST is in the CSV, that row's port "
+                   "and password are reused."),
+        raw_help=("Print each projector's PJLINK greeting and its raw reply to every "
+                  "query (CLSS POWR INF1 INF2 INFO NAME LAMP ERST SVER SNUM; --all adds "
+                  "INPT INST AVMT FILT IRES RRES), then exit without the table or JSON. "
+                  "Works with --host or the whole CSV. Replaces --diagnostic."),
+        debug_help=("Trace every connection, command sent and reply received (plus "
+                    "retries) to stderr, prefixed with the host. The password and MD5 "
+                    "auth digest are never shown. The normal table and JSON still run."),
         epilog=f"""
-Defaults:
-    Input CSV:   {DEFAULT_CSV}
-    Output JSON: {DEFAULT_OUTPUT_DIR}/results_<YYYYMMDD>_<HHMMSS>.json
-    Workers:     {DEFAULT_WORKERS}
-
 CSV Format:
     host,port,password
     192.168.1.100,4352,mypassword
     192.168.1.101,,
 
 Examples:
-    %(prog)s
-    %(prog)s -i my_projectors.csv -o my_results.json
-    %(prog)s -w 10 --all
-    %(prog)s --firmware 1.07 1.08
+    %(prog)s                                     # whole CSV
+    %(prog)s --host 192.168.1.10                 # one projector
+    %(prog)s --host 192.168.1.10 --password 'secret'
+    %(prog)s --host 192.168.1.10 --raw           # greeting + raw reply to every query
+    %(prog)s --host 192.168.1.10 --debug         # trace the exchange on stderr
+    %(prog)s --firmware 1.07 1.08                # who is NOT on 1.07 or 1.08
+    %(prog)s -i my_projectors.csv -o my_results.json -w 10 --all
     %(prog)s --info 192.168.1.10 --password 'secret'
     %(prog)s --send POWR 1 --host 192.168.1.10
-    %(prog)s --diagnostic --debug
+
+Protocol:
+    PJLink over TCP {DEFAULT_PORT}. Class 1 and Class 2; MD5 password
+    authentication when the projector asks for it (PJLINK 1 <random>).
         """,
     )
+    group = parser.add_argument_group("PJLink options")
+    group.add_argument("--all", action="store_true",
+                       help="Query every PJLink command (inputs, mute, error status, "
+                            "filter, resolution, ...), not just firmware + lamp")
+    group.add_argument("--info", nargs="?", const=True, metavar="HOST",
+                       help="Query INFO one device at a time (CSV, --host, or the HOST "
+                            "given here) and print raw + parsed values; no JSON")
+    group.add_argument("--send", nargs=2, metavar=("CMD", "PARAM"),
+                       help="Send one PJLink command to each --host, e.g. "
+                            "--send POWR 1 --host 192.168.1.10; no JSON")
+    cli.add_alias(parser, "--diagnostic", dest="raw", action="store_true")
 
-    parser.add_argument("-i", "--input", default=DEFAULT_CSV,
-                        help=f"Input CSV (default: {DEFAULT_CSV})")
-    parser.add_argument("-o", "--output", default=None,
-                        help=f"Output JSON (default: {DEFAULT_OUTPUT_DIR}/results_<YYYYMMDD>_<HHMMSS>.json)")
-    parser.add_argument("-t", "--timeout", type=int, default=10,
-                        help="Timeout per device in seconds (default: 10)")
-    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
-                        help=f"Concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--all", action="store_true", help="Query all commands")
-    parser.add_argument("--firmware", nargs="+", metavar="VERSION",
-                        help="Only show devices where firmware does not match any of the provided versions")
-    parser.add_argument("--diagnostic", action="store_true", help="Raw hex diagnostic")
-    parser.add_argument("--info", nargs="?", const=True, metavar="HOST",
-                        help="Query INFO one by one; optionally pass a single HOST to skip CSV")
-    parser.add_argument("--send", nargs=2, metavar=("CMD", "PARAM"),
-                        help="Send a PJLink command to a single host, e.g. --send POWR 1")
-    parser.add_argument("--host", default=None,
-                        help="Single host for --send (IP or hostname)")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT,
-                        help=f"Port for single-host queries (default: {DEFAULT_PORT})")
-    parser.add_argument("--password", default=None,
-                        help="Password for single-host queries")
-    parser.add_argument("--debug", action="store_true", help="Debug logging")
+    args = cli.parse_args(parser)
 
-    args = parser.parse_args()
-    setup_logging(args.debug)
+    # --info HOST is the same as --info --host HOST
+    if isinstance(args.info, str):
+        args.host = (args.host or []) + [args.info]
 
-    csv_file = args.input
-    output_file = args.output if args.output else default_output_path()
-    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+    output_file = args.output
     workers = max(1, args.workers)
+
+    if args.send:
+        output_display = "(none: --send)"
+    elif args.info:
+        output_display = "(none: --info)"
+    elif args.raw:
+        output_display = "(none: --raw)"
+    else:
+        output_display = output_file
 
     # -- Header (spec 3.2) --
     print(f"{WHITE}")
     print(f"  {BOLD}PJLink Projector Firmware & Lamp Hours Query{RESET}{WHITE}")
     print(f"  Queries projectors via PJLink Class 1 and Class 2")
-    print(f"  Input:   {csv_file}")
-    print(f"  Output:  {output_file}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {output_display}")
     print(f"  Workers: {workers}")
     print(f"  Timeout: {args.timeout}s")
     if args.firmware:
-        label = ", ".join(f"'{v}'" for v in args.firmware)
-        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against {label}")
+        print(f"  {BOLD}Firmware Filter:{RESET}{WHITE} showing mismatches against "
+              f"{cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
-    # -- Send mode: single command to a single host --
+    if args.send and not args.host:
+        print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} --send requires --host{RESET}")
+        sys.exit(1)
+
+    # -- Device list: --host (reusing the CSV row when listed) or the whole CSV --
+    projectors = cli.select_devices(args, load_csv, make_device)
+
+    # -- Send mode: one command to each --host --
     if args.send:
-        if not args.host:
-            print(f"  {WHITE}{BOLD}Error:{RESET}{WHITE} --send requires --host{RESET}")
-            sys.exit(1)
-        run_send_mode(
-            host=args.host, port=args.port, password=args.password,
-            cmd=args.send[0].upper(), param=args.send[1], timeout=args.timeout,
-        )
+        for proj in projectors:
+            run_send_mode(
+                host=proj["host"], port=proj["port"], password=proj["password"],
+                cmd=args.send[0].upper(), param=args.send[1], timeout=args.timeout,
+            )
         sys.exit(0)
 
     # -- INFO mode: sequential, one device at a time --
     if args.info:
-        if isinstance(args.info, str):
-            targets = [{"host": args.info, "port": args.port, "password": args.password}]
-        else:
-            targets = load_csv(csv_file)
-        run_info_mode(targets, args.timeout)
+        run_info_mode(projectors, args.timeout)
         sys.exit(0)
 
-    projectors = load_csv(csv_file)
+    # -- --raw: greeting + raw reply to every query, no table / JSON --
+    if args.raw:
+        cli.run_raw(projectors, lambda d: dump_raw(d, args.timeout, args.all))
+        return
+
     total = len(projectors)
 
     # -- Track only the most recently started host --
@@ -1087,7 +1209,7 @@ Examples:
             latest_host["value"] = host
         return proj, query_projector(
             host=host, port=proj["port"], password=proj["password"],
-            timeout=args.timeout, query_all=args.all, diagnostic=args.diagnostic,
+            timeout=args.timeout, query_all=args.all,
         )
 
     # -- Run with thread pool + tqdm (spec 3.3) --
@@ -1162,10 +1284,10 @@ Examples:
     # -- Save JSON (spec 2.1) --
     output_data = {
         "query_info": {
-            "csv_file": str(Path(csv_file).resolve()),
+            "csv_file": cli.input_label(args),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "protocol": "PJLink Class 1 + Class 2",
-            "mode": "diagnostic" if args.diagnostic else "all" if args.all else "firmware+lamp",
+            "mode": "all" if args.all else "firmware+lamp",
             "workers": workers,
             "total": total,
             "success": sum(1 for r in results if r["status"] == "success"),
@@ -1175,30 +1297,19 @@ Examples:
         ARRAY_KEY: results,
     }
 
+    cli.ensure_parent(output_file)
     save_to_json(output_data, output_file)
 
-    # -- Print table --
-    if not args.diagnostic:
-        if args.firmware:
-            accepted = set(args.firmware)
-            fw_label = ", ".join(args.firmware)
-            mismatches = [
-                r for r in results
-                if r.get("status") == "success"
-                and r.get("firmware_version", "") not in accepted
-            ]
-            print_results_table(mismatches, firmware_filter=fw_label)
-        else:
-            print_results_table(results)
+    # -- Print table: with --firmware, only devices NOT on one of those versions --
+    if args.firmware:
+        mismatches = cli.firmware_mismatches(results, args.firmware)
+        print_results_table(mismatches, firmware_filter=cli.firmware_label(args.firmware))
     else:
-        print(f"\n  {WHITE}Diagnostic data written to: {output_file}{RESET}")
+        print_results_table(results)
 
     print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
     print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print()
-
-    if args.diagnostic:
-        print(json.dumps(output_data, indent=2))
 
 
 if __name__ == "__main__":

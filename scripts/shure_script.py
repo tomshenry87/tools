@@ -44,6 +44,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
+
 try:
     from tabulate import tabulate
 except ImportError:
@@ -70,12 +73,8 @@ RESET  = "\033[0m"    # Always close every colour block
 # ---------------------------------------------------------------------------
 # Defaults & constants
 # ---------------------------------------------------------------------------
-DEFAULT_CSV     = "secrets/shuremxa_firmware.csv"
-OUTPUT_DIR      = "shure_mxa/files"
-DEFAULT_OUTPUT  = os.path.join(
-    OUTPUT_DIR,
-    f"results_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-)
+DEFAULT_CSV     = "secrets/shuremxa_firmware.csv"   # relative to this script's folder
+OUTPUT_DIR      = "shure_mxa/files"                 # results_<YYYYMMDD>_<HHMMSS>.json
 DEFAULT_TIMEOUT = 10
 DEFAULT_PORT    = 2202
 DEFAULT_WORKERS = 5
@@ -204,7 +203,8 @@ def load_csv(csv_path: str) -> list:
                 continue
             try:
                 port = int(row.get(col_map.get("port", ""), DEFAULT_PORT) or DEFAULT_PORT)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
+                cli.debug.log(host, f"bad port in CSV ({e}); using {DEFAULT_PORT}")
                 port = DEFAULT_PORT
             # Parse this script's additional columns here — port.
             devices.append({"host": host, "port": port})
@@ -218,18 +218,22 @@ def load_csv(csv_path: str) -> list:
 # Shure Command Strings protocol helpers
 # PROTECTED (spec 4) — do not alter framing, sequencing, or timeouts
 # ---------------------------------------------------------------------------
-def send_command(sock: socket.socket, command: str, timeout: float = 5.0) -> str:
+def send_command(sock: socket.socket, command: str, timeout: float = 5.0,
+                 host: str = "?") -> str:
     """
     Send a single command string and return the response.
     Command format: < GET PARAMETER >
     Response format: < REP PARAMETER {value} >
+    host is only used to label the --debug trace.
     """
     cmd = f"< {command} >\r\n"
     sock.settimeout(timeout)
+    cli.debug.sent(host, cmd)
     sock.sendall(cmd.encode("utf-8"))
     time.sleep(0.5)
     sock.settimeout(timeout)
     data = sock.recv(RECV_BUFFER)
+    cli.debug.received(host, data)
     if not data:
         raise Exception("No data received from device")
     return data.decode("utf-8", errors="replace").strip()
@@ -268,12 +272,16 @@ def parse_response(raw: str, parameter: str) -> str:
 
 
 def query_device_parameter(sock: socket.socket, parameter: str,
-                           timeout: float = 5.0) -> str:
+                           timeout: float = 5.0, host: str = "?") -> str:
     """Query a single parameter from a Shure device."""
     try:
-        raw = send_command(sock, f"GET {parameter}", timeout=timeout)
-        return parse_response(raw, parameter)
-    except Exception:
+        raw = send_command(sock, f"GET {parameter}", timeout=timeout, host=host)
+        value = parse_response(raw, parameter)
+        if value == "N/A":
+            cli.debug.log(host, f"{parameter}: no usable value in reply")
+        return value
+    except Exception as e:
+        cli.debug.log(host, f"GET {parameter} failed: {e}")
         return "N/A"
 
 
@@ -303,22 +311,24 @@ def query_microphone(host: str, port: int,
     }
 
     try:
+        cli.debug.log(host, f"connecting to {host}:{port} (timeout {timeout}s)")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
         sock.connect((host, port))
+        cli.debug.log(host, "connected")
 
         try:
             # Small delay after connect to let the device settle
             time.sleep(0.5)
 
-            result["device_id"]        = query_device_parameter(sock, "DEVICE_ID", timeout)
-            result["model"]            = query_device_parameter(sock, "MODEL", timeout)
-            result["serial"]           = query_device_parameter(sock, "SERIAL_NUM", timeout)
-            result["mac"]              = query_device_parameter(sock, "CONTROL_MAC_ADDR", timeout)
-            result["firmware_version"] = query_device_parameter(sock, "FW_VER", timeout)
-            result["ip_address"]       = query_device_parameter(sock, "IP_ADDR_NET_AUDIO_PRIMARY", timeout)
-            result["dante_name"]       = query_device_parameter(sock, "NA_DEVICE_NAME", timeout)
-            result["encryption"]       = query_device_parameter(sock, "ENCRYPTION", timeout)
+            result["device_id"]        = query_device_parameter(sock, "DEVICE_ID", timeout, host)
+            result["model"]            = query_device_parameter(sock, "MODEL", timeout, host)
+            result["serial"]           = query_device_parameter(sock, "SERIAL_NUM", timeout, host)
+            result["mac"]              = query_device_parameter(sock, "CONTROL_MAC_ADDR", timeout, host)
+            result["firmware_version"] = query_device_parameter(sock, "FW_VER", timeout, host)
+            result["ip_address"]       = query_device_parameter(sock, "IP_ADDR_NET_AUDIO_PRIMARY", timeout, host)
+            result["dante_name"]       = query_device_parameter(sock, "NA_DEVICE_NAME", timeout, host)
+            result["encryption"]       = query_device_parameter(sock, "ENCRYPTION", timeout, host)
 
             result["status"] = "success"
 
@@ -341,48 +351,42 @@ def query_microphone(host: str, port: int,
         if result[key] == "N/A":
             result[key] = None
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
 
 
-def query_microphone_raw(host: str, port: int,
-                         timeout: int = DEFAULT_TIMEOUT) -> dict:
-    """Query all parameters and return raw responses for debugging."""
-    raw_results = {}
+def dump_raw(dev: dict, timeout: int = DEFAULT_TIMEOUT):
+    """--raw: print the raw reply (and parsed value) for every GET parameter."""
+    host, port = dev["host"], dev["port"]
+    cli.debug.log(host, f"connecting to {host}:{port} (timeout {timeout}s)")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        sock.connect((host, port))
+        sock.connect((host, port))   # failure -> run_raw prints a connection error
+        time.sleep(0.5)
 
-        try:
-            time.sleep(0.5)
-
-            for param in DEVICE_PARAMS:
-                try:
-                    raw = send_command(sock, f"GET {param}", timeout=timeout)
-                    parsed = parse_response(raw, param)
-                    raw_results[param] = {"raw": raw, "parsed": parsed}
-                except Exception as e:
-                    raw_results[param] = {"raw": str(e), "parsed": "ERROR"}
-        finally:
-            sock.close()
-
-    except Exception as e:
-        raw_results["_connection_error"] = str(e)
-
-    return raw_results
+        for param in DEVICE_PARAMS:
+            label = f"GET {param}"
+            try:
+                raw = send_command(sock, label, timeout=timeout, host=host)
+                cli.raw_item(label, f"{raw}\n(parsed: {parse_response(raw, param)})")
+            except Exception as e:
+                cli.raw_error(label, e)
+    finally:
+        sock.close()
 
 
 # ---------------------------------------------------------------------------
 # Output — JSON (spec 2.1, 2.7)
 # ---------------------------------------------------------------------------
 def save_results_json(results: list, filepath: str, args, elapsed: float):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    cli.ensure_parent(filepath)
     ok   = sum(1 for r in results if r["status"] == "success")
     auth = sum(1 for r in results if r["status"] == "auth_error")
     err  = sum(1 for r in results if r["status"] == "error")
     output = {
         "query_info": {
-            "csv_file":        "(single host)" if args.host else str(Path(args.input).resolve()),
+            "csv_file":        cli.input_label(args),
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        PROTOCOL_LABEL,
             "mode":            "single-host" if args.host else "csv",
@@ -403,11 +407,15 @@ def save_results_json(results: list, filepath: str, args, elapsed: float):
 # Output — terminal (spec 3.4, 3.8)
 # ---------------------------------------------------------------------------
 def print_results_table(results: list, output_file: str, elapsed: float,
-                        workers: int):
+                        workers: int, firmware_filter: list = None):
     """Render the results table following the conformance spec."""
 
+    # --firmware: show only devices NOT on one of the versions (errors included).
+    # The full results list is always saved to JSON regardless.
+    display_results = cli.firmware_mismatches(results, firmware_filter)
+
     table_data = []
-    for r in results:
+    for r in display_results:
         row = [
             status_icon(r),
             clean(r["host"]),
@@ -448,6 +456,11 @@ def print_results_table(results: list, output_file: str, elapsed: float,
     err   = sum(1 for r in results if r["status"] == "error")
 
     print()
+    if firmware_filter:
+        print(
+            f"  {BOLD}Firmware filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
+            f"{BOLD}Showing:{RESET}{WHITE} {len(display_results)} of {total} devices"
+        )
     print(
         f"  {BOLD}Total:{RESET}{WHITE} {total}  |  "
         f"{GREEN}✓{RESET}{WHITE} {BOLD}Success:{RESET}{WHITE} {ok}  |  "
@@ -486,16 +499,23 @@ def print_results_table(results: list, output_file: str, elapsed: float,
 # Entry point
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(
+    parser = cli.build_parser(
+        script_file=__file__,
         description="Query Shure MXA microphones for device info via Command Strings protocol.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
         epilog="""
 Examples:
-  python shure_script.py
-  python shure_script.py -i my_mics.csv
-  python shure_script.py --host 192.168.1.10
-  python shure_script.py --host 192.168.1.10 --port 2202
-  python shure_script.py --host 192.168.1.10 --raw
-  python shure_script.py -i mics.csv -t 15 -o output.json -w 10
+  python3 shure_script.py                              # whole CSV
+  python3 shure_script.py --host 192.168.1.10          # one device
+  python3 shure_script.py --host 192.168.1.10 -p 2202
+  python3 shure_script.py --host 192.168.1.10 --raw
+  python3 shure_script.py --host 192.168.1.10 --debug
+  python3 shure_script.py --firmware 4.7.13 5.0.104    # who is NOT on these
+  python3 shure_script.py -i mics.csv -t 15 -w 10 -o out.json
 
 Protocol:
   Shure Command Strings over TCP port 2202. No authentication required.
@@ -507,71 +527,44 @@ Queried Parameters:
   MODEL                        Hardware model (e.g. MXA920-S, MXA910, MXA710)
   SERIAL_NUM                   Device serial number
   CONTROL_MAC_ADDR             Control MAC address
-  FW_VER                       Firmware version string
+  FW_VER                       Firmware version string (--firmware compares this)
   IP_ADDR_NET_AUDIO_PRIMARY    Primary audio network IP address
   NA_DEVICE_NAME               Dante device name
   ENCRYPTION                   Encryption status (ON/OFF)
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-
-    parser.add_argument("-i", "--input",   default=DEFAULT_CSV,
-        help=f"CSV file with 'host'/'port' columns (default: {DEFAULT_CSV})")
-    parser.add_argument("--host",          default=None,
-        help="Query a single host instead of reading a CSV")
-    parser.add_argument("-o", "--output",  default=DEFAULT_OUTPUT,
-        help=f"Output JSON file (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("-t", "--timeout", type=int, default=DEFAULT_TIMEOUT,
-        help=f"Connection timeout in seconds (default: {DEFAULT_TIMEOUT})")
-    parser.add_argument("-p", "--port",    type=int, default=DEFAULT_PORT,
-        help=f"Port for --host mode (default: {DEFAULT_PORT})")
-    parser.add_argument("-w", "--workers", type=int, default=DEFAULT_WORKERS,
-        help=f"Number of concurrent workers (default: {DEFAULT_WORKERS})")
-    parser.add_argument("--raw",           action="store_true", default=False,
-        help="With --host: dump raw command string responses for all parameters.")
-
-    args = parser.parse_args()
+    args = cli.parse_args(parser)
     term_width = get_terminal_width()
     start_time = time.monotonic()
 
     # -------------------------------------------------------------------
     # Header block (spec 3.2)
     # -------------------------------------------------------------------
-    input_display = args.host if args.host else args.input
     print(f"{WHITE}")
     print(f"  {BOLD}Shure MXA Microphone Query Tool{RESET}{WHITE}")
     print(f"  Queries MXA arrays via Shure Command Strings")
-    print(f"  Input:   {input_display}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
+    if args.firmware:
+        print(f"  Filter:  Showing devices not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
     # -------------------------------------------------------------------
-    # Single-host --raw dump
+    # Build device list (--host or CSV)
     # -------------------------------------------------------------------
-    if args.host and args.raw:
-        print(f"{WHITE}  Raw Command String responses from {args.host}:{args.port}:{RESET}\n")
-        raw = query_microphone_raw(args.host, args.port, timeout=args.timeout)
+    microphones = cli.select_devices(
+        args, load_csv, lambda host: {"host": host, "port": DEFAULT_PORT})
 
-        conn_err = raw.pop("_connection_error", None)
-
-        if conn_err:
-            print(f"  {RED}Connection error:{RESET}{WHITE} {conn_err}{RESET}")
-            return
-
-        for param, data in raw.items():
-            if isinstance(data, dict):
-                print(f"  {WHITE}{BOLD}GET {param}{RESET}")
-                print(f"  {WHITE}  Raw:    {data['raw']}{RESET}")
-                print(f"  {WHITE}  Parsed: {data['parsed']}{RESET}")
-                print()
+    # -------------------------------------------------------------------
+    # --raw: dump what each device sends back, no table / JSON
+    # -------------------------------------------------------------------
+    if args.raw:
+        cli.run_raw(microphones, lambda d: dump_raw(d, timeout=args.timeout))
         return
-
-    # -------------------------------------------------------------------
-    # Build device list
-    # -------------------------------------------------------------------
-    microphones = [{"host": args.host, "port": args.port}] if args.host else load_csv(args.input)
 
     # -------------------------------------------------------------------
     # Progress bar + concurrent query loop (spec 3.3)
@@ -615,7 +608,7 @@ Queried Parameters:
     host_order = {d["host"]: i for i, d in enumerate(microphones)}
     results.sort(key=lambda r: host_order.get(r["host"], 0))
 
-    print_results_table(results, args.output, elapsed, args.workers)
+    print_results_table(results, args.output, elapsed, args.workers, args.firmware)
     save_results_json(results, args.output, args, elapsed)
 
 

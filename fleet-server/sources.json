@@ -12,6 +12,7 @@
   "/home/admin/tools/scripts/relay_firmware/files",
   "/home/admin/tools/scripts/tp_firmware/files",
   "/home/admin/tools/scripts/ups_firmware/files",
-  "/home/admin/tools/scripts/visca_firmware/files"
+  "/home/admin/tools/scripts/visca_firmware/files",
+  "/home/admin/tools/scripts/mxw_firmware/files"
   
 ]

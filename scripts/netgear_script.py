@@ -12,22 +12,23 @@ Temperature note: the M4250 CLI reports Celsius. The terminal table and metrics
 line display Fahrenheit (engineers here read °F). The JSON emits BOTH
 `board_temperature1_f` and `board_temperature1_c`, each suffixed truthfully.
 
-Usage:
+Usage (standard flags: see lib/standard_cli.py or --help):
     python3 netgear_script.py
-    python3 netgear_script.py --verbose
-    python3 netgear_script.py --csv secrets/netgear_firmware.csv
-    python3 netgear_script.py --include-raw --verbose
-    python3 netgear_script.py --firmware 12.0.20.7
+    python3 netgear_script.py --host 10.0.0.2 --debug
+    python3 netgear_script.py --host 10.0.0.2 --raw
+    python3 netgear_script.py -i secrets/netgear_firmware.csv
+    python3 netgear_script.py --include-raw --debug
+    python3 netgear_script.py --firmware 12.0.20.7 13.0.4.26
 
 CSV columns: host, username, password, port (port defaults to 22)
 """
 
 from __future__ import annotations
 
-import argparse
 import csv
 import json
 import logging
+import os
 import re
 import shutil
 import socket
@@ -37,6 +38,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     import paramiko
@@ -65,17 +69,29 @@ WHITE  = "\033[97m"   # All body text, table content, labels
 BOLD   = "\033[1m"    # Section headers, label emphasis
 RESET  = "\033[0m"    # Always close every colour block
 
-DEFAULT_PORT = 22
+DEFAULT_CSV      = "secrets/netgear_firmware.csv"   # relative to this script's folder
+OUTPUT_DIR       = "netgear_firmware/files"         # results_<YYYYMMDD>_<HHMMSS>.json
+DEFAULT_PORT     = 22
+DEFAULT_USERNAME = "admin"
+DEFAULT_TIMEOUT  = 20
+DEFAULT_WORKERS  = 5
+
+# CLI commands sent over the interactive shell, in order, with their
+# read-until-prompt timeouts (seconds)
+SETUP_COMMANDS = [("en", 10), ("terminal length 0", 5)]
+CMD_HARDWARE    = "show hardware"
+CMD_ENVIRONMENT = "show environment | include Temp"
+CMD_POE         = "show poe"
+QUERY_TIMEOUT   = 20
 
 # ──────────────────────────────────────────────
-#  Logging — plain text, no colours
+#  Logging — plain text, no colours. Set up in main():
+#  WARNING normally; with --debug (alias --verbose)
+#  cli.debug.enable() configures DEBUG logging
+#  (paramiko's own messages included) instead.
 # ──────────────────────────────────────────────
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-log = logging.getLogger("netgear_script")
+LOG_FORMAT  = "%(asctime)s  %(levelname)-8s  %(message)s"
+LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -221,10 +237,36 @@ def strip_ansi(text: str) -> str:
     return text
 
 
+def visible(text: str) -> str:
+    """
+    Device text for --raw / --debug: CRLF -> LF, and every other control or
+    escape character (ANSI codes from the vt100 shell, stray CRs) shown as
+    \\xNN so it can't garble the terminal.
+    """
+    text = text.replace("\r\n", "\n")
+    return re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", lambda m: f"\\x{ord(m.group()):02x}", text)
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  SSH shell helpers
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def _read_until_prompt(channel: paramiko.Channel, timeout: float = 15.0) -> str:
+def connect_ssh(client: paramiko.SSHClient, host: str, port: int,
+                username: str, password: str, timeout: int) -> None:
+    """Connect + authenticate (shared by the query and --raw)."""
+    cli.debug.log(host, f"connecting to {host}:{port} as {username!r} (timeout {timeout}s)")
+    client.connect(
+        hostname=host,
+        port=port,
+        username=username,
+        password=password,
+        timeout=timeout,
+        look_for_keys=False,
+        allow_agent=False,
+    )
+    cli.debug.log(host, "connected and authenticated")
+
+
+def _read_until_prompt(channel: paramiko.Channel, timeout: float = 15.0, host: str = "") -> str:
     """
     Read from an interactive SSH channel until a CLI prompt is detected
     or the timeout expires.  Netgear M4250 prompts end with '>' or '#'.
@@ -240,22 +282,29 @@ def _read_until_prompt(channel: paramiko.Channel, timeout: float = 15.0) -> str:
                 break
         else:
             time.sleep(0.3)
+    else:
+        cli.debug.log(host, f"no prompt within {timeout:g}s ({len(raw)} bytes received)")
     return raw.decode("utf-8", errors="replace")
 
 
-def open_shell(client: paramiko.SSHClient) -> paramiko.Channel:
-    """Open an interactive shell and wait for the first prompt."""
+def open_shell(client: paramiko.SSHClient, host: str = "") -> tuple[paramiko.Channel, str]:
+    """Open an interactive shell and wait for the first prompt. Returns (channel, banner)."""
     channel = client.invoke_shell(term="vt100", width=220, height=50)
     time.sleep(2)
-    _read_until_prompt(channel, timeout=10)  # discard banner / MOTD
-    return channel
+    banner = _read_until_prompt(channel, timeout=10, host=host)  # banner / MOTD (not parsed)
+    cli.debug.log(host, f"shell banner: {cli.show(visible(banner))}")
+    return channel, banner
 
 
-def run_command(channel: paramiko.Channel, command: str, timeout: float = 20.0) -> str:
+def run_command(channel: paramiko.Channel, command: str, timeout: float = 20.0,
+                host: str = "") -> str:
     """Send a command and return the output up to the next prompt."""
+    cli.debug.sent(host, command)
     channel.send(command + "\n")
     time.sleep(0.5)
-    return _read_until_prompt(channel, timeout=timeout)
+    output = _read_until_prompt(channel, timeout=timeout, host=host)
+    cli.debug.received(host, visible(output) or "(no output)")
+    return output
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -404,24 +453,16 @@ def check_router(
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
-        client.connect(
-            hostname=host,
-            port=port,
-            username=username,
-            password=password,
-            timeout=timeout,
-            look_for_keys=False,
-            allow_agent=False,
-        )
+        connect_ssh(client, host, port, username, password, timeout)
 
-        channel = open_shell(client)
+        channel, _banner = open_shell(client, host=host)
 
-        run_command(channel, "en",                timeout=10)
-        run_command(channel, "terminal length 0", timeout=5)
+        for cmd, cmd_timeout in SETUP_COMMANDS:          # en, terminal length 0
+            run_command(channel, cmd, timeout=cmd_timeout, host=host)
 
-        raw_ver = run_command(channel, "show hardware",                   timeout=20)
-        raw_env = run_command(channel, "show environment | include Temp", timeout=20)
-        raw_poe = run_command(channel, "show poe",                        timeout=20)
+        raw_ver = run_command(channel, CMD_HARDWARE,    timeout=QUERY_TIMEOUT, host=host)
+        raw_env = run_command(channel, CMD_ENVIRONMENT, timeout=QUERY_TIMEOUT, host=host)
+        raw_poe = run_command(channel, CMD_POE,         timeout=QUERY_TIMEOUT, host=host)
 
         if include_raw:
             result["raw_version"]     = raw_ver
@@ -458,11 +499,12 @@ def check_router(
             result["status"] = "error"
             result["error"]  = "Could not parse firmware version from output"
 
-        run_command(channel, "exit", timeout=5)
-        run_command(channel, "exit", timeout=5)
+        run_command(channel, "exit", timeout=5, host=host)
+        run_command(channel, "exit", timeout=5, host=host)
         channel.close()
 
-    except paramiko.AuthenticationException:
+    except paramiko.AuthenticationException as exc:
+        cli.debug.log(host, f"authentication rejected: {exc}")
         result["status"] = "auth_error"
         result["error"]  = "Authentication failed"
     except (paramiko.SSHException, socket.error) as exc:
@@ -474,6 +516,10 @@ def check_router(
     finally:
         client.close()
 
+    cli.debug.log(host, f"result: {result['status']}"
+                        + (f" ({result['error']})" if result["error"] else "")
+                        + f"; firmware={result['firmware_version']} model={result['model']}"
+                          f" temp={result['cpu_temp']} poe={result['poe_consumed']}")
     return result
 
 
@@ -483,7 +529,7 @@ def check_router(
 def print_results_table(
     results: list[dict],
     elapsed: float,
-    firmware_filter: str | None = None,
+    firmware_filter: list | None = None,
 ) -> None:
     headers = [
         "Status", "Host", "Manufacturer", "Model", "Firmware",
@@ -494,13 +540,11 @@ def print_results_table(
     temp_vals: list[float] = []   # Fahrenheit — the CLI display unit
     poe_vals:  list[float] = []
 
-    # Apply firmware filter if provided
+    # Apply firmware filter if provided: devices not on one of the target
+    # versions, including ones that could not be read (same rule as every
+    # script). The JSON always has every device.
     if firmware_filter:
-        display_results = [
-            r for r in results
-            if r.get("firmware_version") is not None
-            and r.get("firmware_version") != firmware_filter
-        ]
+        display_results = cli.firmware_mismatches(results, firmware_filter)
     else:
         display_results = results
 
@@ -534,7 +578,8 @@ def print_results_table(
     # All-matched shortcut
     if firmware_filter and not display_results:
         print(f"{WHITE}")
-        print(f"  {GREEN}\u2713 All reachable devices are running firmware {firmware_filter}{RESET}{WHITE}")
+        print(f"  {GREEN}\u2713 All devices are running firmware "
+              f"{cli.firmware_label(firmware_filter)}{RESET}{WHITE}")
     else:
         table = tabulate(
             rows,
@@ -549,7 +594,7 @@ def print_results_table(
         bw         = max(raw_width, 60)
 
         if firmware_filter:
-            title = f"Netgear M4250 \u2014 Firmware Mismatch: expected {firmware_filter}"
+            title = f"Netgear M4250 \u2014 Firmware Mismatch: expected {cli.firmware_label(firmware_filter)}"
         else:
             title = "Netgear M4250 Query Results \u2014 Firmware & CPU Temp"
         pad = max(0, (bw - len(title)) // 2)
@@ -571,9 +616,9 @@ def print_results_table(
 
     if firmware_filter:
         mismatches = len(display_results)
-        matched    = sum(1 for r in results if r.get("firmware_version") == firmware_filter)
+        matched    = len(results) - mismatches
         print(
-            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
             f"{GREEN}\u2713{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
             f"{RED}\u2717{RESET}{WHITE} {BOLD}Mismatched:{RESET}{WHITE} {mismatches}"
         )
@@ -610,12 +655,12 @@ def print_results_table(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def check_all_routers(
     routers: list[dict],
-    output_path: Path,
-    csv_path: Path,
+    output_path: str,
+    input_label: str,
     include_raw: bool = False,
-    max_workers: int = 5,
-    timeout: int = 20,
-    firmware_filter: str | None = None,
+    max_workers: int = DEFAULT_WORKERS,
+    timeout: int = DEFAULT_TIMEOUT,
+    firmware_filter: list | None = None,
 ) -> None:
     all_results: list[dict] = [None] * len(routers)  # preserve order
 
@@ -679,10 +724,10 @@ def check_all_routers(
     ok     = sum(1 for r in all_results if r["status"] == "success")
     errors = total - ok
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cli.ensure_parent(output_path)
     payload = {
         "query_info": {
-            "csv_file":        str(Path(csv_path).resolve()),
+            "csv_file":        input_label,
             "timestamp":       datetime.now(timezone.utc).isoformat(),
             "protocol":        "SSH / Netgear CLI",
             "mode":            "firmware+temp+poe",
@@ -694,7 +739,7 @@ def check_all_routers(
         },
         "routers": all_results,
     }
-    with output_path.open("w", encoding="utf-8") as fh:
+    with open(output_path, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=2, ensure_ascii=False)
 
     # ── Print table ───────────────────────────────────────────────────────
@@ -708,71 +753,107 @@ def check_all_routers(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def main() -> None:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+def dump_raw(dev: dict, timeout: int) -> None:
+    """
+    --raw: print what the switch sends back for every line typed in the
+    shell (login banner, en, terminal length 0, the three show commands),
+    each including the echoed command and the next prompt.
+    """
+    host = dev["host"]
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        connect_ssh(client, host, dev["port"], dev["username"], dev["password"], timeout)
+        channel, banner = open_shell(client, host=host)
+        cli.raw_item("login banner / first prompt", visible(banner).strip())
+        commands = SETUP_COMMANDS + [(c, QUERY_TIMEOUT) for c in (CMD_HARDWARE, CMD_ENVIRONMENT, CMD_POE)]
+        for cmd, cmd_timeout in commands:
+            output = run_command(channel, cmd, timeout=cmd_timeout, host=host)
+            if output:
+                cli.raw_item(cmd, visible(output).strip())
+            else:
+                cli.raw_error(cmd, f"no reply within {cmd_timeout}s")
+        channel.close()
+    finally:
+        client.close()
 
-    p = argparse.ArgumentParser(
+
+def make_device(host: str) -> dict:
+    """--host target not in the CSV: same shape and defaults as load_csv()."""
+    return {"host": host, "port": DEFAULT_PORT, "username": DEFAULT_USERNAME, "password": ""}
+
+
+def main() -> None:
+    parser = cli.build_parser(
+        script_file=__file__,
         description=(
             "Check Netgear M4250 firmware versions, CPU temps, and PoE draw via SSH.\n"
             "Defaults: reads secrets/netgear_firmware.csv, writes to netgear_firmware/files/\n\n"
             "CSV columns: host, username, password, port"
         ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    p.add_argument(
-        "--csv", type=Path,
-        default=Path("secrets/netgear_firmware.csv"),
-        help="Input CSV file (default: secrets/netgear_firmware.csv)",
-    )
-    p.add_argument(
-        "--output", type=Path,
-        default=Path(f"netgear_firmware/files/results_{timestamp}.json"),
-        help="Output JSON file (default: netgear_firmware/files/results_YYYYMMDD_HHMMSS.json)",
-    )
-    p.add_argument(
-        "--workers", type=int, default=5,
-        help="Number of concurrent SSH connections (default: 5)",
-    )
-    p.add_argument(
-        "--timeout", type=int, default=20,
-        help="Per-device SSH timeout in seconds (default: 20)",
-    )
-    p.add_argument(
-        "--firmware", type=str, default=None,
-        help="Only show devices whose firmware does not match this version (e.g. 12.0.20.7)",
-    )
-    p.add_argument(
-        "--verbose", action="store_true",
-        help="Enable DEBUG logging",
-    )
-    p.add_argument(
-        "--include-raw", action="store_true",
-        help="Include raw SSH output in the JSON for debugging",
-    )
-    args = p.parse_args()
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        auth=cli.AUTH_USER_PASSWORD,
+        timeout_help=(f"SSH connect timeout in seconds (default: {DEFAULT_TIMEOUT}). "
+                      "Each CLI command has its own fixed read timeout."),
+        firmware_help=("Show only devices whose reported firmware is NOT one of these "
+                       "versions (devices with no firmware reading are left out of the "
+                       "table). The JSON always has every device."),
+        epilog="""
+Examples:
+  python3 netgear_script.py                                # whole CSV
+  python3 netgear_script.py --host 10.0.0.2                # one switch (CSV row reused if listed)
+  python3 netgear_script.py --host 10.0.0.2 -u admin --password 'secret'
+  python3 netgear_script.py --host 10.0.0.2 --raw          # raw CLI output per command
+  python3 netgear_script.py --host 10.0.0.2 --debug        # trace the SSH exchange to stderr
+  python3 netgear_script.py --firmware 12.0.20.7 13.0.4.26 # who is NOT on these
+  python3 netgear_script.py --include-raw -o out.json      # keep raw output in the JSON
 
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+Protocol:
+  SSH on port 22 with the CSV's username/password (username defaults to admin),
+  then an interactive vt100 shell: en, terminal length 0, show hardware,
+  show environment | include Temp, show poe, exit, exit.
+        """,
+    )
+    group = parser.add_argument_group("Netgear options")
+    group.add_argument("--include-raw", action="store_true", default=False,
+        help="Store each switch's raw CLI output in the results JSON (raw_version, "
+             "raw_environment, raw_poe). Unlike --raw, the normal run still happens.")
+    args = cli.parse_args(parser)
+
+    if not args.debug:
+        # Under --debug, cli.debug.enable() has already set up DEBUG logging.
+        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT, datefmt=LOG_DATEFMT)
 
     print(f"{WHITE}")
     print(f"  {BOLD}Netgear M4250 Version & CPU Temp Checker{RESET}{WHITE}")
     print(f"  Queries M4250 devices for firmware version and CPU temperature over SSH")
-    print(f"  Input:   {args.csv}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
     if args.firmware:
-        print(f"  Filter:  firmware != {args.firmware}")
+        print(f"  Filter:  showing devices not on firmware {cli.firmware_label(args.firmware)}")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
-    routers = load_csv(str(args.csv))
+    routers = cli.select_devices(args, load_csv, make_device)
+
+    # --raw: dump what each switch sends back, no table / JSON
+    if args.raw:
+        cli.run_raw(routers, lambda d: dump_raw(d, args.timeout))
+        return
 
     print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} device(s){RESET}\n")
 
     check_all_routers(
         routers,
         args.output,
-        csv_path=args.csv,
+        input_label=cli.input_label(args),
         include_raw=args.include_raw,
         max_workers=args.workers,
         timeout=args.timeout,

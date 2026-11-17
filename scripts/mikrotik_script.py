@@ -10,21 +10,22 @@ connects via SSH, queries /system/package/print for RouterOS version,
 Writes results to mikrotik_version_check/files/results_<YYYYMMDD>_<HHMMSS>.json
 and prints a summary table.
 
-Usage:
-    python3 mikrotik_firmware.py
-    python3 mikrotik_firmware.py --verbose
-    python3 mikrotik_firmware.py --csv secrets/other.csv --output files/other.json
-    python3 mikrotik_firmware.py --workers 10 --timeout 20
-    python3 mikrotik_firmware.py --include-raw --verbose
-    python3 mikrotik_firmware.py --firmware 7.14.2
+Usage (standard flags: see lib/standard_cli.py or --help):
+    python3 mikrotik_script.py
+    python3 mikrotik_script.py --host 10.0.0.1 --debug
+    python3 mikrotik_script.py --host 10.0.0.1 --raw
+    python3 mikrotik_script.py -i secrets/other.csv -o files/other.json
+    python3 mikrotik_script.py -w 10 -t 20
+    python3 mikrotik_script.py --include-raw --debug
+    python3 mikrotik_script.py --firmware 7.14.2 7.15.1
 """
 
 from __future__ import annotations
 
-import argparse
 import csv
 import json
 import logging
+import os
 import re
 import shutil
 import socket
@@ -35,6 +36,9 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 try:
     import paramiko
@@ -65,18 +69,27 @@ RESET  = "\033[0m"    # Always close every colour block
 # ──────────────────────────────────────────────
 #  Constants
 # ──────────────────────────────────────────────
-DEFAULT_PORT = 22
-MANUFACTURER = "MikroTik"
+DEFAULT_CSV      = "secrets/mikrotik_firmware.csv"   # relative to this script's folder
+OUTPUT_DIR       = "mikrotik_version_check/files"    # results_<YYYYMMDD>_<HHMMSS>.json
+DEFAULT_PORT     = 22
+DEFAULT_USERNAME = "admin"
+DEFAULT_TIMEOUT  = 15
+DEFAULT_WORKERS  = 5
+MANUFACTURER     = "MikroTik"
+
+# RouterOS commands, in the order they are run
+CMD_PACKAGES    = "/system/package/print"
+CMD_ROUTERBOARD = "/system/routerboard/print"
+CMD_HEALTH      = "/system/health/print"
 
 # ──────────────────────────────────────────────
-#  Logging — plain, no colours
+#  Logging — plain, no colours. Set up in main():
+#  WARNING normally; with --debug (alias --verbose)
+#  cli.debug.enable() configures DEBUG logging
+#  (paramiko's own messages included) instead.
 # ──────────────────────────────────────────────
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-log = logging.getLogger("mikrotik_firmware")
+LOG_FORMAT  = "%(asctime)s  %(levelname)-8s  %(message)s"
+LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -250,24 +263,60 @@ def celsius_to_fahrenheit(c: float) -> float:
     return round(c * 9 / 5 + 32, 1)
 
 
+def visible(text: str) -> str:
+    """
+    Device text for --raw / --debug: CRLF -> LF, and every other control or
+    escape character (ANSI colour codes from the shell, stray CRs) shown as
+    \\xNN so it can't garble the terminal.
+    """
+    text = text.replace("\r\n", "\n")
+    return re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", lambda m: f"\\x{ord(m.group()):02x}", text)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  SSH: connect (shared by the query and --raw)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+def connect_ssh(client: paramiko.SSHClient, host: str, port: int,
+                username: str, password: str, timeout: int) -> None:
+    cli.debug.log(host, f"connecting to {host}:{port} as {username!r} (timeout {timeout}s)")
+    client.connect(
+        hostname=host,
+        port=port,
+        username=username,
+        password=password,
+        timeout=timeout,
+        look_for_keys=False,
+        allow_agent=False,
+        disabled_algorithms={"pubkeys": ["rsa-sha2-256", "rsa-sha2-512"]},
+    )
+    cli.debug.log(host, "connected and authenticated")
+
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  SSH: get command output (tries TWO methods)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def get_command_output(client: paramiko.SSHClient, command: str) -> str:
+def get_command_output(client: paramiko.SSHClient, command: str, host: str = "") -> str:
     try:
+        cli.debug.sent(host, f"{command}   (exec_command)")
         _, stdout, _ = client.exec_command(command, timeout=15)
         output = stdout.read().decode("utf-8", errors="replace")
+        cli.debug.received(host, visible(output) or "(no output)")
         if output.strip():
             return output
-    except Exception:
-        pass
+        cli.debug.log(host, "exec_command gave no output; retrying in an interactive shell")
+    except Exception as exc:
+        cli.debug.log(host, f"exec_command failed ({type(exc).__name__}: {exc}); "
+                            "retrying in an interactive shell")
 
     try:
         channel = client.invoke_shell(width=200, height=50)
         time.sleep(2)
         if channel.recv_ready():
-            channel.recv(65535)
+            banner = channel.recv(65535)
+            cli.debug.log(host, "shell banner (discarded): "
+                                + cli.show(visible(banner.decode("utf-8", errors="replace"))))
 
+        cli.debug.sent(host, f"{command}   (interactive shell)")
         channel.send(command + "\n")
         time.sleep(3)
 
@@ -283,9 +332,11 @@ def get_command_output(client: paramiko.SSHClient, command: str) -> str:
                     break
 
         channel.close()
-        return raw.decode("utf-8", errors="replace")
-    except Exception:
-        pass
+        output = raw.decode("utf-8", errors="replace")
+        cli.debug.received(host, visible(output) or "(no output)")
+        return output
+    except Exception as exc:
+        cli.debug.log(host, f"interactive shell failed ({type(exc).__name__}: {exc})")
 
     return ""
 
@@ -485,28 +536,21 @@ def check_router(
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
-        client.connect(
-            hostname=host,
-            port=port,
-            username=username,
-            password=password,
-            timeout=timeout,
-            look_for_keys=False,
-            allow_agent=False,
-            disabled_algorithms={"pubkeys": ["rsa-sha2-256", "rsa-sha2-512"]},
-        )
+        connect_ssh(client, host, port, username, password, timeout)
 
         # Query 1: packages
-        raw_pkg = get_command_output(client, "/system/package/print")
+        raw_pkg = get_command_output(client, CMD_PACKAGES, host=host)
         if include_raw:
             result["raw_packages"] = raw_pkg
 
         if not raw_pkg.strip():
             result["error"] = "Router returned empty output"
+            cli.debug.log(host, f"result: {result['status']} ({result['error']})")
             return result
 
         packages = parse_packages(raw_pkg)
         result["packages"] = packages
+        cli.debug.log(host, f"parsed packages: {packages}")
 
         if packages:
             result["routeros_version"] = get_routeros_version(packages)
@@ -515,7 +559,7 @@ def check_router(
             result["error"] = "Could not parse any packages from output"
 
         # Query 2: routerboard (best-effort)
-        raw_rb = get_command_output(client, "/system/routerboard/print")
+        raw_rb = get_command_output(client, CMD_ROUTERBOARD, host=host)
         if include_raw:
             result["raw_routerboard"] = raw_rb
         if raw_rb.strip():
@@ -528,17 +572,19 @@ def check_router(
             result["firmware_version"] = result["routeros_version"]
 
         # Query 3: health (best-effort)
-        raw_health = get_command_output(client, "/system/health/print")
+        raw_health = get_command_output(client, CMD_HEALTH, host=host)
         if include_raw:
             result["raw_health"] = raw_health
         if raw_health.strip():
             hf = get_health_fields(result.get("model"))
+            cli.debug.log(host, f"health fields for model {result.get('model')!r}: {hf}")
             health = parse_health(raw_health, temp_field=hf["temp_field"], poe_field=hf["poe_field"])
             result["poe_out_consumption_w"] = health["poe_out_consumption_w"]
             result["board_temperature1_c"]  = health["board_temperature1_c"]
             result["board_temperature1_f"]  = health["board_temperature1_f"]
 
-    except paramiko.AuthenticationException:
+    except paramiko.AuthenticationException as exc:
+        cli.debug.log(host, f"authentication rejected: {exc}")
         result["status"] = "auth_error"
         result["error"]  = "Authentication failed"
     except (paramiko.SSHException, socket.error) as exc:
@@ -548,6 +594,10 @@ def check_router(
     finally:
         client.close()
 
+    cli.debug.log(host, f"result: {result['status']}"
+                        + (f" ({result['error']})" if result["error"] else "")
+                        + f"; firmware={result['firmware_version']} routeros={result['routeros_version']}"
+                          f" model={result['model']}")
     return result
 
 
@@ -558,24 +608,20 @@ def print_results_table(
     results: list[dict],
     elapsed: float,
     workers: int,
-    output_path: Path,
-    firmware_filter: str | None = None,
+    output_path: str,
+    firmware_filter: list | None = None,
 ) -> None:
     headers = [
         "Status", "Host", "Manufacturer", "Model", "Firmware",
         "RouterOS Version", "Temp (°F)", "Total PoE (W)", "Error",
     ]
 
-    # When --firmware is set, only show successfully queried devices
-    # whose firmware_version doesn't match the target. Errors and
-    # unreachable devices are omitted from the table only — all
-    # results are still written to JSON.
+    # When --firmware is set, only show devices whose firmware_version is
+    # not one of the targets, including errors and
+    # unreachable devices (same rule as every script). All results are
+    # still written to JSON.
     if firmware_filter:
-        display_results = [
-            r for r in results
-            if r["status"] == "success"
-            and r.get("firmware_version") != firmware_filter
-        ]
+        display_results = cli.firmware_mismatches(results, firmware_filter)
     else:
         display_results = results
 
@@ -602,7 +648,7 @@ def print_results_table(
     bw = max(raw_width, 60)
 
     if firmware_filter:
-        title = f"MikroTik RouterOS — Firmware Mismatch: target {firmware_filter}"
+        title = f"MikroTik RouterOS — Firmware Mismatch: target {cli.firmware_label(firmware_filter)}"
     else:
         title = "MikroTik RouterOS Query Results"
     pad = (bw - len(title)) // 2
@@ -629,16 +675,11 @@ def print_results_table(
     )
 
     if firmware_filter:
-        matched = sum(
-            1 for r in results
-            if r["status"] == "success" and r.get("firmware_version") == firmware_filter
-        )
-        mismatched = sum(
-            1 for r in results
-            if r["status"] == "success" and r.get("firmware_version") != firmware_filter
-        )
+        # The mismatches (errors included) are exactly the table rows
+        mismatched = len(display_results)
+        matched    = len(results) - mismatched
         print(
-            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {firmware_filter}  |  "
+            f"  {BOLD}Firmware Filter:{RESET}{WHITE} {cli.firmware_label(firmware_filter)}  |  "
             f"{GREEN}✓{RESET}{WHITE} {BOLD}Matched:{RESET}{WHITE} {matched}  |  "
             f"{YELLOW}✗{RESET}{WHITE} {BOLD}Mismatch:{RESET}{WHITE} {mismatched}"
         )
@@ -705,12 +746,12 @@ def print_results_table(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def check_all_routers(
     routers: list[dict],
-    output_path: Path,
-    csv_path: Path,
-    workers: int = 5,
-    timeout: int = 15,
+    output_path: str,
+    input_label: str,
+    workers: int = DEFAULT_WORKERS,
+    timeout: int = DEFAULT_TIMEOUT,
     include_raw: bool = False,
-    firmware_filter: str | None = None,
+    firmware_filter: list | None = None,
 ) -> None:
     all_results: list[dict] = [None] * len(routers)
     start_ts = datetime.now(timezone.utc)
@@ -771,13 +812,14 @@ def check_all_routers(
     auth = sum(1 for r in all_results if r["status"] == "auth_error")
     err  = sum(1 for r in all_results if r["status"] == "error")
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cli.ensure_parent(output_path)
     output = {
         "query_info": {
-            "csv_file":        str(Path(csv_path).resolve()),
+            "csv_file":        input_label,
             "timestamp":       start_ts.isoformat(),
             "protocol":        "SSH / RouterOS CLI",
-            "mode":            f"firmware filter: {firmware_filter}" if firmware_filter else "package version query",
+            "mode":            (f"firmware filter: {cli.firmware_label(firmware_filter)}"
+                                if firmware_filter else "package version query"),
             "workers":         workers,
             "total":           len(all_results),
             "success":         ok,
@@ -787,7 +829,7 @@ def check_all_routers(
         },
         "routers": all_results,
     }
-    with output_path.open("w", encoding="utf-8") as fh:
+    with open(output_path, "w", encoding="utf-8") as fh:
         json.dump(output, fh, indent=2, ensure_ascii=False)
 
     print_results_table(all_results, elapsed, workers, output_path, firmware_filter=firmware_filter)
@@ -796,44 +838,97 @@ def check_all_routers(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  CLI
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def main() -> None:
-    p = argparse.ArgumentParser(
-        description="Check MikroTik router firmware and package versions via SSH.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    default_ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    p.add_argument("--csv",         type=Path,  default=Path("secrets/mikrotik_firmware.csv"),                            help="Input CSV (default: secrets/mikrotik_firmware.csv)")
-    p.add_argument("--output",      type=Path,  default=Path(f"mikrotik_version_check/files/results_{default_ts}.json"),  help="Output JSON (default: mikrotik_version_check/files/results_<timestamp>.json)")
-    p.add_argument("--workers",     type=int,   default=5,                                                                help="Concurrent SSH workers (default: 5)")
-    p.add_argument("--timeout",     type=int,   default=15,                                                               help="Per-router timeout in seconds (default: 15)")
-    p.add_argument("--firmware",    type=str,   default=None,                                                             help="Only show devices whose firmware does not match this version (e.g. 7.14.2)")
-    p.add_argument("--verbose",     action="store_true",                                                                  help="Enable DEBUG logging")
-    p.add_argument("--include-raw", action="store_true",                                                                  help="Include raw SSH output in the results JSON")
-    args = p.parse_args()
+def dump_raw(dev: dict, timeout: int) -> None:
+    """--raw: print what each RouterOS command returns (the text the parsers see)."""
+    host = dev["host"]
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        connect_ssh(client, host, dev["port"], dev["username"], dev["password"], timeout)
+        for cmd in (CMD_PACKAGES, CMD_ROUTERBOARD, CMD_HEALTH):
+            output = get_command_output(client, cmd, host=host)
+            if output.strip():
+                cli.raw_item(cmd, visible(output).rstrip())
+            else:
+                cli.raw_error(cmd, "no output (exec_command and interactive shell both empty)")
+    finally:
+        client.close()
 
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+
+def make_device(host: str) -> dict:
+    """--host target not in the CSV: same shape and defaults as load_csv()."""
+    return {"host": host, "port": DEFAULT_PORT, "username": DEFAULT_USERNAME, "password": ""}
+
+
+def main() -> None:
+    parser = cli.build_parser(
+        script_file=__file__,
+        description="Check MikroTik router firmware and package versions via SSH.",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        auth=cli.AUTH_USER_PASSWORD,
+        timeout_help=(f"SSH connect timeout in seconds (default: {DEFAULT_TIMEOUT}). "
+                      "Each command has its own fixed 15s timeout."),
+        firmware_help=("Show only successfully queried routers NOT on any of these versions "
+                       "(routerboard current-firmware, else the RouterOS version). Errors are "
+                       "left out of the table. The JSON always has every router."),
+        epilog="""
+Examples:
+  python3 mikrotik_script.py                               # whole CSV
+  python3 mikrotik_script.py --host 10.0.0.1               # one router (CSV row reused if listed)
+  python3 mikrotik_script.py --host 10.0.0.1 -u admin --password 'secret'
+  python3 mikrotik_script.py --host 10.0.0.1 --raw         # raw SSH output per command
+  python3 mikrotik_script.py --host 10.0.0.1 --debug       # trace the SSH exchange to stderr
+  python3 mikrotik_script.py --firmware 7.14.2 7.15.1      # who is NOT on these
+  python3 mikrotik_script.py --include-raw -o out.json     # keep raw output in the JSON
+
+Protocol:
+  SSH on port 22 with the CSV's username/password (username defaults to admin).
+  Commands: /system/package/print, /system/routerboard/print, /system/health/print.
+  Each runs via exec_command, falling back to an interactive shell if that
+  returns nothing.
+        """,
+    )
+    group = parser.add_argument_group("MikroTik options")
+    group.add_argument("--include-raw", action="store_true", default=False,
+        help="Store each router's raw SSH output in the results JSON (raw_packages, "
+             "raw_routerboard, raw_health). Unlike --raw, the normal run still happens.")
+    args = cli.parse_args(parser)
+
+    if not args.debug:
+        # Under --debug, cli.debug.enable() has already set up DEBUG logging.
+        logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT, datefmt=LOG_DATEFMT)
 
     # Header block — spec 3.2
     print(f"{WHITE}")
     print(f"  {BOLD}MikroTik Router Firmware Checker{RESET}{WHITE}")
     print(f"  Queries RouterOS version, packages, and board health over SSH")
-    print(f"  Input:   {args.csv}")
-    print(f"  Output:  {args.output}")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
     print(f"  Workers: {args.workers}")
     print(f"  Timeout: {args.timeout}s")
     if args.firmware:
-        print(f"  Firmware Filter: {args.firmware} — showing mismatched devices only")
+        print(f"  Firmware Filter: {cli.firmware_label(args.firmware)} — showing mismatched devices only")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
-    routers = load_csv(str(args.csv))
+    routers = cli.select_devices(args, load_csv, make_device)
+
+    # --raw: dump what each router sends back, no table / JSON
+    if args.raw:
+        cli.run_raw(routers, lambda d: dump_raw(d, args.timeout))
+        return
 
     print(f"  {WHITE}Loaded {BOLD}{len(routers)}{RESET}{WHITE} router(s){RESET}\n")
 
     check_all_routers(
         routers,
         args.output,
-        csv_path=args.csv,
+        input_label=cli.input_label(args),
         workers=args.workers,
         timeout=args.timeout,
         include_raw=args.include_raw,

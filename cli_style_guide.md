@@ -330,6 +330,68 @@ def load_csv(csv_path: str) -> list:
 
 ---
 
+## Standard CLI Flags
+
+Every script gets the same flags from the shared helper `scripts/lib/standard_cli.py`. Do not hand-write an argparse block. Build the parser with the helper, then add device-specific options in their own group:
+
+```python
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli
+
+parser = cli.build_parser(
+    script_file=__file__,
+    description="Query <devices> for <data>.",
+    default_csv="secrets/<name>_firmware.csv",     # relative to scripts/
+    output_dir="<name>_firmware/files",            # relative to scripts/
+    default_port=23, default_timeout=10, default_workers=5,
+    auth=cli.AUTH_NONE,      # or cli.AUTH_PASSWORD / cli.AUTH_USER_PASSWORD
+)
+opts = parser.add_argument_group("<Device> options")   # script-specific flags
+args = cli.parse_args(parser)                          # also switches on --debug
+
+devices = cli.select_devices(args, load_csv, lambda host: {"host": host, "port": 23})
+if args.raw:
+    cli.run_raw(devices, dump_raw)    # dump_raw(dev) prints with cli.raw_item()
+    return
+```
+
+| Flag | Meaning |
+|------|---------|
+| `-i, --input CSV` | CSV of devices. Default `secrets/<name>.csv` |
+| `--host HOST` | Query `HOST` instead of the whole CSV. Repeat for several hosts. If the host is in the CSV, its row (port, credentials) is reused |
+| `-p, --port PORT` | Port for `--host` targets |
+| `-u, --username USER` | Username for `--host` targets (devices that log in) |
+| `--password PASS` | Password for `--host` targets (devices that log in) |
+| `-o, --output FILE` | Results JSON. Default `<output_dir>/results_<YYYYMMDD>_<HHMMSS>.json` |
+| `--firmware V [V ...]` | Table shows only devices **not** on one of these versions. The JSON always has every device |
+| `-t, --timeout SEC` | Per-device timeout |
+| `-w, --workers N` | Devices queried at once |
+| `--raw` | Print each device's raw responses (what it actually sent back), then exit. No table, no JSON. Works with `--host` or the whole CSV |
+| `--debug` | Trace every connection, command and reply to stderr, prefixed with the host. The normal table and JSON still run |
+
+**Rules:**
+- A standard flag that does not apply to a device stays in place, and its help text says why (pass `port_help=` / `workers_help=` to `build_parser`)
+- Old flag names keep working as hidden aliases: `--csv` and `--verbose` are built in, and scripts add their own with `cli.add_alias()`
+- `--debug` output goes through `cli.debug.log / sent / received / hexdump`. Never log passwords, PSKs, API keys, SNMP communities or auth headers (`cli.redact()` masks a device dict)
+- An exception that a query swallows (`except: pass`) must at least `cli.debug.log()` it
+- `--firmware` is a list: filter with `cli.firmware_mismatches()` and print with `cli.firmware_label()`
+- `query_info.csv_file` and the header's `Input:` line use `cli.input_label(args)`
+
+## Output File Names
+
+All scripts name results files the same way, from one timestamp per run (`cli.RUN_STAMP`):
+
+```
+<output_dir>/results_<YYYYMMDD>_<HHMMSS>.json      e.g. results_20261117_094223.json
+```
+
+- The time is **local** time, so the name matches the wall clock. The exact UTC time is in `query_info.timestamp`
+- No device prefix in the name: the folder says what the device is
+- Call `cli.ensure_parent(path)` before writing, so a missing folder is created
+- The dashboard picks the newest file in each folder from this timestamp
+
+---
+
 ## Checklist for New Scripts
 
 When building a new device query script, verify each item:
@@ -351,3 +413,7 @@ When building a new device query script, verify each item:
 - [ ] JSON output follows the standard structure with `query_info` + device array
 - [ ] Timestamps are UTC ISO 8601
 - [ ] CSV loader handles BOM, auto-detects delimiter, skips `#` comment lines
+- [ ] Parser built with `cli.build_parser()`; device-specific flags in their own argument group
+- [ ] `--host`, `--raw` and `--debug` work, and `--raw` works for the whole CSV as well as `--host`
+- [ ] No secrets in `--debug` output
+- [ ] Default output file is `results_<YYYYMMDD>_<HHMMSS>.json` (local time) from the helper

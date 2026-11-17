@@ -6,11 +6,12 @@ VAPIX API (basicdeviceinfo.cgi, param.cgi, temperaturecontrol.cgi).
 
 Protocol: VAPIX API over HTTPS, HTTP Digest auth, self-signed certs tolerated.
 CSV format: host,port,username,password  (port optional, defaults to 443)
+Run with --help for the flags (--host, --raw, --debug, --firmware, ...).
 """
 
-import argparse
 import csv
 import json
+import os
 import re
 import sys
 import shutil
@@ -19,6 +20,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from time import time
+from urllib.parse import urlencode
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import standard_cli as cli  # noqa: E402  (standard flags, --debug/--raw helpers)
 
 import requests
 import urllib3
@@ -39,23 +44,23 @@ BOLD   = "\033[1m"    # Section headers, label emphasis
 RESET  = "\033[0m"    # Always close every colour block
 
 # ── Paths (spec 2.7, 3.7) ─────────────────────────────────────────────────────
-# Anchored to the script's own location so the paths hold regardless of CWD.
+# Relative to the script's own folder so the paths hold regardless of CWD
+# (-i / -o override them).
 SCRIPT_DIR  = Path(__file__).resolve().parent
 SECRETS_DIR = SCRIPT_DIR / "secrets"
-FILES_DIR   = SCRIPT_DIR / "axis_firmware" / "files"
-
-CSV_FILE    = str(SECRETS_DIR / "axis_firmware.csv")
-_RUN_TS     = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-OUTPUT_FILE = str(FILES_DIR / f"results_{_RUN_TS}.json")
+DEFAULT_CSV = "secrets/axis_firmware.csv"
+OUTPUT_DIR  = "axis_firmware/files"           # results_<YYYYMMDD>_<HHMMSS>.json
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DEFAULT_PORT = 443
-MANUFACTURER = "AXIS"
-MAX_WORKERS  = 5        # Concurrent camera queries
-TIMEOUT      = 10       # Seconds per request
-VERIFY_SSL   = False    # Set True if your cameras have valid certs
-PROTOCOL     = "VAPIX 3 (HTTPS/Digest)"
-MODE         = "firmware+temperature"
+DEFAULT_PORT     = 443
+DEFAULT_USERNAME = "root"   # used when the CSV has no username / for --host not in the CSV
+DEFAULT_PASSWORD = ""
+MANUFACTURER     = "AXIS"
+DEFAULT_WORKERS  = 5        # Concurrent camera queries (-w)
+DEFAULT_TIMEOUT  = 10       # Seconds per request (-t)
+VERIFY_SSL       = False    # Set True if your cameras have valid certs
+PROTOCOL         = "VAPIX 3 (HTTPS/Digest)"
+MODE             = "firmware+temperature"
 
 # Sensors to prefer (priority order) when picking a single "best" reading
 # for the table. "Main" is the overall board temp on M4328-P / M3068-P.
@@ -197,8 +202,8 @@ def load_csv(csv_path: str) -> list:
             except (ValueError, TypeError):
                 port = DEFAULT_PORT
             # This script's additional columns.
-            username = (row.get(col_map.get("username", ""), "") or "").strip() or "root"
-            password = (row.get(col_map.get("password", ""), "") or "").strip()
+            username = (row.get(col_map.get("username", ""), "") or "").strip() or DEFAULT_USERNAME
+            password = (row.get(col_map.get("password", ""), "") or "").strip() or DEFAULT_PASSWORD
             devices.append({
                 "host":     host,
                 "port":     port,
@@ -215,15 +220,39 @@ def load_csv(csv_path: str) -> list:
 # VAPIX helpers — PROTOCOL LOGIC, DO NOT CHANGE (spec 4)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_firmware_and_model(host: str, auth: HTTPDigestAuth) -> dict:
+def vapix_url(host: str, port, path: str) -> str:
+    """https://HOST/path on the default port 443, else https://HOST:PORT/path."""
+    port = int(port or DEFAULT_PORT)
+    return f"https://{host}{path}" if port == DEFAULT_PORT else f"https://{host}:{port}{path}"
+
+
+def _trace_request(host: str, method: str, url: str, timeout, params=None, payload=None) -> None:
+    """--debug: one request about to be sent (credentials are never traced)."""
+    shown = f"{url}?{urlencode(params)}" if params else url
+    cli.debug.log(host, f"{method} {shown} (Digest auth, timeout {timeout}s, verify={VERIFY_SSL})")
+    if payload is not None:
+        cli.debug.sent(host, payload)
+
+
+def _trace_response(host: str, resp) -> None:
+    """--debug: the reply's status line and body."""
+    if cli.debug.enabled:
+        cli.debug.log(host, f"HTTP {resp.status_code} {getattr(resp, 'reason', '') or ''}")
+        cli.debug.received(host, resp.text)
+
+
+def get_firmware_and_model(host: str, auth: HTTPDigestAuth, port=DEFAULT_PORT,
+                           timeout=DEFAULT_TIMEOUT) -> dict:
     """
     Query /axis-cgi/basicdeviceinfo.cgi for firmware version and model info.
     VAPIX Basic Device Information API — method: getAllProperties
     Ref: https://developer.axis.com/vapix/network-video/basic-device-information/
     """
-    url     = f"https://{host}/axis-cgi/basicdeviceinfo.cgi"
+    url     = vapix_url(host, port, "/axis-cgi/basicdeviceinfo.cgi")
     payload = {"apiVersion": "1.0", "context": "axis-query", "method": "getAllProperties"}
-    resp    = requests.post(url, json=payload, auth=auth, timeout=TIMEOUT, verify=VERIFY_SSL)
+    _trace_request(host, "POST", url, timeout, payload=payload)
+    resp    = requests.post(url, json=payload, auth=auth, timeout=timeout, verify=VERIFY_SSL)
+    _trace_response(host, resp)
     resp.raise_for_status()
     props     = resp.json().get("data", {}).get("propertyList", {})
     raw_model = props.get("ProdFullName", props.get("ProdNbr"))
@@ -239,15 +268,18 @@ def get_firmware_and_model(host: str, auth: HTTPDigestAuth) -> dict:
     }
 
 
-def get_mac_address(host: str, auth: HTTPDigestAuth):
+def get_mac_address(host: str, auth: HTTPDigestAuth, port=DEFAULT_PORT,
+                    timeout=DEFAULT_TIMEOUT):
     """
     Query /axis-cgi/param.cgi for the MAC address of the primary interface.
     VAPIX Network Settings — Network.eth0.MACAddress parameter.
     Ref: https://developer.axis.com/vapix/network-video/network-settings/
     """
-    url    = f"https://{host}/axis-cgi/param.cgi"
+    url    = vapix_url(host, port, "/axis-cgi/param.cgi")
     params = {"action": "list", "group": "Network.eth0.MACAddress"}
-    resp   = requests.get(url, params=params, auth=auth, timeout=TIMEOUT, verify=VERIFY_SSL)
+    _trace_request(host, "GET", url, timeout, params=params)
+    resp   = requests.get(url, params=params, auth=auth, timeout=timeout, verify=VERIFY_SSL)
+    _trace_response(host, resp)
     resp.raise_for_status()
     for line in resp.text.strip().splitlines():
         if "=" in line:
@@ -258,7 +290,8 @@ def get_mac_address(host: str, auth: HTTPDigestAuth):
     return None
 
 
-def get_temperature(host: str, auth: HTTPDigestAuth) -> dict:
+def get_temperature(host: str, auth: HTTPDigestAuth, port=DEFAULT_PORT,
+                    timeout=DEFAULT_TIMEOUT) -> dict:
     """
     Query /axis-cgi/temperaturecontrol.cgi?action=statusall
     VAPIX Temperature Control API — statusall action.
@@ -271,9 +304,11 @@ def get_temperature(host: str, auth: HTTPDigestAuth) -> dict:
         Sensor.S1.Name=CPU
         ...
     """
-    url    = f"https://{host}/axis-cgi/temperaturecontrol.cgi"
+    url    = vapix_url(host, port, "/axis-cgi/temperaturecontrol.cgi")
     params = {"action": "statusall"}
-    resp   = requests.get(url, params=params, auth=auth, timeout=TIMEOUT, verify=VERIFY_SSL)
+    _trace_request(host, "GET", url, timeout, params=params)
+    resp   = requests.get(url, params=params, auth=auth, timeout=timeout, verify=VERIFY_SSL)
+    _trace_response(host, resp)
     resp.raise_for_status()
 
     sensors: dict[str, dict] = {}
@@ -329,19 +364,20 @@ def get_temperature(host: str, auth: HTTPDigestAuth) -> dict:
 # Per-camera worker — orchestration and error classification unchanged (spec 4)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def query_camera(row: dict) -> dict:
+def query_camera(row: dict, timeout=DEFAULT_TIMEOUT) -> dict:
     """Connect to one camera, query firmware + temperature, return result dict."""
     # Host passed through verbatim — no trim, no lowercase (spec 2.6).
     host     = row["host"]
-    username = row.get("username", "root")
-    password = row.get("password", "")
+    port     = row.get("port", DEFAULT_PORT)
+    username = row.get("username", DEFAULT_USERNAME)
+    password = row.get("password", DEFAULT_PASSWORD)
 
     with _active_lock:
         _latest_host["value"] = host
 
     result = {
         "host":             host,
-        "port":             row.get("port", DEFAULT_PORT),
+        "port":             port,
         "query_timestamp":  datetime.now(timezone.utc).isoformat(),
         "status":           "error",
         "error":            None,
@@ -360,34 +396,72 @@ def query_camera(row: dict) -> dict:
     auth = HTTPDigestAuth(username, password)
 
     try:
-        fw = get_firmware_and_model(host, auth)
+        fw = get_firmware_and_model(host, auth, port, timeout)
         result.update(fw)
 
         try:
-            result["mac"] = get_mac_address(host, auth)
+            result["mac"] = get_mac_address(host, auth, port, timeout)
         except Exception as me:
+            cli.debug.log(host, f"MAC query failed: {type(me).__name__}: {me}")
             result["mac_error"] = truncate_error(str(me))
 
         try:
-            temp = get_temperature(host, auth)
+            temp = get_temperature(host, auth, port, timeout)
             result.update(temp)
         except Exception as te:
+            cli.debug.log(host, f"temperature query failed: {type(te).__name__}: {te}")
             result["temp_error"] = truncate_error(str(te))
 
         result["status"] = "success"
 
     except requests.exceptions.HTTPError as he:
+        cli.debug.log(host, f"basicdeviceinfo failed: {he}")
         code = he.response.status_code
         result["status"] = "auth_error" if code in (401, 403) else "error"
         result["error"]  = truncate_error(f"HTTP {code}")
-    except requests.exceptions.ConnectTimeout:
+    except requests.exceptions.ConnectTimeout as ex:
+        cli.debug.log(host, f"connect timeout: {ex}")
         result["error"] = "Timed out"
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.ConnectionError as ex:
+        cli.debug.log(host, f"connection error: {ex}")
         result["error"] = "Unreachable"
     except Exception as ex:
+        cli.debug.log(host, f"query failed: {type(ex).__name__}: {ex}")
         result["error"] = truncate_error(str(ex))
 
+    cli.debug.log(host, f"result: {result['status']}" + (f" ({result['error']})" if result["error"] else ""))
     return result
+
+
+def dump_raw(dev: dict, timeout) -> None:
+    """--raw: send the three VAPIX requests the query sends and print each reply as received."""
+    host, port = dev["host"], dev.get("port", DEFAULT_PORT)
+    auth = HTTPDigestAuth(dev.get("username", DEFAULT_USERNAME), dev.get("password", DEFAULT_PASSWORD))
+    calls = [
+        ("POST", "/axis-cgi/basicdeviceinfo.cgi",
+         {"json": {"apiVersion": "1.0", "context": "axis-query", "method": "getAllProperties"}}),
+        ("GET", "/axis-cgi/param.cgi",
+         {"params": {"action": "list", "group": "Network.eth0.MACAddress"}}),
+        ("GET", "/axis-cgi/temperaturecontrol.cgi",
+         {"params": {"action": "statusall"}}),
+    ]
+    for method, path, kw in calls:
+        url = vapix_url(host, port, path)
+        what = kw.get("json", {}).get("method") or "&".join(f"{k}={v}" for k, v in kw["params"].items())
+        label = f"{method} {path} ({what})"
+        send = requests.post if method == "POST" else requests.get
+        _trace_request(host, method, url, timeout, params=kw.get("params"), payload=kw.get("json"))
+        try:
+            resp = send(url, auth=auth, timeout=timeout, verify=VERIFY_SSL, **kw)
+        except Exception as e:
+            cli.raw_error(label, f"{type(e).__name__}: {e}")
+            if isinstance(e, requests.exceptions.ConnectionError):
+                # No connection at all (the query stops here too): skip the rest
+                cli.raw_error("remaining requests", "skipped (could not connect)")
+                return
+            continue
+        _trace_response(host, resp)
+        cli.raw_item(f"{label}  HTTP {resp.status_code}", resp.text)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -404,25 +478,24 @@ def format_temp(result: dict):
     return f"{temp_f}°F{label}"
 
 
-def print_header(total: int, firmware_filter) -> None:
+def print_header(total: int, args) -> None:
     print(f"{WHITE}")
     print(f"  {BOLD}AXIS Camera VAPIX Query Tool{RESET}{WHITE}")
     print(f"  Queries AXIS cameras for firmware version and temperature")
-    print(f"  Input:   {CSV_FILE}")
-    print(f"  Output:  {OUTPUT_FILE}")
-    print(f"  Workers: {MAX_WORKERS}")
-    print(f"  Timeout: {TIMEOUT}s")
+    print(f"  Input:   {cli.input_label(args)}")
+    print(f"  Output:  {'(none: --raw)' if args.raw else args.output}")
+    print(f"  Workers: {args.workers}")
+    print(f"  Timeout: {args.timeout}s")
     print(f"  Devices: {total}")
-    if firmware_filter:
-        print(f"  Filter:  Hiding firmware version {firmware_filter} from table")
+    if args.firmware:
+        print(f"  Filter:  Hiding firmware version {cli.firmware_label(args.firmware)} from table")
+    if args.debug:
+        print(f"  Debug:   on (trace on stderr)")
     print(f"{RESET}")
 
 
 def print_table(results: list, firmware_filter=None) -> None:
-    visible = [
-        r for r in results
-        if firmware_filter is None or r.get("firmware_version") != firmware_filter
-    ]
+    visible = cli.firmware_mismatches(results, firmware_filter)
     filtered_count = len(results) - len(visible)
 
     # Column order per spec 3.4 — no Port column.
@@ -462,12 +535,13 @@ def print_table(results: list, firmware_filter=None) -> None:
         print(f"  {line}")
     if filtered_count:
         print(f"  {YELLOW}{filtered_count} device(s) with firmware "
-              f"{firmware_filter} hidden by --firmware filter{RESET}{WHITE}")
+              f"{cli.firmware_label(firmware_filter)} hidden by --firmware filter{RESET}{WHITE}")
     print(f"{RESET}")
 
 
 def print_summary(results: list, elapsed: float, temp_vals_f: list,
-                  filtered_count: int = 0) -> None:
+                  filtered_count: int = 0, output_file: str = "",
+                  workers: int = DEFAULT_WORKERS) -> None:
     total = len(results)
     ok    = sum(1 for r in results if r["status"] == "success")
     auth  = sum(1 for r in results if r["status"] == "auth_error")
@@ -493,8 +567,8 @@ def print_summary(results: list, elapsed: float, temp_vals_f: list,
         print(f"  {BOLD}Board Temperature (°F){RESET}{WHITE} — No data available")
 
     print()
-    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {OUTPUT_FILE}{RESET}")
-    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({MAX_WORKERS} workers){RESET}")
+    print(f"  {WHITE}{BOLD}Results saved:{RESET}{WHITE} {output_file}{RESET}")
+    print(f"  {WHITE}{BOLD}Elapsed:{RESET}{WHITE} {elapsed:.1f}s ({workers} workers){RESET}")
     print()
 
 
@@ -502,18 +576,19 @@ def print_summary(results: list, elapsed: float, temp_vals_f: list,
 # JSON output (spec 2.1)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def save_json(results: list, elapsed: float) -> None:
+def save_json(results: list, elapsed: float, args) -> None:
     total = len(results)
     ok    = sum(1 for r in results if r["status"] == "success")
     auth  = sum(1 for r in results if r["status"] == "auth_error")
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as fh:
+    cli.ensure_parent(args.output)
+    with open(args.output, "w", encoding="utf-8") as fh:
         json.dump({
             "query_info": {
-                "csv_file":        str(Path(CSV_FILE).resolve()),
+                "csv_file":        cli.input_label(args),
                 "timestamp":       datetime.now(timezone.utc).isoformat(),
                 "protocol":        PROTOCOL,
                 "mode":            MODE,
-                "workers":         MAX_WORKERS,
+                "workers":         args.workers,
                 "total":           total,
                 "success":         ok,
                 "auth_errors":     auth,
@@ -529,23 +604,55 @@ def save_json(results: list, elapsed: float) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AXIS Camera VAPIX Query Tool")
-    parser.add_argument(
-        "--firmware",
-        metavar="VERSION",
-        help="Hide cameras matching this firmware version from the table "
-             "(e.g. 11.11.68). Full results are still saved to JSON.",
+    parser = cli.build_parser(
+        script_file=__file__,
+        description="AXIS Camera VAPIX Query Tool\n"
+                    "Queries AXIS cameras for firmware, model, serial, MAC and temperature\n"
+                    "over HTTPS (VAPIX, HTTP Digest auth, self-signed certs tolerated).",
+        default_csv=DEFAULT_CSV,
+        output_dir=OUTPUT_DIR,
+        default_port=DEFAULT_PORT,
+        default_timeout=DEFAULT_TIMEOUT,
+        default_workers=DEFAULT_WORKERS,
+        auth=cli.AUTH_USER_PASSWORD,
+        port_help=(f"HTTPS port for --host targets (default: the CSV row's, else "
+                   f"{DEFAULT_PORT})"),
+        firmware_help=("Hide cameras on any of these firmware versions from the table "
+                       "(e.g. 11.11.68 12.0.1). Full results are still saved to JSON."),
+        raw_help=("Print each camera's raw replies to the three VAPIX requests "
+                  "(basicdeviceinfo, param.cgi MAC, temperaturecontrol), then exit "
+                  "without the table or JSON. Works with --host or the whole CSV."),
+        epilog=f"""
+Examples:
+  python3 axis_script.py                                   # whole CSV
+  python3 axis_script.py --host cam-101.example.edu        # one camera (CSV row's login if listed)
+  python3 axis_script.py --host 10.0.0.5 -u root --password s3cret
+  python3 axis_script.py --host cam-101.example.edu --raw
+  python3 axis_script.py --host cam-101.example.edu --debug
+  python3 axis_script.py --firmware 11.11.68 12.0.1        # cameras NOT on either version
+  python3 axis_script.py -i cams.csv -t 15 -w 10 -o out.json
+
+CSV columns: host,port,username,password  (port optional, default {DEFAULT_PORT};
+  username default {DEFAULT_USERNAME}). A --host that is not in the CSV uses
+  {DEFAULT_USERNAME} with an empty password unless -u / --password are given.
+        """,
     )
-    args = parser.parse_args()
-    firmware_filter = args.firmware.strip() if args.firmware else None
+    args = cli.parse_args(parser)
 
     SECRETS_DIR.mkdir(parents=True, exist_ok=True)
-    FILES_DIR.mkdir(parents=True, exist_ok=True)
 
-    cameras = load_csv(CSV_FILE)
+    cameras = cli.select_devices(
+        args, load_csv,
+        lambda host: {"host": host, "port": DEFAULT_PORT,
+                      "username": DEFAULT_USERNAME, "password": DEFAULT_PASSWORD})
     total   = len(cameras)
 
-    print_header(total, firmware_filter)
+    print_header(total, args)
+
+    # --raw: dump what each camera sends back, no table / JSON
+    if args.raw:
+        cli.run_raw(cameras, lambda d: dump_raw(d, args.timeout))
+        return
 
     bar_fmt = (
         f"  {WHITE}Scanning{RESET} "
@@ -567,8 +674,8 @@ def main() -> None:
         file=sys.stderr,
         leave=True,
     ) as pbar:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-            futures = {pool.submit(query_camera, cam): cam for cam in cameras}
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            futures = {pool.submit(query_camera, cam, args.timeout): cam for cam in cameras}
             for future in as_completed(futures):
                 results.append(future.result())
                 with _active_lock:
@@ -593,14 +700,11 @@ def main() -> None:
         except (ValueError, TypeError):
             pass
 
-    filtered_count = sum(
-        1 for r in results
-        if firmware_filter and r.get("firmware_version") == firmware_filter
-    )
+    filtered_count = len(results) - len(cli.firmware_mismatches(results, args.firmware))
 
-    print_table(results, firmware_filter)
-    print_summary(results, elapsed, temp_vals_f, filtered_count)
-    save_json(results, elapsed)
+    print_table(results, args.firmware)
+    print_summary(results, elapsed, temp_vals_f, filtered_count, args.output, args.workers)
+    save_json(results, elapsed, args)
 
 
 if __name__ == "__main__":

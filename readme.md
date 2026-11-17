@@ -36,6 +36,21 @@ Queries projectors using the PJLink protocol (Class 1 and Class 2). Retrieves fi
 - **Output:** Formatted CLI table + `results.json` with full detail
 - **Error handling:** Distinguishes auth failures, timeouts, and unreachable hosts
 
+## Common Flags
+
+Every script takes the same flags (defined once in `scripts/lib/standard_cli.py`; full table in `cli_style_guide.md`):
+
+```
+python3 <script>.py                          # whole CSV, table + results JSON
+python3 <script>.py --host HOST              # one device (reuses its CSV row if listed)
+python3 <script>.py --host HOST --raw        # what the device actually sent back
+python3 <script>.py --host HOST --debug      # trace every command and reply
+python3 <script>.py --firmware 1.2.3 1.2.4   # only devices NOT on these versions
+python3 <script>.py -i other.csv -o out.json -t 15 -w 10
+```
+
+Devices that log in also take `-u/--username` and `--password` for `--host` targets. Run any script with `--help` for its device-specific options.
+
 ## CSV INPUT FILES
 - Must be savd in /scripts/secrets
 - Templates for each script are located in /scripts/secrets/templates
@@ -43,7 +58,7 @@ Queries projectors using the PJLink protocol (Class 1 and Class 2). Retrieves fi
 
 ## JSON OUTPUT FILES
 - Are stored in /scripts/'script_name'/files
-- The results JSON file will be saved with date and timestamp
+- The results JSON file is named `results_<YYYYMMDD>_<HHMMSS>.json` in local time
 - overtime you might need to remove these files
 
 ## Dependencies

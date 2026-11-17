@@ -1,4 +1,5 @@
 scripts/secrets/visca_firmware.csv
+scripts/secrets/mxw_firmware.csv
 scripts/secrets/axis_firmware.csv
 scripts/secrets/biamp_firmware.csv
 scripts/secrets/bravia_firmware.csv
